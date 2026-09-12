@@ -1,0 +1,3 @@
+# Exact transitive ABI generations imposed by egui/winit, rustls/tempfile and
+# proc-macro migrations. No lint group is disabled. See docs/dependencies.md.
+allowed-duplicate-crates = ["syn", "bitflags", "block2", "getrandom", "miniz_oxide", "objc2", "objc2-app-kit", "objc2-foundation", "calloop", "calloop-wayland-source", "jni-sys", "linux-raw-sys", "objc2-ui-kit", "r-efi", "redox_syscall", "rustc-hash", "rustix", "smithay-client-toolkit", "thiserror", "thiserror-impl", "windows-sys", "windows-targets", "windows_aarch64_gnullvm", "windows_aarch64_msvc", "windows_i686_gnu", "windows_i686_gnullvm", "windows_i686_msvc", "windows_x86_64_gnu", "windows_x86_64_gnullvm", "windows_x86_64_msvc"]

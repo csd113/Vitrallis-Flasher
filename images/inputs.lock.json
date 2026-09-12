@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/nextthingco/x-chip-os",
+  "source_commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+  "architecture": "armhf",
+  "distribution": "trixie",
+  "source_date_epoch": 1785292905,
+  "container_digest": null,
+  "debian_snapshot": null,
+  "chip_snapshot_sha256": null,
+  "package_lock_sha256": null,
+  "vitrallis_bundle_sha256": null,
+  "vitrallis_compatibility": "blocked",
+  "blockers": [
+    "Lock the arm/v7 build-container digest and a signed Debian snapshot.",
+    "Snapshot the CHIP repository, signing key fingerprint and all transitive package versions/checksums.",
+    "Review upstream redistribution permissions before distributing their configuration or images.",
+    "Validate PocketCHIP panel, keyboard, touch, USB recovery transport and both NAND parts.",
+    "Validate preservation of the stock PocketHome menu, default startup, controls, calibration and redistributable stock applications on Debian 13.",
+    "Validate the shared NAND-write policy: no NAND-backed swap, RAM-only zram if adopted, bounded volatile logs/tmp, preserved UBI health and memory-pressure testing."
+  ],
+  "vitrallis_blockers": [
+    "Supply the complete matching ARM Vitrallis bundle; verify its PocketHome/Marshmallow session contract and any optional app dependencies.",
+    "Validate opt-in Vitrallis startup, failure fallback to Marshmallow, Home binding restoration and offline removal."
+  ]
+}

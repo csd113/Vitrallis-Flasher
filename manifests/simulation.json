@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "release": "simulation-debian13",
+  "board": "pocketchip",
+  "soc": "allwinner-r8",
+  "os": "debian-13-trixie",
+  "architecture": "armhf",
+  "installer_protocol": 1,
+  "minimum_flasher": "0.1.0",
+  "vitrallis": "not-installed",
+  "assets": [
+    {
+      "role": "uboot",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "kernel",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "dtb",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "recovery",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "spl-hynix",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "spl-toshiba",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "uboot-nand",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    },
+    {
+      "role": "rootfs",
+      "url": "https://example.invalid/simulation/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "size": 61,
+      "sha256": "8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e",
+      "provenance": {
+        "repository": "https://github.com/csd113/Vitrallis-Flasher",
+        "commit": "80565d868ed51e62900c805e471931c8c8804f2f",
+        "license": "LicenseRef-Proprietary"
+      }
+    }
+  ],
+  "profile": "stock"
+}

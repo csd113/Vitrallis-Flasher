@@ -1,0 +1,10 @@
+/target/
+/work/
+/images/work/
+/images/output/
+/dist/
+*.part
+.DS_Store
+
+__pycache__/
+*.pyc

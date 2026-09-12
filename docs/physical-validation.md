@@ -1,0 +1,58 @@
+# Physical validation still required
+
+All current installation evidence is simulated. The downloaded OS was inspected as
+an archive, not executed. Hardware testing must be separately authorized and recorded
+with exact application/upstream revisions, asset hashes, board revision, NAND part,
+host/driver versions and sanitized logs. Never promote a failed or incomplete test.
+
+## Release gates
+
+- Establish permissions for upstream recovery/image reuse and distribution; review
+  pinned bootloader/SPL assets, build provenance and corresponding sources.
+- Close the reproducible image input lock; build twice and compare hashes. Verify
+  the stock PocketHome desktop, menus, startup, compatible applications and calibration.
+  For `vitrallis-default` only, additionally verify the complete ARM bundle, ABI,
+  automatic startup and Marshmallow fallback/removal contract.
+- Implement and review the authenticated fixed-operation recovery protocol described
+  in `recovery-protocol.md`. Keep real writes blocked until it passes review.
+- Prove board/NAND identification before erase. Preserve Hynix/Toshiba geometry and
+  reject unknown parts; validate SPL primary/backup, padded U-Boot and SLC rootfs.
+- Bind fresh recovery identity and session nonce to the selected FEL SID. Test wrong
+  endpoint, spoofed IP/MAC, untrusted SSH peer, unplug/replug and multiple devices.
+
+## Device/host matrix
+
+Test separate Hynix H27UCG8T2ETR and Toshiba TC58TEG5DCLTA00 boards on Windows x86-64,
+macOS arm64, macOS x86-64 and Linux x86-64; add Linux arm64. Record FEL enumeration,
+USB permissions, driver identity, recovery gadget re-enumeration, networking and
+endpoint authentication. Windows needs deliberate WinUSB and gadget-driver validation;
+macOS needs a working ECM/NCM solution. No driver changes should be automatic.
+
+For each board, test a full erase/write/readback, bad-block handling, correct bootloader
+copies and normal NAND boot with the jumper removed. Verify USB/network disconnect,
+slow transfer, cancellation at every boundary, tool crash, verification mismatch,
+low-power interruption and a fresh recovery retry. A verification failure must not
+produce “Complete”, reboot, or preserve prior erase authorization. Use sacrificial
+or backed-up hardware under explicit authorization for destructive fault tests.
+
+Validate the actual LCD/backlight, keyboard, touchscreen calibration, Home/Power key,
+Wi-Fi, sound, battery reporting and PocketHome stock behavior for both profiles.
+For `vitrallis-default`, additionally test Vitrallis launch and all three native utilities,
+app focus/resume, systemd session cleanup, startup failure and return to Marshmallow.
+Verify the stock image contains no Vitrallis files or startup hooks. Include cold boot,
+readability at 480×272, CPU/RAM and storage constraints. Package presence alone cannot
+prove these behaviors.
+
+Finally test unsigned/signed distribution separately: Windows SmartScreen and driver
+signing, macOS Developer ID/notarization, Linux library availability and artifact
+checksums/notices. The existing CI matrix checks compilation/tests only and cannot
+substitute for this hardware and distribution evidence.
+
+## Memory pressure and NAND writes
+
+Run the [storage-policy validation matrix](debian-optimizations.md#release-validation)
+for both desktop profiles and NAND parts. Reject disk/NAND swap, zram backing-device
+writeback, unbounded temporary growth, broken UBI health persistence, and any implicit
+fallback to disk swap. Compare no-swap and small RAM-only zram workloads, verify log
+retention behavior and update compatibility, and preserve crash recovery. Package
+presence and configuration files alone are not runtime proof.

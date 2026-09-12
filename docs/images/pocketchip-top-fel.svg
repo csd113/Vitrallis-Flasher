@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="650" viewBox="0 0 1000 650" role="img" aria-labelledby="title desc">
+  <title id="title">PocketCHIP exposed top pads: bridge GROUND to FEL</title>
+  <desc id="desc">Front-view schematic of PocketCHIP. At the right end of the exposed top pad row, FEL is immediately to the right of GROUND. A cyan jumper connects only these two pads. Other pads are omitted. This is a wiring reference, not a photograph or physical flashing validation.</desc>
+  <rect width="1000" height="650" rx="22" fill="#101b27"/>
+  <g font-family="system-ui, sans-serif">
+    <text x="48" y="53" fill="#74dfd0" font-size="15" font-weight="700" letter-spacing="2">POCKETCHIP · FRONT VIEW</text>
+    <text x="48" y="96" fill="#fff" font-size="32" font-weight="700">Use the exposed top FEL + GROUND pads</text>
+    <text x="48" y="125" fill="#c7d0dc" font-size="17">CHIP stays seated in the case in this wiring reference.</text>
+    <rect x="75" y="232" width="850" height="339" rx="27" fill="#dce3e6"/>
+    <rect x="102" y="168" width="796" height="112" rx="16" fill="#f6f5ef"/>
+    <rect x="106" y="294" width="788" height="186" rx="9" fill="#223343"/>
+    <text x="137" y="345" fill="#8eabba" font-size="20">SCREEN</text>
+    <g fill="#b6bec3">
+      <rect x="120" y="500" width="63" height="23" rx="4"/><rect x="195" y="500" width="63" height="23" rx="4"/>
+      <rect x="270" y="500" width="63" height="23" rx="4"/><rect x="345" y="500" width="63" height="23" rx="4"/>
+      <rect x="120" y="535" width="63" height="19" rx="4"/><rect x="195" y="535" width="63" height="19" rx="4"/>
+      <rect x="270" y="535" width="138" height="19" rx="4"/>
+    </g>
+    <circle cx="500" cy="527" r="18" fill="#b6bec3"/>
+    <text x="648" y="535" fill="#3b5364" font-size="17">Keyboard / Home</text>
+    <text x="143" y="218" fill="#73777a" font-size="23" letter-spacing="8">· · ·</text>
+    <text x="134" y="253" fill="#596471" font-size="15">Other pads omitted</text>
+    <g fill="#c6a75b" stroke="#796b47" stroke-width="2">
+      <ellipse cx="350" cy="209" rx="10" ry="15"/><ellipse cx="445" cy="209" rx="10" ry="15"/>
+      <ellipse cx="540" cy="209" rx="10" ry="15"/><ellipse cx="650" cy="209" rx="10" ry="15"/>
+    </g>
+    <g fill="#a82a61" font-size="16" font-weight="700" text-anchor="middle">
+      <text x="350" y="254">UART:RX</text><text x="445" y="254">UART:TX</text>
+      <text x="540" y="254">GROUND</text><text x="650" y="254">FEL</text>
+    </g>
+    <path d="M540 209 V177 Q540 153 566 153 H624 Q650 153 650 177 V209" fill="none" stroke="#087f85" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="540" cy="209" r="5" fill="#112d34"/><circle cx="650" cy="209" r="5" fill="#112d34"/>
+    <text x="733" y="217" fill="#cf5287" font-size="21" font-weight="700">Pocket</text>
+    <text x="750" y="243" fill="#cf5287" font-size="24" font-weight="700">CHIP</text>
+    <text x="137" y="388" fill="#fff" font-size="20">Power off and unplug USB before positioning the jumper.</text>
+    <text x="137" y="422" fill="#fff" font-size="20">Bridge only GROUND ↔ FEL, then connect a USB data cable.</text>
+    <text x="137" y="455" fill="#adc2d0" font-size="16">Match the labels on your device. Keep the jumper clear of neighboring pads.</text>
+    <text x="48" y="607" fill="#c7d0dc" font-size="16">Schematic, not to scale. Check the labeled pads; in-case recovery remains unvalidated.</text>
+    <text x="48" y="631" fill="#8ea4b7" font-size="14">Sources and the bare CHIP jumper photograph are in docs/fel-drivers.md.</text>
+  </g>
+</svg>

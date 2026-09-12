@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-09-12",
+  "repositories": [
+    {
+      "repository": "https://github.com/nextthingco/x-chip-tools",
+      "commit": "215f98eed44babb699c129bb124537d32c414102",
+      "reviewed_files": {
+        "README.md": "28019aa72d257762ce6474f2540b6fda709b492c8e7ad960c34120fbb42c1bc2",
+        "flash-live.sh": "6e0a6a23725943fa17f2c52cf9b42cf9e78e9ad9b28878a8f98bad33a7fda3b1",
+        "lib-nand.sh": "20f2d7a38deda319f48a4244d9963a3c52e3c30a40f91cb645b184b6d54649e9",
+        "assets/init": "152f6afd267f29827384e7f8ed1ba33a9d0a799b0c237c244c1eb113381f0608",
+        "assets/build-initramfs.sh": "83c4652bad95a9f7cdbfe9e593158be824de85e33ee4a05ed3a8702928bada1f"
+      },
+      "license": "no-root-license-grant-observed",
+      "redistributed": false
+    },
+    {
+      "repository": "https://github.com/nextthingco/x-chip-os",
+      "commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+      "reviewed_files": {
+        "README.md": "6688187811e78e00e3903aa06a9a683e8f53ca87db27a40518f1875e2f0d1f9c",
+        "Dockerfile": "7f5b8f9c6c54708a2f2f9e6fefa64f09cb6501d6d51e4a2426ef363d524a34db",
+        "build.sh": "13b35bed1091f484b47a0acdd644b86210a5765ddd49239f33350771a4dea4b0",
+        "init.sh": "0955ffe47a0d9a8a5dbce0f1ad1339a14a1250a7ec761b159498bd37f2e0ad46",
+        "pocketchip/config/package-lists/pocketchip.list.chroot": "651973cffac41e59b022e64e715174c1f72e2b86ed3d43b0bf927076c41c949a"
+      },
+      "license": "no-root-license-grant-observed",
+      "redistributed": false
+    },
+    {
+      "repository": "https://github.com/linux-sunxi/sunxi-tools",
+      "commit": "d7bbd172a5da601a08f94479de308c6fb714a19a",
+      "reviewed_files": {
+        "LICENSE.md": "a86425c18b019d34f9bdd90d927cf400b6239a96c63e3c2af1195abb37c78d2c",
+        "fel.c": "2d065fef80f4669ff71a33da788c0187ae2fa1b8cbf7c0ced1e4d5736e3101be",
+        "soc_info.c": "fbdaf27be0f82bb243ae797f7d2562eca3a9d4ac5451fa5b8fcf0a25fcd6ddac"
+      },
+      "license": "GPL-2.0-or-later",
+      "redistributed": false
+    },
+    {
+      "repository": "https://github.com/csd113/Vitrallis-Shell",
+      "commit": "40b232780729853cf49691d160517ab866b4addb",
+      "reviewed_files": {
+        "README.md": "786885137daf572c366327b33e82649824211bd902d31545d7bbe90dabd3a1c5",
+        "Cargo.toml": "b46749976771154205f96fa9ac2293562e70eb477e3a466c6e7baf07111221d5",
+        "docs/devices/pocketchip.md": "7ca99b2adddefa7a782b645892c7e80d838ac2eacabaa21a3b399b73be445f4c",
+        "devices/pocketchip/install.py": "1f178c286ee9d2b2470afe715cf6d09fbf42974ca9bab8b4d0035c5e86bb7f85",
+        "devices/pocketchip/vitrallis-session.py": "33f50e97c2955e516282cd1d096b63cdca38198f6d3454b5b7587b134bb16a27",
+        "src/platform/mod.rs": "243dbb2d8e56050d8ae3fc11d58238519d14b18409c393c1b7653777ae7123f9",
+        "src/app_center/runtime.rs": "13817f7a31f378f99ec210aa6a371982f44b1c842cdc87f680c3e2a0aaecdd6a"
+      },
+      "license": "no-root-license-grant-observed",
+      "redistributed": false
+    }
+  ],
+  "assets": [
+    {
+      "name": "initrd.uimage",
+      "tag": "installer-2026.06.19-181233",
+      "url": "https://github.com/nextthingco/x-chip-tools/releases/download/installer-2026.06.19-181233/initrd.uimage",
+      "size": 31628120,
+      "sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+      "download_verified": true,
+      "flash_approved": false
+    },
+    {
+      "name": "pocketchip-rootfs.tar.gz",
+      "tag": "os-2026.07.29-024145",
+      "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.07.29-024145/pocketchip-rootfs.tar.gz",
+      "size": 516321424,
+      "sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2",
+      "download_verified": true,
+      "flash_approved": false
+    }
+  ],
+  "approved_physical_manifest_sha256": [],
+  "followup_reviews": [
+    {
+      "repository": "https://github.com/csd113/Vitrallis-Shell",
+      "commit": "02df65ba08e694777031fe3bd7a0b8274ddf4e45",
+      "purpose": "Published one-line bootstrap, runtime requirements and optional default startup contract",
+      "reviewed_files": {
+        "README.md": "2ebf10e8de945af2302439e5afba6fbf8860b1f1dccd48fc26d795dade4ec531",
+        "docs/devices/pocketchip.md": "1ec18abd54d2d9a3b5243e4a1e0b8527c7e032d6ff731d55e88ceff78852d873",
+        "devices/pocketchip/bootstrap.py": "26bee5fdfce9a9c05e4b166fb713b5b10ad7053fcf9ff802f59487ca725b85c6"
+      },
+      "bootstrap_executed": false,
+      "complete_release_bundle_available": false,
+      "redistributed": false
+    },
+    {
+      "repository": "https://github.com/nextthingco/x-chip-os",
+      "commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+      "purpose": "Swap build defaults and NAND health service persistence review",
+      "reviewed_files": {
+        "pocketchip/config/binary": "9f5b0261392fde3ae3e0a1415f506e1b082c7b14259cda2e0a47de715056a593",
+        "pocketchip/config/hooks/normal/0300-ubihealthd.hook.chroot": "ebbb5c645c291f34c0cd6ea8ade6df1438a622e47384efc60c24ea8c39346fe6",
+        "pocketchip/config/includes.chroot_before_packages/usr/lib/systemd/system/ubihealthd.service": "454f8a5e0e2fbe821d1815dbc05d32629619bfb2b1ffb3eb88a9302cbdd41568"
+      },
+      "rootfs_sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2",
+      "runtime_validated": false
+    }
+  ]
+}

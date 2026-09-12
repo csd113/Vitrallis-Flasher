@@ -1,0 +1,111 @@
+{
+  "asset": "pocketchip-rootfs.tar.gz",
+  "members": 50936,
+  "boot_files": [
+    {
+      "path": "boot/grub/theme.cfg",
+      "size": 239
+    },
+    {
+      "path": "boot/grub/config.cfg",
+      "size": 476
+    },
+    {
+      "path": "boot/grub/grub.cfg",
+      "size": 1366
+    },
+    {
+      "path": "boot/grub/live-theme/theme.txt",
+      "size": 1155
+    },
+    {
+      "path": "boot/grub/loopback.cfg",
+      "size": 27
+    },
+    {
+      "path": "boot/dtbs/6.12.94+deb13-chip/sun5i-r8-chip.dtb",
+      "size": 25537
+    },
+    {
+      "path": "boot/dtbs/6.12.94+deb13-chip/sun5i-r8-chip.dtb.bak",
+      "size": 25537
+    },
+    {
+      "path": "boot/vmlinuz-6.12.94+deb13-chip",
+      "size": 6676992
+    },
+    {
+      "path": "boot/boot.scr",
+      "size": 3500
+    },
+    {
+      "path": "boot/System.map-6.12.94+deb13-chip",
+      "size": 83
+    },
+    {
+      "path": "boot/initrd.img-6.12.94+deb13-chip",
+      "size": 13864525
+    },
+    {
+      "path": "boot/config-6.12.94+deb13-chip",
+      "size": 297577
+    }
+  ],
+  "packages": {
+    "alsa-utils": {
+      "Version": "1.2.14-1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "awesome": {
+      "Version": "4.3-7+b2",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "greetd": {
+      "Version": "0.10.3-4",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "libsdl2-2.0-0": {
+      "Version": "2.32.4+dfsg-1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "linux-image-6.12.94+deb13-chip": {
+      "Version": "6.12.94-1.29",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "linux-image-chip": {
+      "Version": "6.12.94-1.29",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "lxterminal": {
+      "Version": "0.4.1-1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "network-manager": {
+      "Version": "1.52.1-1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "pocket-home": {
+      "Version": "0.0.8",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "python3": {
+      "Version": "3.13.5-1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    },
+    "systemd": {
+      "Version": "257.13-1~deb13u1",
+      "Architecture": "armhf",
+      "Status": "install ok installed"
+    }
+  }
+}
