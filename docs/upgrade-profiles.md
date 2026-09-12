@@ -45,12 +45,14 @@ Jessie-era package, proprietary app or original kernel can remain unchanged. The
 reviewed candidate contains PocketHome, but preservation of the entire stock
 experience still needs an application inventory and device validation.
 
-A FEL recovery reimage erases NAND. It cannot retain the current filesystem in place.
-No supported in-place Jessie-to-trixie migration or automatic backup/restore is
-implemented here. Before any future physical release, provide a separately verified
-backup and restoration procedure for documents, app data, menu customizations and
-calibration; do not blindly restore old system files over Debian 13. Current releases
-make no data-preservation claim and cannot erase a device.
+A FEL recovery reimage erases all existing data on the device's internal NAND.
+Both profiles install a fresh OS; neither carries over the old filesystem, documents,
+saves, applications, calibration customizations or settings. Users are responsible
+for copying anything they want to keep to another device before flashing and for any
+later manual restoration. Backup, restore and in-place migration features are outside
+this project's scope and are not release blockers. “Stock” describes the new image's
+PocketHome experience, not preservation of the previous installation. Physical
+flashing is currently disabled in this prototype.
 
 ## Optional Vitrallis default
 
@@ -62,9 +64,9 @@ available; login, calibration and recovery services are not replaced.
 
 The upstream bootstrap linked in [README](../README.md#install-vitrallis-separately)
 installs Vitrallis alongside Marshmallow; it does not enable automatic startup. The
-optional profile must additionally back up the current `~/.config/awesome/rc.lua`,
-validate the existing configuration, and append exactly the upstream block after the
-existing startup code:
+optional profile must additionally retain a rollback copy of the **new Debian 13
+installation’s** `~/.config/awesome/rc.lua`, validate that configuration, and append
+exactly the upstream block after the existing startup code:
 
 ```lua
 -- BEGIN optional Vitrallis startup
@@ -84,8 +86,10 @@ entire Awesome configuration or suppress its home-screen startup.
 This block is a documented build/integration contract, **not an executed hook in this
 prototype**. The optional physical profile remains blocked until fresh device tests
 cover installation, boot into Vitrallis, launch failure, Marshmallow selection, Home
-key restoration and offline removal. The published standalone beta2.5 binaries
-cannot substitute for the pending complete release bundle.
+key restoration and offline removal. The complete bundle and helpers are published
+in [beta2.6](https://github.com/csd113/Vitrallis-Shell/releases/tag/v0.1.0-beta2.6);
+pinning, verification and integration remain required. Standalone beta2.5 binaries
+cannot substitute for that bundle.
 
 See the [reviewed upstream startup instructions](https://github.com/csd113/Vitrallis-Shell/blob/02df65ba08e694777031fe3bd7a0b8274ddf4e45/docs/devices/pocketchip.md#optional-startup),
 [image build gates](image-build.md) and [physical validation checklist](physical-validation.md).

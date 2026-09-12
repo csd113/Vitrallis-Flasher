@@ -67,7 +67,7 @@ def package(target=None, bin_dir=None):
             shutil.copy2(destination / 'flasher-gui', contents / 'MacOS/flasher-gui')
             with (contents / 'Info.plist').open('wb') as plist:
                 plistlib.dump({'CFBundleExecutable':'flasher-gui','CFBundleIdentifier':'com.vitrallis.flasher','CFBundleName':'Vitrallis Flasher','CFBundlePackageType':'APPL','CFBundleShortVersionString':'0.1.0','NSHighResolutionCapable':True}, plist)
-        for filename in ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'upstream-lock.json', 'Cargo.lock']:
+        for filename in ['README.md', 'to-do.md', 'CONTRIBUTING.md', 'SECURITY.md', 'upstream-lock.json', 'Cargo.lock']:
             shutil.copy2(ROOT / filename, destination / filename)
         shutil.copytree(ROOT / 'docs', destination / 'docs')
         shutil.copytree(ROOT / 'manifests', destination / 'manifests')

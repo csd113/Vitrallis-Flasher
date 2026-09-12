@@ -1,11 +1,19 @@
 # Vitrallis Flasher
 
+> **WARNING: Flashing erases all existing data on the PocketCHIP’s internal NAND.**
+> Vitrallis Flasher will not preserve, back up, migrate or restore the existing
+> operating system, documents, saves, applications or settings. **You are responsible
+> for backing up anything you want to keep to another device before flashing.**
+> Both desktop profiles perform a fresh installation. Backup and restore features
+> are not planned. Physical flashing is currently disabled in this prototype.
+
 A native PocketCHIP recovery workspace for Windows, macOS and Linux, built in Rust.
 
 **Physical flashing is blocked.** This implementation provides read-only FEL diagnostics,
 a verified HTTPS/offline asset pipeline, and a complete simulated LIVE recovery flow.
 It cannot erase NAND, boot an unreviewed recovery image, or reboot attached hardware.
 No approved physical image is shipped. No telemetry, automatic driver changes or release publishing.
+Remaining work is tracked in [to-do.md](to-do.md).
 
 ## Start
 
@@ -78,7 +86,8 @@ The script is included in every platform ZIP. Source builds use the local
 “Stock” means retaining the PocketCHIP desktop experience on Debian 13. It does not
 mean keeping Jessie packages unchanged or preserving files through a NAND erase.
 The planned upgrade is a recovery reimage, not an in-place Jessie-to-trixie upgrade.
-Stock applications, controls and configuration preservation still require validation.
+Stock applications, controls and the fresh image’s default configuration still require
+validation. Existing device files and custom settings will not be carried over.
 See [upgrade profiles and recovery](docs/upgrade-profiles.md).
 
 ### Install Vitrallis separately
@@ -91,10 +100,11 @@ normal desktop user. It does not upgrade Debian or change the boot default:
 (set -eu; t=$(mktemp); trap 'rm -f "$t"' 0; trap 'exit 130' 1 2 15; curl -q -fSL --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 30 --max-filesize 262144 https://raw.githubusercontent.com/csd113/Vitrallis-Shell/main/devices/pocketchip/bootstrap.py -o "$t"; python3 "$t")
 ```
 
-**Release bundle pending:** the reviewed upstream bootstrap is on `main`, but the
-published beta2.5 assets are standalone binaries, not the complete four-binary bundle
-and matching helpers required by this installer. The command cannot currently finish
-an installation from those releases. We reviewed the bootstrap without executing it.
+**Flasher integration pending:** [Vitrallis Shell beta2.6](https://github.com/csd113/Vitrallis-Shell/releases/tag/v0.1.0-beta2.6)
+now publishes complete bundles and matching installation helpers. This project still
+needs to pin and verify those assets and test them in its Debian 13 image. Earlier
+beta2.5 standalone binaries cannot replace a complete bundle. The bootstrap was
+reviewed without executing it; release availability is not physical validation.
 [Upstream installation instructions](https://github.com/csd113/Vitrallis-Shell#install-on-pocketchip)
 cover runtime requirements and release status. The optional `vitrallis-default`
 profile additionally requires the reversible Awesome startup integration described in
