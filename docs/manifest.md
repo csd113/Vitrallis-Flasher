@@ -21,15 +21,25 @@ SHA-256 and provenance (HTTPS repository, full 40-digit lowercase commit, licens
 identifier). Provenance is recorded, not treated as an authorization signature.
 There are no filename, command, environment, erase-offset or address fields.
 
-| Role | Maximum size |
-| --- | --- |
-| uboot | 4 MiB |
-| kernel | 16 MiB |
-| dtb | 1 MiB |
-| recovery | 40 MiB |
-| spl-hynix / spl-toshiba | 8 MiB each |
-| uboot-nand | 4 MiB |
-| rootfs | 2 GiB |
+| Role | Maximum size | Intended meaning |
+| --- | --- | --- |
+| uboot | 4 MiB | Complete FEL-loaded bootloader (BROM header + SPL + U-Boot + DTB) |
+| uboot-nand | 4 MiB | U-Boot payload written to NAND at `0x800000`, zero-padded to one erase block; distinct from `uboot` |
+| kernel | 16 MiB | Recovery kernel loaded into RAM; must match the `dtb` |
+| dtb | 1 MiB | Recovery device tree; must match the `kernel` and carry `__symbols__` if an overlay is applied |
+| recovery | 40 MiB | Recovery initramfs; it is *not* self-contained and requires `kernel` + `dtb` + a reviewed boot script |
+| spl-hynix | 8 MiB | Raw NAND SPL image for SK Hynix H27UCG8T2ETR (OOB 1664) |
+| spl-toshiba | 8 MiB | Raw NAND SPL image for Toshiba TC58TEG5DCLTA00 (OOB 1280) |
+| rootfs | 2 GiB | Debian rootfs archive streamed into the on-device UBIFS installer |
+
+The installed kernel, installed DTB and PocketCHIP device-tree overlay are not
+separate manifest roles: they are part of the pinned rootfs and are loaded from
+UBIFS by its `/boot/boot.scr`. The role meanings above are the intended physical
+semantics established in Batch 0; the parser currently enforces only inventory
+completeness, uniqueness, size bounds and provenance shape. A physical-release
+validator must additionally assert these semantics, format/type and cross-asset
+compatibility before any manifest can be approved. See
+[image provenance](image-provenance.md).
 
 Maximum aggregate disk need is bounded by this fixed inventory. Acquisition retains
 cache entries plus private snapshots and an in-progress temporary file; allow room

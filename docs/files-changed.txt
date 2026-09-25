@@ -23,11 +23,13 @@ crates/flasher-core/src/transport.rs
 crates/flasher-gui/Cargo.toml
 crates/flasher-gui/src/main.rs
 docs/architecture.md
+docs/boot-layout.md
 docs/debian-optimizations.md
 docs/dependencies.md
 docs/fel-drivers.md
 docs/files-changed.txt
 docs/image-build.md
+docs/image-provenance.md
 docs/images/README.md
 docs/images/chip-fel-jumper.png
 docs/images/pocketchip-top-fel.svg
@@ -44,7 +46,10 @@ docs/validation.md
 fixtures/8743e89298365a2a9241dd856b32023cbe14d02f149c6baf93797f37d781f06e
 images/Dockerfile
 images/build.py
+images/compatibility.json
+images/evidence/kernel-config-6.12.94+deb13-chip
 images/inputs.lock.json
+images/kernel-requirements.json
 images/repack.py
 images/storage-candidates/journald.conf
 images/storage-candidates/tmp.conf

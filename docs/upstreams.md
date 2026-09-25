@@ -1,15 +1,47 @@
-# Upstream review — 2026-09-12
+# Upstream review — started 2026-09-12, extended 2026-09-25
 
 Full revisions, reviewed file hashes and verified asset bytes are recorded in
 [`upstream-lock.json`](../upstream-lock.json). Review checkouts and large downloaded
 images are ignored under `work/upstream`; none are redistributed in packages.
+The artifact-level map is [image provenance](image-provenance.md).
 
-| Project | Reviewed revision |
-| --- | --- |
-| [x-chip-tools](https://github.com/nextthingco/x-chip-tools/tree/215f98eed44babb699c129bb124537d32c414102) | 215f98eed44babb699c129bb124537d32c414102 |
-| [x-chip-os](https://github.com/nextthingco/x-chip-os/tree/7584eab1aafb1667bd89ae210dcd641efc7cc5b5) | 7584eab1aafb1667bd89ae210dcd641efc7cc5b5 |
-| [sunxi-tools](https://github.com/linux-sunxi/sunxi-tools/tree/d7bbd172a5da601a08f94479de308c6fb714a19a) | d7bbd172a5da601a08f94479de308c6fb714a19a |
-| [Vitrallis-Shell](https://github.com/csd113/Vitrallis-Shell/tree/40b232780729853cf49691d160517ab866b4addb) | 40b232780729853cf49691d160517ab866b4addb |
+| Project | Reviewed revision | Batch 0 status |
+| --- | --- | --- |
+| [x-chip-tools](https://github.com/nextthingco/x-chip-tools/tree/215f98eed44babb699c129bb124537d32c414102) | 215f98eed44babb699c129bb124537d32c414102 | recovery initramfs + boot layout verified |
+| [x-chip-os](https://github.com/nextthingco/x-chip-os/tree/7584eab1aafb1667bd89ae210dcd641efc7cc5b5) | 7584eab1aafb1667bd89ae210dcd641efc7cc5b5 | rootfs recipe pinned; consumed as prebuilt artifact |
+| [x-chip-uboot](https://github.com/nextthingco/x-chip-uboot/tree/0e17d167ce72977420e4e54656d97de1f3237885) | 0e17d167ce72977420e4e54656d97de1f3237885 (`uboot-2026.09.13-122745`) | bootloader source/config/release verified; rebuild explained to timestamps |
+| [u-boot/u-boot](https://github.com/u-boot/u-boot/tree/d637294e264adfeb29f390dfc393106fd4d41b17) | d637294e264adfeb29f390dfc393106fd4d41b17 (`v2022.01`, annotated) | upstream base for the bootloader build |
+| [x-chip-linux-deb](https://github.com/nextthingco/x-chip-linux-deb/tree/d2fa89a991f3a1aa5ca812268d75acc82e6b933e) | d2fa89a991f3a1aa5ca812268d75acc82e6b933e | kernel source behind the pinned rootfs's `6.12.94-1.29` |
+| [x-chip-deb-repo](https://github.com/nextthingco/x-chip-deb-repo/tree/40a8723194368dd29c663b0af01f9737c10edf8f) | 40a8723194368dd29c663b0af01f9737c10edf8f | last package-repo state published before the accepted rootfs build |
+| [CHIP-dt-overlays](https://github.com/nextthingco/CHIP-dt-overlays/tree/e79aee33ef7664c16de02acbc3fe00ce5f3d6ada) | e79aee33ef7664c16de02acbc3fe00ce5f3d6ada | PocketCHIP overlay source and application path verified (MIT) |
+| [sunxi-tools](https://github.com/linux-sunxi/sunxi-tools/tree/d7bbd172a5da601a08f94479de308c6fb714a19a) | d7bbd172a5da601a08f94479de308c6fb714a19a | `sunxi-fel` and `sunxi-nand-image-builder` |
+| [Vitrallis-Shell](https://github.com/csd113/Vitrallis-Shell/tree/40b232780729853cf49691d160517ab866b4addb) | 40b232780729853cf49691d160517ab866b4addb | optional profile; no license grant at the reviewed commit |
+
+## Batch 0 corrections and additions (2026-09-25)
+
+* The bootloader UBI discrepancy is **resolved**: `nand.cfg` does not list
+  `CONFIG_CMD_UBI`/`CONFIG_MTD_UBI` because U-Boot's `arch/arm/Kconfig`
+  (`imply CMD_UBI if MTD_RAW_NAND`) enables them once `nand.cfg` sets
+  `CONFIG_MTD_RAW_NAND=y`; `CMD_UBI` selects `MTD_UBI` and `CMD_UBIFS` defaults
+  on. The resolved `.config` from a real build confirms it.
+* The released U-Boot/SPL binaries were rebuilt from the pinned sources and the
+  only differences are embedded build timestamps (and the SPL eGON checksum
+  derived from the timestamped payload). See the U-Boot section of the Batch 0
+  report and `docs/image-provenance.md`.
+* One released `sunxi-spl.bin` serves both NAND parts. The Hynix/Toshiba
+  distinction is the OOB geometry used when wrapping that SPL with
+  `sunxi-nand-image-builder` (1664 vs 1280 bytes), not a different SPL binary.
+  Upstream publishes no wrapped images, and its padding is random.
+* The CHIP apt repository is a **moving target**: it is rebuilt from scratch on
+  each push, and the kernel inside the pinned rootfs (`6.12.94-1.29`) is no
+  longer downloadable. The pinned rootfs is consumed as a prebuilt artifact;
+  a newer release (`os-2026.09.23-010738`, kernel `6.12.107-1.31`) is recorded
+  as a hash-pinned alternative in the lock. See
+  [image provenance](image-provenance.md#rootfs-candidate-decision).
+* The PocketCHIP overlay is applied by U-Boot from the rootfs (`fdt apply` of
+  `/lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo` selected by the
+  DIP one-wire product ID); the base DTB has no PocketCHIP panel/backlight/
+  keyboard/touch nodes on its own.
 
 ## LIVE installer
 

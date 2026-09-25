@@ -73,6 +73,30 @@ mod tests {
         Ok(())
     }
     #[test]
+    fn lock_approvals_agree_with_the_empty_physical_catalog() -> Result<(), Error> {
+        let lock: serde_json::Value =
+            serde_json::from_str(include_str!("../../../upstream-lock.json"))
+                .map_err(|_| Error::State)?;
+        let approved = lock["approved_physical_manifest_sha256"]
+            .as_array()
+            .ok_or(Error::State)?;
+        assert_eq!(
+            catalog(Channel::ApprovedPhysical).is_empty(),
+            approved.is_empty()
+        );
+        for digest in approved {
+            let value = digest.as_str().ok_or(Error::State)?;
+            assert_eq!(value.len(), 64);
+            assert!(
+                value
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
     fn candidates_cannot_be_selected_as_physical_releases() {
         assert!(catalog(Channel::ApprovedPhysical).is_empty());
         assert!(select(Channel::ApprovedPhysical, "simulation-debian13").is_err());

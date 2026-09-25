@@ -27,16 +27,25 @@ def run(argv, timeout=1800):
     subprocess.run(argv, cwd=ROOT, check=True, timeout=timeout)
 
 
+def run_expect(argv, code, timeout=1800):
+    completed = subprocess.run(argv, cwd=ROOT, timeout=timeout)
+    if completed.returncode != code:
+        raise SystemExit(f'{argv[0]} exited {completed.returncode}, expected {code}')
+
+
 def validate():
     run(['cargo', 'fmt', '--all', '--check'])
     run(['cargo', 'clippy', '--workspace', '--all-targets', '--all-features', '--locked', '--', '-D', 'warnings', '-D', 'clippy::all', '-D', 'clippy::pedantic', '-D', 'clippy::nursery', '-D', 'clippy::cargo'])
     run(['cargo', 'test', '--workspace', '--all-features', '--locked'])
     run([sys.executable, '-m', 'unittest', 'discover', '-s', 'images', '-p', 'test_*.py'])
     run([sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py'])
+    run([sys.executable, 'scripts/provenance.py', 'check'])
     run([sys.executable, 'images/build.py', 'plan'])
     run([sys.executable, 'images/build.py', 'plan', '--profile', 'vitrallis-default'])
+    run_expect([sys.executable, 'images/build.py', 'check'], 2)
     run(['cargo', 'build', '--workspace', '--all-features', '--release', '--locked'])
     run(['cargo', 'run', '--locked', '-p', 'flasher-cli', '--', 'validate', 'manifests/simulation.json'])
+    run(['cargo', 'run', '--locked', '-p', 'flasher-cli', '--', 'validate', 'manifests/simulation-vitrallis.json'])
     run(['git', 'diff', '--check'])
 
 
@@ -73,11 +82,13 @@ def package(target=None, bin_dir=None):
         shutil.copytree(ROOT / 'manifests', destination / 'manifests')
         shutil.copytree(ROOT / 'fixtures', destination / 'fixtures')
         (destination / 'scripts').mkdir()
-        shutil.copy2(ROOT / 'scripts/upgrade_debian13.py', destination / 'scripts/upgrade_debian13.py')
+        for filename in ['upgrade_debian13.py', 'provenance.py']:
+            shutil.copy2(ROOT / 'scripts' / filename, destination / 'scripts' / filename)
         (destination / 'images').mkdir()
-        for filename in ['build.py', 'inputs.lock.json', 'storage.py']:
+        for filename in ['build.py', 'inputs.lock.json', 'storage.py', 'kernel-requirements.json', 'compatibility.json']:
             shutil.copy2(ROOT / 'images' / filename, destination / 'images' / filename)
         shutil.copytree(ROOT / 'images/storage-candidates', destination / 'images/storage-candidates')
+        shutil.copytree(ROOT / 'images/evidence', destination / 'images/evidence')
         (destination / 'dependency-licenses.json').write_text(json.dumps([{'name':p['name'],'version':p['version'],'license':p['license'],'repository':p['repository']} for p in deps['packages']], indent=2)+'\n')
         # Include available upstream license texts for registry crates used by these builds.
         notices = destination / 'third-party-licenses'

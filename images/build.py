@@ -9,6 +9,7 @@ import hashlib
 import json
 import pathlib
 import platform
+import re
 import sys
 
 from storage import storage_policy
@@ -16,6 +17,12 @@ from storage import storage_policy
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PIN = "7584eab1aafb1667bd89ae210dcd641efc7cc5b5"
 REPOSITORY = "https://github.com/nextthingco/x-chip-os"
+DEPENDENCIES = ("bootloader", "kernel", "overlays", "package_repository", "recovery_installer")
+SNAPSHOT = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+def immutable_commit(value):
+    return isinstance(value, str) and len(value) == 40 and all(c in "0123456789abcdef" for c in value)
 
 
 def load_inputs(path):
@@ -23,21 +30,37 @@ def load_inputs(path):
     if len(data) > 65536:
         raise ValueError("input lock exceeds 64 KiB")
     lock = json.loads(data)
-    expected = {"schema_version", "source_repository", "source_commit", "architecture", "distribution", "source_date_epoch", "container_digest", "debian_snapshot", "chip_snapshot_sha256", "package_lock_sha256", "vitrallis_bundle_sha256", "vitrallis_compatibility", "blockers", "vitrallis_blockers"}
+    expected = {"schema_version", "source_repository", "source_commit", "architecture", "distribution", "source_date_epoch", "dependencies", "container_digest", "debian_snapshot", "chip_snapshot_sha256", "package_lock_sha256", "vitrallis_bundle_sha256", "vitrallis_compatibility", "blockers", "vitrallis_blockers"}
     if not isinstance(lock, dict) or set(lock) != expected:
         raise ValueError("unexpected image input fields")
-    if lock["schema_version"] != 1 or lock["source_repository"] != REPOSITORY or lock["source_commit"] != PIN:
+    if lock["schema_version"] != 2 or lock["source_repository"] != REPOSITORY or lock["source_commit"] != PIN:
         raise ValueError("unreviewed source revision")
     if lock["architecture"] != "armhf" or lock["distribution"] != "trixie":
         raise ValueError("unsupported image target")
     if type(lock["source_date_epoch"]) is not int or not 0 < lock["source_date_epoch"] < 2**32:
         raise ValueError("invalid deterministic timestamp")
+    dependencies = lock["dependencies"]
+    if not isinstance(dependencies, dict) or set(dependencies) != set(DEPENDENCIES):
+        raise ValueError("unexpected dependency set")
+    for name, record in dependencies.items():
+        if not isinstance(record, dict) or set(record) != {"repository", "commit", "tag"}:
+            raise ValueError("invalid dependency record: " + name)
+        if not isinstance(record["repository"], str) or not record["repository"].startswith("https://"):
+            raise ValueError("dependency needs an immutable HTTPS repository: " + name)
+        if not immutable_commit(record["commit"]):
+            raise ValueError("dependency needs an immutable commit: " + name)
+        if record["tag"] is not None and (not isinstance(record["tag"], str) or not record["tag"] or len(record["tag"]) > 128):
+            raise ValueError("invalid dependency tag: " + name)
     if lock["vitrallis_compatibility"] != "blocked":
         raise ValueError("this scaffold cannot certify Vitrallis compatibility")
     for field in ["chip_snapshot_sha256", "package_lock_sha256", "vitrallis_bundle_sha256"]:
         value = lock[field]
         if value is not None and (not isinstance(value, str) or len(value) != 64 or any(c not in "0123456789abcdef" for c in value)):
             raise ValueError("invalid checksum lock")
+    if lock["container_digest"] is not None and (not isinstance(lock["container_digest"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", lock["container_digest"])):
+        raise ValueError("container digest must be a sha256 digest or null")
+    if lock["debian_snapshot"] is not None and (not isinstance(lock["debian_snapshot"], str) or not SNAPSHOT.match(lock["debian_snapshot"])):
+        raise ValueError("Debian snapshot must be a UTC timestamp or null")
     for field in ("blockers", "vitrallis_blockers"):
         if not isinstance(lock[field], list) or not lock[field] or any(not isinstance(item, str) or not item or len(item) > 1024 for item in lock[field]):
             raise ValueError("invalid release blockers")
@@ -84,6 +107,7 @@ def plan(lock, profile="stock"):
         "missing": missing,
         "linux_only": True,
         "source": {"repository": REPOSITORY, "commit": PIN},
+        "dependencies": lock["dependencies"],
         "source_date_epoch": lock["source_date_epoch"],
         "blockers": lock["blockers"] + (lock["vitrallis_blockers"] if shell else []),
         "steps": [

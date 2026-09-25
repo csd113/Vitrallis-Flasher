@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "config": "images/evidence/kernel-config-6.12.94+deb13-chip",
+  "config_sha256": "0e4e379d5add59800208d06ad5563e053a842b9402314a3868ecd02601e9d9b5",
+  "kernel_package": {
+    "name": "linux-image-6.12.94+deb13-chip",
+    "version": "6.12.94-1.29",
+    "source_repository": "https://github.com/nextthingco/x-chip-linux-deb",
+    "source_commit": "d2fa89a991f3a1aa5ca812268d75acc82e6b933e"
+  },
+  "config_source": {
+    "asset": "pocketchip-rootfs.tar.gz",
+    "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.07.29-024145/pocketchip-rootfs.tar.gz",
+    "path": "boot/config-6.12.94+deb13-chip",
+    "sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2"
+  },
+  "required": {
+    "CONFIG_MTD": "y",
+    "CONFIG_MTD_CMDLINE_PARTS": "y",
+    "CONFIG_MTD_OF_PARTS": "y",
+    "CONFIG_MTD_RAW_NAND": "y",
+    "CONFIG_MTD_NAND_SUNXI": "y",
+    "CONFIG_MTD_UBI": "y",
+    "CONFIG_MTD_UBI_BLOCK": "y",
+    "CONFIG_UBIFS_FS": "y",
+    "CONFIG_UBIFS_FS_XATTR": "y",
+    "CONFIG_DRM": "y",
+    "CONFIG_DRM_SUN4I": "y",
+    "CONFIG_DRM_SUN4I_BACKEND": "y",
+    "CONFIG_DRM_CHRONTEL_CH7033": "y",
+    "CONFIG_DRM_SIMPLE_BRIDGE": "y",
+    "CONFIG_DRM_DISPLAY_CONNECTOR": "y",
+    "CONFIG_I2C_GPIO": "y",
+    "CONFIG_USB_MUSB_SUNXI": "y",
+    "CONFIG_USB_MUSB_DUAL_ROLE": "y",
+    "CONFIG_USB_CONFIGFS_RNDIS": "y",
+    "CONFIG_AXP20X_POWER": "y"
+  },
+  "notes": "Values asserted from the config extracted out of the pinned pocketchip-rootfs.tar.gz, not from documentation. These are the NAND/UBI root-mount chain, the documented built-in display bridge chain, and the FEL-installer USB-gadget chain. Panel (CONFIG_DRM_PANEL_SIMPLE=m), PWM backlight (CONFIG_BACKLIGHT_PWM=m), TCA8418 keyboard (CONFIG_KEYBOARD_TCA8418=m) and the sun4i touchscreen (CONFIG_TOUCHSCREEN_SUN4I=m) are modules in this package; whether early module load is sufficient for the PocketCHIP panel is a hardware-validation item."
+}

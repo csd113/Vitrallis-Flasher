@@ -19,10 +19,30 @@ build environment; it requires an explicit base image and generated signed snaps
 sources. There is no automatic privileged builder or downloadable approved OS yet.
 
 The source's moving Debian/CHIP apt feeds and `debian:trixie` base do not form a
-reproducible closure. `inputs.lock.json` deliberately leaves container digest, signed
-Debian snapshot and CHIP snapshot/package hashes unfilled. The optional
-`vitrallis-default` profile also requires the complete Vitrallis bundle. Supplying fabricated hashes or a moving tag would hide these blockers.
-The timestamp is fixed for normalized outputs; it does not freeze packages by itself.
+reproducible closure. `inputs.lock.json` (schema 2) now records the dependency
+provenance established in Batch 0 — the accepted bootloader and recovery-installer
+releases, the kernel source commit behind the pinned rootfs, the overlay commit and
+the package-repository revision — while still leaving `container_digest`,
+`debian_snapshot`, `chip_snapshot_sha256` and `package_lock_sha256` null. Those
+four fields are build decisions that the current evidence cannot honestly fill:
+the CHIP apt repository is rebuilt on every push, has already replaced the kernel
+inside the pinned rootfs (`6.12.94-1.29` → `6.12.107-1.31`), and publishes no
+archived snapshot. The optional `vitrallis-default` profile also requires the
+complete Vitrallis bundle. Supplying fabricated hashes or a moving tag would hide
+these blockers. The timestamp is fixed for normalized outputs; it does not freeze
+packages by itself.
+
+Consequently Batch 1 has two honest routes, and must choose one explicitly:
+
+1. **Consume the pinned prebuilt rootfs** `pocketchip-rootfs.tar.gz`
+   (`010eb2a0…`, `os-2026.07.29-024145`); or
+2. **Build a new rootfs from pinned sources plus a signed Debian snapshot and a
+   rebuilt/re-signed CHIP package set**, then re-inspect it as a new candidate.
+   The existing rootfs cannot be rebuilt from the live mirrors.
+
+The accepted kernel configuration from the pinned rootfs is checked in as
+`images/evidence/kernel-config-6.12.94+deb13-chip` and asserted by
+`python3 scripts/provenance.py check-kernel-config`.
 
 A completed builder must materialize the pinned source in a fresh working tree,
 configure signed immutable mirrors, lock all package versions and key fingerprints,

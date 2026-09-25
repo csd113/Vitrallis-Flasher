@@ -37,6 +37,29 @@ class ImageScaffoldTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_inputs(path)
 
+    def test_dependency_pins_must_be_immutable(self):
+        lock = json.loads((ROOT / 'images/inputs.lock.json').read_text())
+        self.assertEqual(set(lock['dependencies']), {'bootloader', 'kernel', 'overlays', 'package_repository', 'recovery_installer'})
+        for name in lock['dependencies']:
+            self.assertRegex(lock['dependencies'][name]['commit'], r'^[0-9a-f]{40}$')
+        lock['dependencies']['kernel']['commit'] = 'main'
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'lock.json'
+            path.write_text(json.dumps(lock))
+            with self.assertRaises(ValueError):
+                load_inputs(path)
+
+    def test_moving_container_and_snapshot_values_are_rejected(self):
+        lock = json.loads((ROOT / 'images/inputs.lock.json').read_text())
+        for field, value in (('container_digest', 'latest'), ('debian_snapshot', 'trixie')):
+            lock[field] = value
+            with tempfile.TemporaryDirectory() as directory:
+                path = pathlib.Path(directory) / 'lock.json'
+                path.write_text(json.dumps(lock))
+                with self.assertRaises(ValueError):
+                    load_inputs(path)
+            lock[field] = None
+
     def test_repack_is_deterministic_and_preserves_contents(self):
         import tarfile
         with tempfile.TemporaryDirectory() as directory:

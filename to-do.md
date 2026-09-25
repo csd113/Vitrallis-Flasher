@@ -38,12 +38,25 @@ not release blockers. “Stock” means the new image provides the PocketHome ex
 
 ## 2. Build and approve the Debian 13 images
 
+Batch 0 (2026-09-25) established artifact provenance: every physical role has an
+identified source or an explicit unresolved status in `upstream-lock.json`;
+`docs/image-provenance.md` maps the relationships. The remaining image work is:
+
 - [ ] Finish the isolated Linux image builder based on the reviewed x-chip-os source;
   the current builder only prints plans/checks.
-- [ ] Lock the build-container digest, signed Debian snapshot, CHIP repository
-  snapshot/signing key and all package versions/checksums in the image input lock.
+- [ ] Choose and record one rootfs route: consume the accepted pinned prebuilt
+  rootfs (`os-2026.07.29-024145`), adopt the newer pinned alternative
+  (`os-2026.09.23-010738`), or build from a Debian snapshot plus rebuilt CHIP
+  packages. Only then can `container_digest`, `debian_snapshot`,
+  `chip_snapshot_sha256` and `package_lock_sha256` be filled honestly.
+- [ ] When building, lock the build-container digest, signed Debian snapshot and
+  all package versions/checksums. The CHIP signing key fingerprint
+  (`6584A42C802AE168A2985797C2B5998BA4BEE115`) and the accepted package hashes
+  are recorded; the live apt repo is rebuilt from scratch and deletes old packages.
 - [ ] Build twice in clean environments and compare normalized image hashes. Record
   provenance, package inventory and matching kernel, DTB, recovery and bootloader assets.
+- [ ] Decide how `spl-hynix`/`spl-toshiba` become manifest assets (deterministic
+  generation vs published images); see `docs/image-provenance.md`.
 - [ ] Validate the fresh `stock` image's PocketHome menu/startup, compatible stock
   apps and hardware configuration. It must contain no Vitrallis startup hooks/binaries.
 - [ ] Define and validate immutable approved physical manifests and release selection,

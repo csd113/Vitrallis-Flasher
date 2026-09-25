@@ -268,6 +268,30 @@ mod tests {
         assert!(Manifest::read(std::io::repeat(b' ').take(MAX_MANIFEST_BYTES + 1)).is_err());
     }
     #[test]
+    fn every_role_enforces_its_exact_size_limit() {
+        let expected = [
+            (Role::Uboot, 4 * 1024 * 1024),
+            (Role::Kernel, 16 * 1024 * 1024),
+            (Role::Dtb, 1024 * 1024),
+            (Role::Recovery, 40 * 1024 * 1024),
+            (Role::SplHynix, 8 * 1024 * 1024),
+            (Role::SplToshiba, 8 * 1024 * 1024),
+            (Role::UbootNand, 4 * 1024 * 1024),
+            (Role::Rootfs, MAX_ASSET_BYTES),
+        ];
+        for (role, limit) in expected {
+            assert_eq!(role.limit(), limit, "{role:?}");
+        }
+        for (index, role) in Role::ALL.into_iter().enumerate() {
+            let at_limit = altered(|value| value["assets"][index]["size"] = role.limit().into());
+            assert!(at_limit.is_ok(), "{role:?} must accept its exact limit");
+            let over_limit =
+                altered(|value| value["assets"][index]["size"] = (role.limit() + 1).into());
+            assert!(over_limit.is_err(), "{role:?} must reject limit + 1");
+        }
+    }
+
+    #[test]
     fn rejects_versions_and_wrong_board() {
         for key in [
             "board",

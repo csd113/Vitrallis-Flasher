@@ -1,10 +1,37 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "source_repository": "https://github.com/nextthingco/x-chip-os",
   "source_commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
   "architecture": "armhf",
   "distribution": "trixie",
   "source_date_epoch": 1785292905,
+  "dependencies": {
+    "bootloader": {
+      "repository": "https://github.com/nextthingco/x-chip-uboot",
+      "commit": "0e17d167ce72977420e4e54656d97de1f3237885",
+      "tag": "uboot-2026.09.13-122745"
+    },
+    "kernel": {
+      "repository": "https://github.com/nextthingco/x-chip-linux-deb",
+      "commit": "d2fa89a991f3a1aa5ca812268d75acc82e6b933e",
+      "tag": null
+    },
+    "overlays": {
+      "repository": "https://github.com/nextthingco/CHIP-dt-overlays",
+      "commit": "e79aee33ef7664c16de02acbc3fe00ce5f3d6ada",
+      "tag": null
+    },
+    "package_repository": {
+      "repository": "https://github.com/nextthingco/x-chip-deb-repo",
+      "commit": "40a8723194368dd29c663b0af01f9737c10edf8f",
+      "tag": null
+    },
+    "recovery_installer": {
+      "repository": "https://github.com/nextthingco/x-chip-tools",
+      "commit": "215f98eed44babb699c129bb124537d32c414102",
+      "tag": "installer-2026.06.19-181233"
+    }
+  },
   "container_digest": null,
   "debian_snapshot": null,
   "chip_snapshot_sha256": null,
@@ -13,7 +40,8 @@
   "vitrallis_compatibility": "blocked",
   "blockers": [
     "Lock the arm/v7 build-container digest and a signed Debian snapshot.",
-    "Snapshot the CHIP repository, signing key fingerprint and all transitive package versions/checksums.",
+    "Snapshot the CHIP repository package index and every transitive package version/checksum; pinning the live GitHub Pages index is not yet possible because upstream rebuilds it.",
+    "Verify the CHIP repository signing key fingerprint, verify the InRelease signature against the key snapshot, and record both in the lock.",
     "Review upstream redistribution permissions before distributing their configuration or images.",
     "Validate PocketCHIP panel, keyboard, touch, USB recovery transport and both NAND parts.",
     "Validate preservation of the stock PocketHome menu, default startup, controls, calibration and redistributable stock applications on Debian 13.",

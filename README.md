@@ -165,6 +165,8 @@ drafts are included for review, not applied to an image or device.
 - [Contributing and validation](CONTRIBUTING.md)
 - [Security model](SECURITY.md)
 - [Architecture](docs/architecture.md)
+- [Artifact provenance](docs/image-provenance.md)
+- [NAND boot layout](docs/boot-layout.md)
 - [FEL and Windows driver setup](docs/fel-drivers.md)
 - [Recovery and troubleshooting](docs/recovery.md)
 - [Upstream and dependency licensing](docs/upstream-licenses.md)

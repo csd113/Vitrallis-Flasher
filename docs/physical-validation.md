@@ -17,6 +17,13 @@ host/driver versions and sanitized logs. Never promote a failed or incomplete te
   in `recovery-protocol.md`. Keep real writes blocked until it passes review.
 - Prove board/NAND identification before erase. Preserve Hynix/Toshiba geometry and
   reject unknown parts; validate SPL primary/backup, padded U-Boot and SLC rootfs.
+  Resolve how `spl-hynix`/`spl-toshiba` become pinned inputs (deterministic generation
+  vs published images) before reviewing them as release artifacts.
+- Validate the LCD module path on hardware: the published `-chip` kernel builds the
+  DRM/tcon stack in but the panel/backlight/touch drivers as modules, and the boot
+  script passes no initramfs. `sun4i_tcon_probe()` defers until `panel-simple` loads
+  from the rootfs; confirm the tcon re-probe and that `/dev/fb0`/a DRM connector
+  appears. See [image provenance](image-provenance.md).
 - Bind fresh recovery identity and session nonce to the selected FEL SID. Test wrong
   endpoint, spoofed IP/MAC, untrusted SSH peer, unplug/replug and multiple devices.
 
