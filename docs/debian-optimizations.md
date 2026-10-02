@@ -8,10 +8,16 @@ approval still requires runtime evidence.
 
 ## What the inspected image actually contains
 
-The reviewed rootfs is `os-2026.07.29-024145/pocketchip-rootfs.tar.gz`, SHA-256
-`010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2`.
-It was inspected directly as an archive without extraction or execution. Selected
-facts are recorded in [storage-inspection.json](storage-inspection.json).
+The selected rootfs is `os-2026.09.23-010738/pocketchip-rootfs.tar.gz`, SHA-256
+`1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef`. It was
+inspected directly as an archive without extraction or execution. Selected facts
+are recorded in [storage-inspection.json](storage-inspection.json); the July
+`os-2026.07.29-024145` inspection remains the documented fallback. Batch 1
+re-runs a machine-checkable subset of this audit on every build
+(`images/assemble.py`): it fails closed on an fstab swap entry, an enabled
+swap/zram unit link, or an active upstream journald directive, and records the
+journald drop-ins, zram generator state, `tmp.mount` options and kernel
+swap/zram/UBIFS symbols in the artifact set.
 
 - `/etc/fstab` contains only the unconfigured-base-system comment. No swapfile or
   configured `.swap` unit was found in the inspected paths. This is not proof of the
@@ -21,7 +27,7 @@ facts are recorded in [storage-inspection.json](storage-inspection.json).
   `LB_SWAP_FILE_SIZE="512"`. Treat this as a build setting to resolve explicitly,
   not evidence that the published rootfs has a working 512 MB swapfile. The completed
   image builder must suppress swap-image creation and audit the resulting image.
-- Kernel `6.12.94+deb13-chip` has `CONFIG_SWAP=y`, `CONFIG_ZRAM=m`, the zram module,
+- Kernel `6.12.107+deb13-chip` has `CONFIG_SWAP=y`, `CONFIG_ZRAM=m`, the zram module,
   LZ4 support and zram writeback capability. No installed `zram-tools` or
   `systemd-zram-generator` package was found. Zswap is compiled in but not default-on.
 - `CONFIG_UBIFS_ATIME_SUPPORT` is disabled. Adding `noatime` to this kernel's UBIFS

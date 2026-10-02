@@ -39,29 +39,41 @@ not release blockers. “Stock” means the new image provides the PocketHome ex
 ## 2. Build and approve the Debian 13 images
 
 Batch 0 (2026-09-25) established artifact provenance: every physical role has an
-identified source or an explicit unresolved status in `upstream-lock.json`;
-`docs/image-provenance.md` maps the relationships. The remaining image work is:
+identified source in `upstream-lock.json`; `docs/image-provenance.md` maps the
+relationships. Batch 1 (2026-10-01) selected the September rootfs, made the
+per-part SPLs deterministic and implemented the real host-side builder
+(`images/assemble.py`) with strict physical-manifest validation. The remaining
+image work is:
 
-- [ ] Finish the isolated Linux image builder based on the reviewed x-chip-os source;
-  the current builder only prints plans/checks.
-- [ ] Choose and record one rootfs route: consume the accepted pinned prebuilt
-  rootfs (`os-2026.07.29-024145`), adopt the newer pinned alternative
-  (`os-2026.09.23-010738`), or build from a Debian snapshot plus rebuilt CHIP
-  packages. Only then can `container_digest`, `debian_snapshot`,
-  `chip_snapshot_sha256` and `package_lock_sha256` be filled honestly.
-- [ ] When building, lock the build-container digest, signed Debian snapshot and
-  all package versions/checksums. The CHIP signing key fingerprint
-  (`6584A42C802AE168A2985797C2B5998BA4BEE115`) and the accepted package hashes
-  are recorded; the live apt repo is rebuilt from scratch and deletes old packages.
-- [ ] Build twice in clean environments and compare normalized image hashes. Record
-  provenance, package inventory and matching kernel, DTB, recovery and bootloader assets.
-- [ ] Decide how `spl-hynix`/`spl-toshiba` become manifest assets (deterministic
-  generation vs published images); see `docs/image-provenance.md`.
+- [x] Finish the isolated Linux image builder. `images/assemble.py` verifies the
+  pinned assets, stream-scans the rootfs without extraction, rebuilds the
+  pinned SPL tool in a digest-pinned container with no network, generates both
+  SPL variants deterministically, pads U-Boot, audits storage/compatibility,
+  repacks the rootfs deterministically and emits validated physical manifests.
+- [x] Choose and record one rootfs route: the accepted pinned prebuilt
+  `os-2026.09.23-010738` archive was adopted. The older
+  `os-2026.07.29-024145` archive remains pinned as the documented fallback.
+- [x] Lock the build container and snapshot: `images/inputs.lock.json` records
+  the base-image manifest digest, the signed `snapshot.debian.org` timestamp,
+  the pinned SPL tool files and the checked-in package inventory. No live CHIP
+  apt repository is consumed; the selected rootfs's package state is bound by
+  `images/package-inventory-6.12.107+deb13-chip.json`.
+- [x] Generate `spl-hynix`/`spl-toshiba` deterministically from the locked
+  `sunxi-spl.bin` and pinned tool, run each variant twice and hash-pin the
+  results; see `docs/image-build.md`. No NAND write was added.
+- [ ] Build twice in clean environments and compare normalized image hashes
+  (Batch 1 recorded a bit-identical complete-set comparison; repeat in remote
+  CI on a second host before release). Record provenance, package inventory and
+  matching kernel, DTB, recovery and bootloader assets.
+- [x] Validate immutable physical manifests semantically (roles, formats,
+  exact hashes/sizes, distinctness, DTB/overlay, boot script, kernel/rootfs,
+  SPL variant, layout, immutability, approval binding) with positive and
+  negative tests. `approved_physical_manifest_sha256` stays empty: no manifest
+  is approved and no write path exists.
 - [ ] Validate the fresh `stock` image's PocketHome menu/startup, compatible stock
   apps and hardware configuration. It must contain no Vitrallis startup hooks/binaries.
-- [ ] Define and validate immutable approved physical manifests and release selection,
-  including profile compatibility, asset hashes, minimum flasher version and offline
-  installation. Keep the physical catalog empty until approval is substantiated.
+- [ ] Complete release selection and offline installation for approved physical
+  manifests once the hardware and redistribution gates pass.
 
 ## 3. Integrate the optional Vitrallis-default profile
 
@@ -82,8 +94,11 @@ These items must not hold back an independently validated stock-only release.
 
 ## 4. Validate memory and NAND-write settings
 
-- [ ] Apply and audit the [candidate storage policy](docs/debian-optimizations.md)
-  during the controlled image build; drafts currently have no effect on a device.
+- [ ] Apply the [candidate storage policy](docs/debian-optimizations.md) to a
+  device and validate it. Batch 1 audits the actual rootfs state during every
+  build (no fstab swap, no enabled swap/zram units, journald/tmp/kernel
+  symbols recorded) and fails closed on violations, but the configuration
+  drafts still have no effect on a device.
 - [ ] Verify no NAND-backed swap through fstab, units, generators, hooks and runtime
   state. If zram is adopted, pin exactly one manager and verify RAM-only operation
   with no backing device or disk-swap fallback.

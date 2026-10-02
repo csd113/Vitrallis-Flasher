@@ -9,16 +9,20 @@ host/driver versions and sanitized logs. Never promote a failed or incomplete te
 
 - Establish permissions for upstream recovery/image reuse and distribution; review
   pinned bootloader/SPL assets, build provenance and corresponding sources.
-- Close the reproducible image input lock; build twice and compare hashes. Verify
-  the stock PocketHome desktop, menus, startup, compatible applications and calibration.
-  For `vitrallis-default` only, additionally verify the complete ARM bundle, ABI,
+- Close the reproducible image input lock; build twice and compare hashes. The
+  host-side closure is complete: Batch 1 builds the complete artifact set twice
+  from clean state with bit-identical output and validates both physical
+  manifests. Hardware validation still must verify the stock PocketHome desktop,
+  menus, startup, compatible applications and calibration. For
+  `vitrallis-default` only, additionally verify the complete ARM bundle, ABI,
   automatic startup and Marshmallow fallback/removal contract.
 - Implement and review the authenticated fixed-operation recovery protocol described
   in `recovery-protocol.md`. Keep real writes blocked until it passes review.
 - Prove board/NAND identification before erase. Preserve Hynix/Toshiba geometry and
   reject unknown parts; validate SPL primary/backup, padded U-Boot and SLC rootfs.
-  Resolve how `spl-hynix`/`spl-toshiba` become pinned inputs (deterministic generation
-  vs published images) before reviewing them as release artifacts.
+  `spl-hynix`/`spl-toshiba` are pinned as deterministic derived artifacts from the
+  locked `sunxi-spl.bin` and pinned tool; hardware must still confirm that the BROM
+  and controller accept them on both parts.
 - Validate the LCD module path on hardware: the published `-chip` kernel builds the
   DRM/tcon stack in but the panel/backlight/touch drivers as modules, and the boot
   script passes no initramfs. `sun4i_tcon_probe()` defers until `panel-simple` loads

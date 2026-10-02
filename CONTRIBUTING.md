@@ -20,7 +20,19 @@ cargo test --workspace --all-features
 cargo build --workspace --all-features --release --locked
 python3 -m unittest discover -s images -p test_*.py
 python3 -m unittest discover -s scripts -p test_*.py
+python3 scripts/provenance.py check
+python3 scripts/provenance.py check-kernel-config
 python3 images/build.py plan
+```
+
+The full host-side image build additionally needs Docker, the pinned builder
+image and the locked assets; it is explicit and never part of routine checks:
+
+```text
+python3 images/assemble.py fetch-assets --assets work/assets
+python3 images/assemble.py build --assets work/assets --output work/batch1/set --work work/batch1/work
+python3 images/assemble.py verify --set work/batch1/set
+python3 images/assemble.py reproduce --assets work/assets --output work/batch1/repro --work work/batch1/repro-work
 ```
 
 If formatting fails, format only touched packages, then rerun the check. Tests live

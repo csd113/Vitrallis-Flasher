@@ -132,3 +132,93 @@ FEL payload upload, NAND or MTD operations, device kernel execution, full kernel
 rebuild, rootfs rebuild, package installation, or any change to a connected device.
 Remaining hardware-only questions are recorded in `docs/boot-layout.md` and
 `docs/image-provenance.md`.
+
+## Batch 1 image-builder validation — 2026-10-01
+
+Host: macOS arm64, Python 3.13.5, Rust 1.98.1, Docker 29.8.1
+(`--platform linux/amd64`). No device was connected or opened; no NAND, MTD,
+FEL, USB or destructive operation was performed, and no NAND-writing path was
+added.
+
+Rootfs selected: `os-2026.09.23-010738` /
+`pocketchip-rootfs-2026-09-23.tar.gz` (`1e516cad…`, 516,563,033 bytes), kernel
+`6.12.107+deb13-chip` `6.12.107-1.31`. The July `os-2026.07.29-024145` archive
+and its kernel config remain pinned and documented as the fallback. The selected
+archive was re-inspected without extraction: 50,950 members, 8 char devices, 6
+hardlinks, no xattrs or sparse members. Its DTB (`0132f7fa…`) and PocketCHIP
+overlay (`3230ea7f…`) are byte-identical to the July candidate; the kernel
+(`d3c044d8…`), config (`436a91ee…`) and boot script (`61901b03…`) differ. All
+709 installed packages were recorded with per-package version, architecture,
+status and `.list`/`.md5sums` hashes in
+`images/package-inventory-6.12.107+deb13-chip.json`.
+
+The pinned builder image was built from `debian:bookworm-slim` digest
+`sha256:3783cc…4251` and the signed snapshot `20260930T000000Z` (InRelease
+SHA-256 `77737fa4…e1aa`), installing `gcc 12.2.0-14+deb12u1`,
+`libc6-dev 2.36-9+deb12u14` and `ca-certificates 20230311+deb12u1`. The SPL tool
+container ran with `--network none` and only the pinned source tree mounted
+read-only.
+
+| Check | Result |
+| --- | --- |
+| `cargo fmt --all --check` | Passed |
+| strict Clippy (`-D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery -D clippy::cargo`) | Passed |
+| `cargo test --workspace --all-features --locked` | 43 passed, 3 ignored (unchanged Rust core) |
+| image tests (`images/test_*.py`) | 60 passed |
+| script tests (`scripts/test_*.py`) | 32 passed |
+| `scripts/provenance.py check` | Passed: 9 repositories, 8 assets, 8 release roles |
+| `scripts/provenance.py check-kernel-config` | Passed for the 6.12.107 config evidence |
+| `images/build.py check` (stock) | exit 0, all route-1 inputs pinned |
+| `images/build.py check --profile vitrallis-default` | expected exit 2, bundle still missing |
+| `images/assemble.py fetch-assets` | 5 locked assets verified (rootfs, SPL, U-Boot ×2, initrd) |
+| `images/assemble.py build` | complete Hynix + Toshiba sets emitted and self-validated |
+| `images/assemble.py verify` | both physical manifests and `SHA256SUMS` valid |
+| `images/assemble.py reproduce` | bit-identical, see below |
+| `scripts/ci.py validate` | exit 0 (includes the full sequence above) |
+| `cargo build --workspace --all-features --release --locked` | Passed |
+| `scripts/ci.py package` | Passed: unsigned macOS arm64 ZIP with the new image-builder files |
+| `git diff --check` | Passed |
+
+### SPL reproducibility
+
+Each variant ran twice in the pinned container with its deterministic entropy
+stream bound over `/dev/urandom`; both runs and a third run under the
+independent `gcc:12-bookworm` toolchain produced identical bytes. A control run
+with real kernel entropy differs only outside the ECC-protected regions.
+
+| Variant | OOB | Size | SHA-256 |
+| --- | --- | ---: | --- |
+| `spl-hynix` | 1664 | 4,620,288 | `0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a` |
+| `spl-toshiba` | 1280 | 4,521,984 | `487edb2eda190bd98b85deacaf858fcc4583351c3210be4ebc19ee983d19dd45` |
+
+Control comparison over all 256 pages: protected data/ECC regions differing =
+0; unused tail/BBM regions differing = 512 of 512 (expected; only the replaced
+entropy input differs). `images/spl.py` descrambles and verifies every page's
+protected region against the exact source chunk.
+
+### Complete artifact set and full-image reproducibility
+
+`images/assemble.py reproduce` built the complete set twice from clean state
+and compared every produced file:
+
+```text
+comparison: {"identical": true, "files": 20, "different": [], "only_first": [], "only_second": []}
+manifest-hynix.json   sha256 0a9cb8281a31ab8c193ede75eb2748193e54aff4a7bc93b7f88f1f1ff555b93d
+manifest-toshiba.json sha256 0585d1d3d158cb0e08c779ac22bea7aceeb0bed6088cdb3831f8aee90cabb9f8
+rootfs-repacked.tar.gz sha256 2b71673de39192088f6a03b238877b3bee3b3a19de775d90db97c7bcf21d34e0
+```
+
+Both builds produced the same 20 files with no differences and no files present
+in only one build; `images/assemble.py verify` revalidated both physical
+manifests and `SHA256SUMS` for both. The pinned SPL tool binary hashed
+`3971c30cb442800f559ce97b373f0d207e8cf65d7ca6a75d81dcfbf7e23c3156` and again
+produced both variant hashes byte-identically.
+
+The deterministic rootfs repack preserved all 50,950 members and 1,264,012,666
+content bytes; source and output canonical member manifests matched exactly.
+
+Not performed in this batch: any device or NAND interaction, FEL upload, UBI
+format/mount, LCD/backlight/touch/keyboard behaviour, DIP/product-version
+behaviour, power-loss behaviour and USB transport runtime behaviour. Those
+remain in [physical validation](physical-validation.md) and are explicitly not
+claimed here.

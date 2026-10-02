@@ -62,3 +62,18 @@ catalog verifies both the release ID and profile against its manifest. Profile i
 part of the hashed JSON, so the two profiles have different erase confirmations.
 Neither a `stock` profile nor `not-installed` grants physical approval. There are no
 legacy published manifests to migrate; this is the initial unpublished v1 contract.
+
+## Host-side physical manifests (Batch 1)
+
+`images/assemble.py` additionally emits a **physical manifest** per NAND variant
+(`manifest-hynix.json`, `manifest-toshiba.json`) for the artifact set it built.
+This is a separate, stricter host-side document: it names the exact artifact and
+input files, their sizes and SHA-256 values, the fixed NAND layout, the
+kernel/DTB/overlay/boot-script/rootfs compatibility evidence, the storage audit
+and package inventory hashes, and the pinned toolchain. `images/physical.py`
+validates it offline, including magic/format checks on every role, byte-distinct
+roles, the exact SPL geometry for the declared variant, no layout overlap,
+rootfs at `0x1000000`, immutable provenance for every input, and an approval
+record that binds the manifest hash and every artifact hash. The approved list
+in `upstream-lock.json` stays empty, so no physical manifest can authorize a
+write; this document set is not yet the application's release manifest.

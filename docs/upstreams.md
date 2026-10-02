@@ -1,4 +1,4 @@
-# Upstream review — started 2026-09-12, extended 2026-09-25
+# Upstream review — started 2026-09-12, extended 2026-10-01
 
 Full revisions, reviewed file hashes and verified asset bytes are recorded in
 [`upstream-lock.json`](../upstream-lock.json). Review checkouts and large downloaded
@@ -8,13 +8,13 @@ The artifact-level map is [image provenance](image-provenance.md).
 | Project | Reviewed revision | Batch 0 status |
 | --- | --- | --- |
 | [x-chip-tools](https://github.com/nextthingco/x-chip-tools/tree/215f98eed44babb699c129bb124537d32c414102) | 215f98eed44babb699c129bb124537d32c414102 | recovery initramfs + boot layout verified |
-| [x-chip-os](https://github.com/nextthingco/x-chip-os/tree/7584eab1aafb1667bd89ae210dcd641efc7cc5b5) | 7584eab1aafb1667bd89ae210dcd641efc7cc5b5 | rootfs recipe pinned; consumed as prebuilt artifact |
+| [x-chip-os](https://github.com/nextthingco/x-chip-os/tree/f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff) | f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff (`os-2026.09.23-010738`) | selected rootfs recipe; consumed as a prebuilt artifact |
 | [x-chip-uboot](https://github.com/nextthingco/x-chip-uboot/tree/0e17d167ce72977420e4e54656d97de1f3237885) | 0e17d167ce72977420e4e54656d97de1f3237885 (`uboot-2026.09.13-122745`) | bootloader source/config/release verified; rebuild explained to timestamps |
 | [u-boot/u-boot](https://github.com/u-boot/u-boot/tree/d637294e264adfeb29f390dfc393106fd4d41b17) | d637294e264adfeb29f390dfc393106fd4d41b17 (`v2022.01`, annotated) | upstream base for the bootloader build |
-| [x-chip-linux-deb](https://github.com/nextthingco/x-chip-linux-deb/tree/d2fa89a991f3a1aa5ca812268d75acc82e6b933e) | d2fa89a991f3a1aa5ca812268d75acc82e6b933e | kernel source behind the pinned rootfs's `6.12.94-1.29` |
-| [x-chip-deb-repo](https://github.com/nextthingco/x-chip-deb-repo/tree/40a8723194368dd29c663b0af01f9737c10edf8f) | 40a8723194368dd29c663b0af01f9737c10edf8f | last package-repo state published before the accepted rootfs build |
+| [x-chip-linux-deb](https://github.com/nextthingco/x-chip-linux-deb/tree/6ed9015281df266c73ce56673724cac0f18bc625) | d2fa89a991f3a1aa5ca812268d75acc82e6b933e (July) and 6ed9015281df266c73ce56673724cac0f18bc625 (selected) | kernel source behind the fallback `6.12.94-1.29` and selected `6.12.107-1.31` rootfs kernels |
+| [x-chip-deb-repo](https://github.com/nextthingco/x-chip-deb-repo/tree/20bb1e8795305729e4587225439cca04fc475182) | 40a8723194368dd29c663b0af01f9737c10edf8f (July) and 20bb1e8795305729e4587225439cca04fc475182 (selected kernel) | package repository behind the fallback and selected rootfs kernels |
 | [CHIP-dt-overlays](https://github.com/nextthingco/CHIP-dt-overlays/tree/e79aee33ef7664c16de02acbc3fe00ce5f3d6ada) | e79aee33ef7664c16de02acbc3fe00ce5f3d6ada | PocketCHIP overlay source and application path verified (MIT) |
-| [sunxi-tools](https://github.com/linux-sunxi/sunxi-tools/tree/d7bbd172a5da601a08f94479de308c6fb714a19a) | d7bbd172a5da601a08f94479de308c6fb714a19a | `sunxi-fel` and `sunxi-nand-image-builder` |
+| [sunxi-tools](https://github.com/linux-sunxi/sunxi-tools/tree/d7bbd172a5da601a08f94479de308c6fb714a19a) | d7bbd172a5da601a08f94479de308c6fb714a19a | `sunxi-fel` and the deterministic `sunxi-nand-image-builder` (Batch 1) |
 | [Vitrallis-Shell](https://github.com/csd113/Vitrallis-Shell/tree/40b232780729853cf49691d160517ab866b4addb) | 40b232780729853cf49691d160517ab866b4addb | optional profile; no license grant at the reviewed commit |
 
 ## Batch 0 corrections and additions (2026-09-25)
@@ -31,13 +31,15 @@ The artifact-level map is [image provenance](image-provenance.md).
 * One released `sunxi-spl.bin` serves both NAND parts. The Hynix/Toshiba
   distinction is the OOB geometry used when wrapping that SPL with
   `sunxi-nand-image-builder` (1664 vs 1280 bytes), not a different SPL binary.
-  Upstream publishes no wrapped images, and its padding is random.
+  Upstream publishes no wrapped images. Batch 1 generates them deterministically
+  from the pinned source and a checked-in entropy stream; see
+  [image provenance](image-provenance.md#deterministic-spl-generation).
 * The CHIP apt repository is a **moving target**: it is rebuilt from scratch on
-  each push, and the kernel inside the pinned rootfs (`6.12.94-1.29`) is no
-  longer downloadable. The pinned rootfs is consumed as a prebuilt artifact;
-  a newer release (`os-2026.09.23-010738`, kernel `6.12.107-1.31`) is recorded
-  as a hash-pinned alternative in the lock. See
-  [image provenance](image-provenance.md#rootfs-candidate-decision).
+  each push, and the kernel inside the July rootfs (`6.12.94-1.29`) is no
+  longer downloadable. Batch 1 selected the newer `os-2026.09.23-010738`
+  release (kernel `6.12.107-1.31`, whose config and vmlinuz match the pinned
+  live `.deb`) and kept the July archive as the documented fallback. See
+  [image provenance](image-provenance.md#rootfs-decision).
 * The PocketCHIP overlay is applied by U-Boot from the rootfs (`fdt apply` of
   `/lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo` selected by the
   DIP one-wire product ID); the base DTB has no PocketCHIP panel/backlight/
@@ -67,20 +69,23 @@ physical evidence. [NAND source](https://github.com/nextthingco/x-chip-tools/blo
 | Asset | Bytes | SHA-256 |
 | --- | ---: | --- |
 | installer-2026.06.19-181233 / initrd.uimage | 31,628,120 | 5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25 |
-| os-2026.07.29-024145 / pocketchip-rootfs.tar.gz | 516,321,424 | 010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2 |
+| os-2026.07.29-024145 / pocketchip-rootfs.tar.gz (fallback) | 516,321,424 | 010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2 |
+| os-2026.09.23-010738 / pocketchip-rootfs.tar.gz (selected) | 516,563,033 | 1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef |
+| linux-image-6.12.107+deb13-chip_6.12.107-1.31_armhf.deb | 55,955,660 | 4e3260a627f17d727dc4beafe258157b5a54d70a294bfacac5b25182281608a7 |
 
 Both assets were downloaded via HTTPS and rehashed locally; both tags resolve to the
 reviewed source revisions. This proves byte integrity against the recorded release
 metadata, not hardware safety. Their immutable download URLs are in the lock file.
 
-A streaming, nonextracting inspection read 50,936 rootfs archive members, the package
-database and selected configuration. The observed package inventory is recorded in
-[rootfs-inspection.json](rootfs-inspection.json). PocketHome 0.0.8, Awesome 4.3,
-SDL2 2.32.4, Python 3.13, systemd 257 and kernel 6.12.94-chip are present. Python Tk
-and xinput were not observed in that installed-package set. The source README's
+A streaming, nonextracting inspection read 50,950 selected-rootfs archive members,
+the package database and selected configuration. The observed package inventory is
+recorded in [rootfs-inspection.json](rootfs-inspection.json) and hashed per package
+in `images/package-inventory-6.12.107+deb13-chip.json`. PocketHome 0.0.8, Awesome
+4.3, SDL2 2.32.4, Python 3.13, systemd 257 and kernel 6.12.107-chip are present.
+Python Tk and xinput were not observed in that installed-package set. The source README's
 PocketHome portability warning is stale relative to this artifact. No ARM binary was
 executed, and package presence does not establish session or hardware compatibility.
-[OS source](https://github.com/nextthingco/x-chip-os/tree/7584eab1aafb1667bd89ae210dcd641efc7cc5b5).
+[OS source](https://github.com/nextthingco/x-chip-os/tree/f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff).
 
 ## Vitrallis compatibility
 

@@ -137,7 +137,7 @@ or manifest-supplied commands are permitted. See [image contract](docs/manifest.
 | `flasher-core` | Strict manifests; bounded HTTPS and offline ingestion; SHA-256 cache/snapshots; FEL parser; typed NAND; sealed backend; confirmation/recovery state machine |
 | `flasher-cli` | Doctor, read-only detect, validate, fetch, offline import, interactive simulation and cancellation |
 | `flasher-gui` | Native egui wizard, background work, cancellation, progress, friendly errors, bounded copyable log |
-| `images/` | Linux build plan, fail-closed input lock, container scaffold, deterministic rootfs repacker and tests |
+| `images/` | Pinned input lock, real deterministic host-side image builder (streamed rootfs scan/repack, deterministic SPLs, physical-manifest validation) and tests |
 | GitHub Actions | Five native build targets, strict checks, unsigned ZIP artifacts only |
 
 The reviewed x-chip-tools LIVE method keeps UBIFS geometry work on the device; the
