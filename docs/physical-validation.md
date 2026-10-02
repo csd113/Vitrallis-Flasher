@@ -94,6 +94,9 @@ erased, and backup SPL/U-Boot retain their original digests without ECC failures
 Normal backup boot is independently confirmed over SSH while full raw primary
 readback remains erased. SID/kernel/root UUID are unchanged, all ECC failure
 counters are zero and bad-block counts remain stable. Clean restoration is now physically verified with all four original program
-digests and zero uncorrectable failures. Isolated restored-primary boot and
+digests and zero uncorrectable failures. Protocol v5 also physically erases the
+backup while protecting the primary. Host SIGINT after dispatch produces an
+Indeterminate journal and no success; independent authenticated readback proves
+the device completed erasure with primary/U-Boot intact. Isolated restored-primary boot and
 new-release SPL acceptance remain pending. The production
 manifest/plan and full reflash remain blocked until their required evidence exists.

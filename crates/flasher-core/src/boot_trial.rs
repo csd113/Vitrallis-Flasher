@@ -473,6 +473,19 @@ mod tests {
     }
 
     #[test]
+    fn measured_backup_erasure_after_host_loss_is_not_primary_verification() {
+        let evidence: Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/recovery-backup-after-host-interruption-10.json"
+        ))
+        .unwrap();
+        let report: BootReadback =
+            serde_json::from_value(evidence["response"]["BootReadback"].clone()).unwrap();
+        verify_erased(&report, BootRegion::SplBackup).unwrap();
+        assert!(verify_erased_primary(&report).is_err());
+        assert!(verify_erased(&report, BootRegion::FourthBootBlock).is_err());
+    }
+
+    #[test]
     fn erase_only_preflight_cannot_authorize_a_restoration_write() {
         let (inventory, backup, uboot) = measured();
         let checked = prepare(&inventory, &backup, &uboot).unwrap();

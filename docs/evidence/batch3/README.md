@@ -180,7 +180,7 @@ selection is claimed.
   exact full raw data/OOB erasure and durable Verified journal (18.041 seconds).
 - `recovery-boot-chain-after-primary-erase-8.json`: independent post-erase backup
   SPL, corrected U-Boot and inventory, with unchanged digests and zero ECC errors.
-  Primary erasure and BROM fallback are physically proven; clean restoration is pending.
+  Primary erasure and BROM fallback are physically proven; the later ninth session records clean restoration.
 
 - `normal-backup-spl-boot-8.json`: new cold NAND boot after bridge removal,
   independent matching SID/kernel/root UUID, unchanged bad blocks, zero ECC failures
@@ -200,4 +200,18 @@ selection is claimed.
 - `recovery-boot-chain-after-primary-restoration-9.json`: independent unchanged
   backup SPL, corrected U-Boot and inventory after restoration.
 - `recovery-template-v5.json`: build metadata for closed primary/backup isolation
-  operations. Physical v5 dispatch and isolated restored-primary boot are pending.
+  operations. The tenth session records physical v5 dispatch; isolated restored-primary boot remains pending.
+
+- `recovery-boot-10-tool.json`: fresh pinned v5 RAM boot after authenticated return
+  to FEL and independent same-SID identification.
+- `recovery-backup-trial-preflight-10.json`: successful device-local backup-erase
+  preparation, followed by disconnect; the discarded ticket is omitted.
+- `recovery-backup-erase-interrupted-host-10.json`: actual SIGINT one second after
+  durable Dispatched, CLI exit 1, empty success output and terminal Indeterminate
+  journal. No automatic retry was performed.
+- `recovery-backup-after-host-interruption-10.json`: a new authenticated read-only
+  connection proves every backup data/OOB byte is FF after the device finishes
+  its committed erase. This does not change the interrupted host journal.
+- `recovery-protected-chain-after-backup-erase-10.json`: independent original
+  corrected primary SPL and U-Boot digests and unchanged inventory. The backup
+  remains erased for a pending isolated cold boot of the clean restored primary.

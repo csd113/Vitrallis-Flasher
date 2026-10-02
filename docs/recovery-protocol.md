@@ -187,7 +187,7 @@ Neither the ticket nor this diagnostic constitutes release-manifest approval.
 rejection checks. Its fixed primary erase completes with exact raw data/OOB
 verification and a durable Verified host journal. Backup SPL and U-Boot remain
 unchanged. Normal backup boot with a still-erased primary is physically proven on the
-measured Hynix unit. Clean restoration remains pending.
+measured Hynix unit. The ninth session subsequently verifies clean restoration.
 
 The host trial journal publishes a new private intent file atomically without
 overwrite and fsyncs it before preparation or dispatch. It records public SID,
@@ -226,4 +226,10 @@ five per codeword, with zero uncorrectable failures. The raw hash differs from
 the clean input, so raw byte equality is not used as success criteria. Backup
 and U-Boot are intact. A normal boot with both blocks present would not directly
 identify the selected SPL; v5 backup isolation will test the restored primary.
-Physical v5 execution and that isolated boot remain pending.
+The tenth v5 session physically dispatches backup erasure, then interrupts the
+host with SIGINT one second after durable Dispatched. The host exits without
+success and retains Indeterminate. The device completes the committed operation;
+a fresh authenticated read-only connection proves the full backup data/OOB is FF.
+Independent primary and U-Boot checks still pass. This later observation does not
+rewrite the original host journal or authorize automatic resumption. Isolated
+restored-primary boot remains pending.

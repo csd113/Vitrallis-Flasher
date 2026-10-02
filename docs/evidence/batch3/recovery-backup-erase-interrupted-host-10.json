@@ -1,0 +1,109 @@
+{
+  "protocol": 5,
+  "operation": "EraseBackup",
+  "host_interruption": "SIGINT one second after observing the durable Dispatched journal stage",
+  "cli_exit": 1,
+  "elapsed_until_host_exit_seconds": 8.488,
+  "stdout": "",
+  "stderr": "operation cancelled; start a fresh preflight before retrying",
+  "host_journal": {
+    "header": {
+      "version": 1,
+      "context": {
+        "sid": [
+          23,
+          66,
+          37,
+          22,
+          88,
+          56,
+          48,
+          80,
+          48,
+          48,
+          51,
+          49,
+          192,
+          136,
+          2,
+          14
+        ],
+        "session": [
+          88,
+          186,
+          178,
+          201,
+          39,
+          9,
+          163,
+          155,
+          161,
+          89,
+          85,
+          141,
+          158,
+          201,
+          4,
+          199
+        ],
+        "daemon_sha256": [
+          190,
+          93,
+          244,
+          103,
+          252,
+          197,
+          116,
+          143,
+          125,
+          179,
+          40,
+          45,
+          236,
+          46,
+          205,
+          75,
+          165,
+          242,
+          233,
+          154,
+          183,
+          255,
+          211,
+          64,
+          117,
+          182,
+          217,
+          3,
+          124,
+          176,
+          178,
+          217
+        ],
+        "operation": "EraseBackup"
+      },
+      "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+      "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb"
+    },
+    "entries": [
+      {
+        "sequence": 0,
+        "stage": "Intent"
+      },
+      {
+        "sequence": 1,
+        "stage": "Prepared"
+      },
+      {
+        "sequence": 2,
+        "stage": "Dispatched"
+      },
+      {
+        "sequence": 3,
+        "stage": "Indeterminate"
+      }
+    ]
+  },
+  "automatic_retry_performed": false,
+  "host_success_emitted": false
+}

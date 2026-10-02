@@ -293,6 +293,29 @@ mod tests {
     }
 
     #[test]
+    fn actual_interrupted_host_record_remains_indeterminate_on_inspection() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-backup-erase-interrupted-host-10.json"
+        ))
+        .unwrap();
+        let record = &evidence["host_journal"];
+        let mut bytes = serde_json::to_vec(&record["header"]).unwrap();
+        bytes.push(b'\n');
+        for entry in record["entries"].as_array().unwrap() {
+            bytes.extend(serde_json::to_vec(entry).unwrap());
+            bytes.push(b'\n');
+        }
+        let directory = crate::assets::temporary_directory().unwrap();
+        let mut file = tempfile::NamedTempFile::new_in(directory.path()).unwrap();
+        file.write_all(&bytes).unwrap();
+        file.as_file().sync_all().unwrap();
+        let report = read(file.path(), &Cancellation::default()).unwrap();
+        assert_eq!(report.header.context.operation, Operation::EraseBackup);
+        assert_eq!(report.entries.last().unwrap().stage, Stage::Indeterminate);
+        assert_eq!(report.entries.len(), 4);
+    }
+
+    #[test]
     fn backup_verification_is_bound_to_its_operation_and_partition() {
         let directory = crate::assets::temporary_directory().unwrap();
         let path = directory.path().join("backup.jsonl");

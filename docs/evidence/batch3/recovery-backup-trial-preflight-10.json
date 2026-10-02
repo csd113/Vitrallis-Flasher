@@ -1,0 +1,14 @@
+{
+  "protocol": 5,
+  "elapsed_seconds": 6.851,
+  "response": {
+    "SplTrialPrepared": {
+      "operation": "EraseBackup",
+      "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+      "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+      "original_uboot_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+      "ticket_discarded_on_disconnect": true
+    }
+  },
+  "nand_mutation_performed": false
+}

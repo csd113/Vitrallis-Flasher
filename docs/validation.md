@@ -550,3 +550,21 @@ exit 0. Logs: `work/batch3/backup-trial-full-validation.log` and
 strict Clippy, workspace tests/release, 65 image tests, 32 script tests, provenance,
 kernel, stock/Vitrallis plan and manifest checks. Physical v5 dispatch and
 isolated restored-primary boot remain pending; production execution remains denied.
+
+### Batch 3 interrupted backup-erase session
+
+The tenth authenticated v5 session passes backup preflight, then the actual CLI
+receives SIGINT one second after its durable Dispatched record. It exits 1, emits
+no success and retains Indeterminate without retry. A new authenticated read-only
+connection proves complete backup data/OOB erasure; independent native primary
+SPL and corrected U-Boot checks remain healthy. The isolated restored-primary
+cold boot remains pending. These observations do not enable production execution.
+
+Regression tests consume the actual readback and public interrupted journal:
+backup erasure cannot verify a primary/fourth-region operation, and journal
+inspection retains Indeterminate. `python3 scripts/ci.py validate` and
+`cargo check --workspace --all-targets --all-features --locked` both exit 0.
+Logs: `work/batch3/interrupted-backup-trial-validation.log` and
+`work/batch3/interrupted-backup-trial-workspace-check.log`. The CI sequence includes
+formatting, strict Clippy, workspace tests, release build, Python image/script
+suites, provenance and established image/plan checks.

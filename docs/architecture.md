@@ -198,5 +198,8 @@ loss, and verified replies require primary readback plus the unchanged backup bo
 chain. This diagnostic does not enable the production `NandPlan`, release catalog
 or GUI flash path. Primary erasure, normal backup boot and clean original-program restoration are
 physically verified. Protocol v5 adds closed backup isolation/restoration while
-protecting the primary. Isolated restored-primary boot and release installation
+protecting the primary. Physical host interruption after backup-erase dispatch
+preserves an Indeterminate host journal while the device finishes its committed
+operation; a separate read-only session verifies erasure and the protected chain.
+Isolated restored-primary boot and release installation
 remain pending.
