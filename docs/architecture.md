@@ -225,3 +225,13 @@ write preflight to deny SPL mutation. Standard recovery retains its original
 DTB. This diagnostic grants no NAND-plan or physical-manifest approval; payload
 loading, marker observation and trial rejection with the alias are physically
 measured in RAM session 13. This does not validate production NAND execution.
+
+The host `VerifiedAsset::transfer` path revalidates the same private open snapshot
+before invoking delivery callbacks, then reads at most 8 KiB per chunk with
+checked ordered artifact offsets. It rechecks total length and SHA256 at EOF
+before emitting completion progress. Callback failures or cancellation stop
+without retry/resume; a late integrity failure remains a failure even if earlier
+chunks were acknowledged. Offsets refer to artifact bytes and grant no NAND
+authority. Recovery framing, rootfs extraction, interruption journals and final
+semantic verification still need to consume this path through a validated plan.
+The transfer primitive does not change production authorization gates.

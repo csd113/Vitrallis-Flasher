@@ -13,6 +13,9 @@ use std::{
 };
 use tempfile::NamedTempFile;
 
+mod transfer;
+pub use transfer::TRANSFER_CHUNK_BYTES;
+
 #[derive(Debug)]
 pub struct Cache {
     root: PathBuf,

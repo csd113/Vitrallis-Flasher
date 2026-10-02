@@ -860,3 +860,23 @@ record parses as JSON and `git diff --check` passes. This is artifact/source
 review using existing rebuilds, not a new build, release NAND write, physical
 redundant U-Boot test or full application reflash. No Rust code changed in this
 review, so the passing physical-fixture suite remains the latest code validation.
+
+### Batch 3 bounded verified artifact delivery
+
+`VerifiedAsset::transfer` rechecks the retained private snapshot before delivery,
+uses 8 KiB chunks with ordered artifact offsets, and checks EOF/length/SHA256
+before completion progress. Four targeted tests cover bounds/offsets/monotonic
+progress, corruption before delivery, callback failure/cancellation without
+retry, and corruption/append during delivery without completion. All four pass
+natively and cross-built on ARMv7 under qemu. This is a host transfer primitive;
+recovery framing and rootfs installation/semantic verification are not wired yet.
+Production gates remain denied.
+
+Full `python3 scripts/ci.py validate` passes: 177 core tests (six intentional
+ignored subprocess fixtures), five integration tests, 11 daemon tests, 72 image
+tests, 35 script tests, formatting, strict Clippy, release/provenance and existing
+image/manifest checks. Fresh `cargo check --workspace --all-targets --all-features
+--locked` passes. Logs: `work/batch3/artifact-transfer-targeted-tests.log`,
+`artifact-transfer-arm-tests.log`, `artifact-transfer-clippy.log`,
+`artifact-transfer-full-validation.log` and `artifact-transfer-workspace-check.log`
+in the same private directory.
