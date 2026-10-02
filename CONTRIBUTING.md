@@ -6,7 +6,7 @@ losetup and mkfs.ubifs. Use structured argv, bounded input and fail-closed types
 Do not add dependencies without checking the standard library and existing crates.
 No production `unwrap`, `expect`, panic, arbitrary manifest commands or unsafe Rust.
 
-Use the pinned Rust toolchain, Python 3.11 or newer for build scripts, and committed Cargo.lock. Linux GUI builds require
+Use the pinned Rust 1.99.0 toolchain, Python 3.11 or newer for build scripts, and committed Cargo.lock. Linux GUI builds require
 X11/Wayland, xkbcommon, GL/EGL headers and pkg-config; the CI setup script lists the
 packages. Windows builds use MSVC. macOS builds use Xcode command-line tools.
 `python scripts/ci.py setup` is intended for disposable CI runners, not end-user setup.

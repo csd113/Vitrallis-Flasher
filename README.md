@@ -23,7 +23,7 @@ For an unsigned prebuilt package, extract the ZIP first. On macOS, open
 and simulation without a desktop. Follow the platform signing/driver limits in
 [driver guidance](docs/fel-drivers.md). No sunxi-fel binary or driver is bundled.
 
-To build from source, install Rust using the pinned `rust-toolchain.toml`, then:
+To build from source, install Rust **1.99.0** using the pinned `rust-toolchain.toml`, then:
 
 ```text
 cargo run --locked -p flasher-gui

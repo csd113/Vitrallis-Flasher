@@ -5,7 +5,7 @@ resolver = "3"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.99.0"
 repository = "https://github.com/csd113/Vitrallis-Flasher"
 license = "LicenseRef-Proprietary"
 keywords = ["pocketchip", "recovery", "fel"]

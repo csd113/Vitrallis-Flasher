@@ -292,3 +292,29 @@ ECC behaviour, authentication of a recovery endpoint, and any hardware validatio
 The scripted PocketCHIP/R8 + NAND fixtures prove host decision logic only. Those
 items remain in [physical validation](physical-validation.md) and are explicitly
 not claimed here.
+
+## Batch 3 — Rust 1.99.0 baseline (2026-10-01)
+
+Host: macOS arm64, rustc 1.99.0 (b940084d7 2026-09-28). The
+toolchain pin, workspace `rust-version`, CI setup, README and contributor
+guide now require 1.99.0. Package manifests inherit the workspace requirement.
+CI calls the pinned setup script; the image-builder Dockerfile contains no
+Rust compiler. Cargo.lock was preserved; no dependency update was needed.
+Historical validation entries above retain the compiler actually used.
+
+The initial strict Clippy run found three new `assert_is_empty` violations
+in HTTP isolation tests. They now compare against a typed empty array so
+failures display the unexpected requests; no lint was suppressed.
+
+| Command | Result |
+| --- | --- |
+| `cargo fmt --all --check` | Passed |
+| `cargo check --workspace --all-targets --all-features --locked` | Passed |
+| `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery -D clippy::cargo` | Passed after the assertion fixes |
+| `cargo test --workspace --all-features --locked` | Passed: 101 core tests and 5 integration tests; six child-process fixtures intentionally ignored and exercised by parent tests |
+| `cargo build --workspace --all-features --release --locked` | Passed |
+| `git diff --check` | Passed |
+
+This baseline validates host code only. Hardware work and the remaining
+Batch 3 completion criteria are still in progress. Work on `main` was
+explicitly requested for this batch; no push is authorized.

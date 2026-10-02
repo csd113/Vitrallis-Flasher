@@ -768,7 +768,7 @@ mod tests {
             |_, _, _| {},
         )?;
         assert_eq!(verified.len(), 8);
-        assert!(client.calls().is_empty());
+        assert_eq!(client.calls(), [] as [url::Url; 0]);
         Ok(())
     }
     #[test]
@@ -785,7 +785,7 @@ mod tests {
             )
             .is_err()
         );
-        assert!(client.calls().is_empty());
+        assert_eq!(client.calls(), [] as [url::Url; 0]);
         Ok(())
     }
     #[test]
@@ -798,7 +798,7 @@ mod tests {
             acquire(&manifest, &cache, None, &cancel, |_, _, _| {}),
             Err(Error::Cancelled)
         ));
-        assert!(client.calls().is_empty());
+        assert_eq!(client.calls(), [] as [url::Url; 0]);
         Ok(())
     }
 }

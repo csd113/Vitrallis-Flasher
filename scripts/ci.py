@@ -168,7 +168,7 @@ def main():
         parser.error('target/bin-dir apply only to package')
     os.chdir(ROOT)
     if args.command == 'setup':
-        run(['rustup','toolchain','install','1.98.1','--profile','minimal','--component','rustfmt,clippy'])
+        run(['rustup','toolchain','install','1.99.0','--profile','minimal','--component','rustfmt,clippy'])
         if platform.system() == 'Linux':
             run(['sudo','apt-get','update'])
             run(['sudo','apt-get','install','-y','pkg-config','libx11-dev','libxi-dev','libxcursor-dev','libxrandr-dev','libxinerama-dev','libgl1-mesa-dev','libegl1-mesa-dev','libwayland-dev','libxkbcommon-dev'])
