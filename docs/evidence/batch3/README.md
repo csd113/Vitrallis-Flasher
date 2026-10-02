@@ -377,3 +377,14 @@ selection is claimed.
   for symlink/hardlink containment, inode identity, numeric UID/GID 1000, final
   setuid/setgid mode and invalid owner rejection. This does not access NAND or
   prove whole-tree installation, device nodes or semantic filesystem readback.
+
+
+- `rootfs-contained-character-preflight-fixture-check.json`: ARMv7 Linux
+  fixtures for closed character-node creation and captured-inode metadata,
+  symlink substitution rejection, and complete inventory metadata preflight.
+  No device access or physical UBI installation is claimed.
+
+- `rootfs-installation-preflight-stream-check.json`: complete locked stock
+  archive verified replay after whole-inventory owner/mode/hardlink preflight.
+  Counts and semantic digest match the independent audit. Host-only delivery
+  creates a private verified snapshot but performs no extraction or NAND work.

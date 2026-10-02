@@ -1130,3 +1130,27 @@ all-target/all-feature check and diff check pass. Private logs:
 Source hash and fixture results are in the separate link/metadata evidence.
 The installer sink, device nodes, full tree verification and physical UBI
 installation remain required; no new recovery payload is uploaded.
+
+
+### Character nodes and complete metadata preflight checkpoint
+
+All 22 ARMv7 rootfs tests pass under qemu-arm (0.18 seconds), including seven
+Linux containment tests. The root-owned character-node fixture exercises
+mknodat, captured-inode ownership and procfs descriptor chmod without device
+I/O. Whole-inventory tests reject owner sentinels, unsupported modes and
+inconsistent hardlink metadata. Strict ARM Clippy passes with all targets,
+features, locked graph and the full established lint flags.
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+209 native core tests (six intentional ignored subprocess fixtures), five
+integration tests, 11 recovery tests, 73 image tests, 35 script tests, locked
+release builds and established provenance/kernel/image/manifest checks.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. Complete stock verified replay with installation
+preflight also passes; its counts and semantic digest match the independent
+audit. Private logs: `work/batch3/rootfs-character-full-validation.log`,
+`rootfs-character-workspace-check.log`, `rootfs-character-final-arm-tests.log`,
+`rootfs-character-final-arm-clippy.log` and `rootfs-character-stock-replay.log`.
+This does not complete the installer sink, tree sync/readback, authenticated
+receiving or physical UBI installation. The frozen v9 hardware payload is
+unchanged.

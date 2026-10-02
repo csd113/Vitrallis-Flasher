@@ -46,6 +46,7 @@ impl VerifiedAsset {
         cancel: &Cancellation,
     ) -> Result<crate::rootfs::Inspection, Error> {
         let expected = self.inspect_rootfs(cancel)?;
+        expected.installation_preflight(cancel)?;
         let result =
             crate::rootfs::replay_gzip(self.snapshot.as_file_mut(), &expected, sink, cancel)?;
         self.recheck(cancel)?;

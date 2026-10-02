@@ -63,6 +63,53 @@ pub struct Inspection {
     pub semantic_sha256: [u8; 32],
 }
 impl Inspection {
+    /// Check the complete metadata inventory before any installation mutation.
+    /// # Errors
+    /// Rejects missing root metadata, reserved owner IDs, unsupported symlink or
+    /// device modes, and hardlink metadata that cannot share the target inode.
+    pub fn installation_preflight(&self, cancel: &Cancellation) -> Result<(), Error> {
+        let root = self
+            .entries
+            .first()
+            .ok_or_else(|| reject("missing root metadata"))?;
+        if root.path != "." || root.kind != Kind::Directory || root.uid != 0 || root.gid != 0 {
+            return Err(reject("missing root directory identity"));
+        }
+        let mut prior = BTreeMap::<&str, &Entry>::new();
+        for entry in &self.entries {
+            cancel.check()?;
+            if entry.uid == u32::MAX || entry.gid == u32::MAX || entry.mode > 0o7777 {
+                return Err(reject("unsupported installation owner or mode"));
+            }
+            match entry.kind {
+                Kind::Symlink if entry.mode != 0o777 => {
+                    return Err(reject("unsupported symlink mode"));
+                }
+                Kind::Character => {
+                    validate_device(entry)?;
+                    if entry.mode > 0o777 {
+                        return Err(reject("unsupported character mode"));
+                    }
+                }
+                Kind::Hardlink => {
+                    let target = path(&entry.link)?;
+                    let target = prior
+                        .get(target.as_str())
+                        .ok_or_else(|| reject("missing hardlink target"))?;
+                    if target.kind != Kind::File
+                        || (target.uid, target.gid, target.mode)
+                            != (entry.uid, entry.gid, entry.mode)
+                    {
+                        return Err(reject("inconsistent hardlink inode metadata"));
+                    }
+                }
+                _ => {}
+            }
+            prior.insert(entry.path.as_str(), entry);
+        }
+        cancel.check()
+    }
+
     #[must_use]
     pub fn entries(&self) -> &[Entry] {
         &self.entries
@@ -1193,5 +1240,55 @@ mod tests {
         );
         assert_eq!(recorder.finished, [".", "file"]);
         assert_eq!(recorder.bytes.len(), 20_000);
+    }
+    #[test]
+    fn installation_preflight_checks_whole_inode_metadata_before_delivery() {
+        let tar = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', b"data", ""),
+            member("./hard", b'1', b"", "./file"),
+        ]);
+        let mut inspection = scan(&tar).unwrap();
+        inspection
+            .installation_preflight(&Cancellation::default())
+            .unwrap();
+        inspection.entries[2].gid = 1000;
+        assert!(
+            inspection
+                .installation_preflight(&Cancellation::default())
+                .is_err()
+        );
+        inspection.entries[2].gid = 0;
+        inspection.entries[1].uid = u32::MAX;
+        assert!(
+            inspection
+                .installation_preflight(&Cancellation::default())
+                .is_err()
+        );
+        let without_root = scan(&archive(&[member("file", b'0', b"", "")])).unwrap();
+        assert!(
+            without_root
+                .installation_preflight(&Cancellation::default())
+                .is_err()
+        );
+        let mut link = scan(&archive(&[
+            member("./", b'5', b"", ""),
+            member("./link", b'2', b"", "file"),
+        ]))
+        .unwrap();
+        link.entries[1].mode = 0o777;
+        link.installation_preflight(&Cancellation::default())
+            .unwrap();
+        link.entries[1].mode = 0o755;
+        assert!(
+            link.installation_preflight(&Cancellation::default())
+                .is_err()
+        );
+        let cancel = Cancellation::default();
+        cancel.cancel();
+        assert!(matches!(
+            link.installation_preflight(&cancel),
+            Err(Error::Cancelled)
+        ));
     }
 }

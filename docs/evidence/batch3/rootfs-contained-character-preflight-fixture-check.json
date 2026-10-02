@@ -1,0 +1,36 @@
+{
+  "evidence_kind": "deterministic Linux character-node and complete inventory metadata fixtures under ARMv7 qemu",
+  "device_accessed": false,
+  "nand_mutated": false,
+  "production_reflash": false,
+  "full_rootfs_installer": false,
+  "source_sha256": "540e6dd7ef8f5c37d407cf15cd351e360bbe108c800c013be2d7c5ff74c6a39c",
+  "parser_source_sha256": "25e471323b1dff445515558468cd41ac41e3095d03ba57e2caa8dd0b57975151",
+  "rootfs_tests_passed": 22,
+  "contained_tests_passed": 7,
+  "test_seconds": 0.18,
+  "strict_arm_clippy_passed": true,
+  "container_process_uid": 0,
+  "character_fixture": {
+    "path": "dev/null",
+    "major": 1,
+    "minor": 3,
+    "uid": 0,
+    "gid": 0,
+    "mode_octal": "666"
+  },
+  "validated_behaviors": [
+    "closed character-device identity validated before exclusive mknodat",
+    "O_PATH capture never opens character node for I/O",
+    "numeric ownership applied to captured inode",
+    "chmod uses verified procfs descriptor links with held inode identity checked before and after",
+    "changed device identity and symlink substitutes rejected without touching targets",
+    "whole inventory rejects reserved owner IDs, unsupported modes and conflicting hardlink metadata before replay delivery",
+    "complete stock inventory passes installation metadata preflight"
+  ],
+  "limitations": [
+    "temporary Linux filesystem fixtures, not PocketCHIP UBI",
+    "installer sink, complete tree sync and semantic installed-filesystem readback remain unfinished",
+    "recovery payload unchanged; character-node code not yet uploaded to physical device"
+  ]
+}

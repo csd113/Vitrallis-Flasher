@@ -339,8 +339,8 @@ already-locked `rustix` 1.1.4 crate provide the Linux descriptor operations; no
 new package/version is added.
 
 This is a filesystem capability rather than a NAND/plan authorization. Held-descriptor metadata and inspected link helpers are now implemented, as
-described below. The complete installer sink, character devices, whole-tree
-completion and semantic readback remain unfinished. Cancellation is checked
+described below. The complete installer sink, whole-tree completion and semantic readback
+remain unfinished. Cancellation is checked
 before and after syscalls; a cancellation after creation may leave a new entry,
 so the future installer must preserve truthful interruption state. The recovery
 payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
@@ -361,5 +361,27 @@ before final chmod, preserving setuid/setgid bits cleared by chown. Metadata
 is checked afterward and the object fsynced. UID/GID `u32::MAX` sentinels and
 unsupported modes are rejected before metadata mutation. Directory metadata
 must be deferred until descendants are installed. These primitives do not
-replace complete inventory validation, a contained replay installer, character
-node creation, whole-tree sync or semantic installed-content verification.
+replace a contained replay installer, whole-tree sync or semantic
+installed-content verification.
+
+
+### Character nodes and installation metadata preflight
+
+Character creation accepts only the eight reviewed path/major/minor identities,
+root ownership and ordinary permission bits. Exclusive descriptor-relative
+`mknodat` initially uses mode 0600 and requires effective UID 0. Final ownership
+uses a captured `O_PATH | O_NOFOLLOW` inode. The pinned rustix API cannot chmod
+an O_PATH descriptor directly, so final mode uses the held descriptor's kernel
+procfs link. Both procfs directories are checked for `PROC_SUPER_MAGIC`, and
+resolved device/inode identity is checked before and after chmod. The device
+node is never opened for I/O; archive symlink targets are never followed.
+
+Before verified asset replay delivers any entry, the complete inspected
+inventory must pass installation metadata preflight. It requires explicit
+root-owned root-directory metadata, rejects reserved UID/GID sentinels and
+unsupported modes, and requires hardlink owner/mode equality with its earlier
+regular-file target. This prevents discovering an unsupported inode metadata
+contract only after earlier entries have been delivered. The complete stock
+archive passes this check. These are installation building blocks; the complete
+sink, authenticated receiving, tree completion and semantic readback are still
+required before physical rootfs execution.

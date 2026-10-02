@@ -2,7 +2,7 @@
 //! This is a filesystem capability, not a NAND or physical-plan authorization.
 use crate::{Cancellation, Error};
 use rustix::{
-    fd::{AsFd, OwnedFd},
+    fd::{AsFd, AsRawFd, OwnedFd},
     fs::{self, AtFlags, FileType, Mode, OFlags},
     process::{Gid, Uid},
 };
@@ -214,6 +214,67 @@ impl Root {
         cancel.check()
     }
 
+    /// Create only a reviewed standard character node, initially mode 0600.
+    /// This never opens the device for I/O.
+    /// # Errors
+    /// Rejects changed identities, unsafe paths, existing leaves or cancellation.
+    pub fn create_character(
+        &self,
+        entry: &super::Entry,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
+        validate_character(entry)?;
+        if rustix::process::geteuid().as_raw() != 0 {
+            return Err(Error::UnsafePath);
+        }
+        let (parent, leaf) = self.parent(&entry.path, cancel)?;
+        cancel.check()?;
+        fs::mknodat(
+            parent,
+            leaf.as_str(),
+            FileType::CharacterDevice,
+            Mode::from_raw_mode(0o600),
+            fs::makedev(entry.major, entry.minor),
+        )
+        .map_err(std::io::Error::from)?;
+        cancel.check()
+    }
+
+    /// Apply character-node metadata through a captured inode, without device I/O.
+    /// # Errors
+    /// Rejects changed nodes, unavailable/untrusted procfs, syscall errors or cancellation.
+    pub fn finish_character(
+        &self,
+        entry: &super::Entry,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
+        validate_character(entry)?;
+        let (parent, leaf) = self.parent(&entry.path, cancel)?;
+        let node = fs::openat(
+            parent,
+            leaf.as_str(),
+            OFlags::PATH | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        let stat = fs::fstat(&node).map_err(std::io::Error::from)?;
+        check_character(&stat, entry)?;
+        cancel.check()?;
+        fs::chownat(
+            &node,
+            "",
+            Some(Uid::from_raw(entry.uid)),
+            Some(Gid::from_raw(entry.gid)),
+            AtFlags::EMPTY_PATH | AtFlags::SYMLINK_NOFOLLOW,
+        )
+        .map_err(std::io::Error::from)?;
+        chmod_captured(&node, entry.mode, cancel)?;
+        let after = fs::fstat(node).map_err(std::io::Error::from)?;
+        check_character(&after, entry)?;
+        validate_metadata(&after, entry, FileType::CharacterDevice)?;
+        cancel.check()
+    }
+
     fn parent(&self, relative: &str, cancel: &Cancellation) -> Result<(OwnedFd, String), Error> {
         cancel.check()?;
         let normalized = super::path(relative)?;
@@ -237,6 +298,76 @@ impl Root {
         }
         Ok((directory, leaf.to_owned()))
     }
+}
+
+fn validate_character(entry: &super::Entry) -> Result<(), Error> {
+    if entry.kind != super::Kind::Character || super::path(&entry.path)? != entry.path {
+        return Err(Error::UnsafePath);
+    }
+    validate_owner(entry)?;
+    if entry.mode > 0o777 {
+        return Err(Error::UnsafePath);
+    }
+    super::validate_device(entry)
+}
+
+fn check_character(stat: &fs::Stat, entry: &super::Entry) -> Result<(), Error> {
+    if FileType::from_raw_mode(stat.st_mode) != FileType::CharacterDevice
+        || fs::major(stat.st_rdev) != entry.major
+        || fs::minor(stat.st_rdev) != entry.minor
+    {
+        return Err(Error::UnsafePath);
+    }
+    Ok(())
+}
+
+fn chmod_captured(node: &OwnedFd, mode: u32, cancel: &Cancellation) -> Result<(), Error> {
+    cancel.check()?;
+    // Only this kernel-controlled namespace is followed, never an archive link.
+    // The locked rustix API cannot apply chmod directly to an O_PATH descriptor.
+    let proc = fs::open(
+        "/proc",
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+        Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    if fs::fstatfs(&proc).map_err(std::io::Error::from)?.f_type != fs::PROC_SUPER_MAGIC {
+        return Err(Error::UnsafePath);
+    }
+    let descriptors = fs::openat(
+        proc,
+        "self/fd",
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+        Mode::empty(),
+    )
+    .map_err(std::io::Error::from)?;
+    if fs::fstatfs(&descriptors)
+        .map_err(std::io::Error::from)?
+        .f_type
+        != fs::PROC_SUPER_MAGIC
+    {
+        return Err(Error::UnsafePath);
+    }
+    let name = node.as_raw_fd().to_string();
+    let pinned = fs::fstat(node).map_err(std::io::Error::from)?;
+    for applying in [false, true] {
+        cancel.check()?;
+        if applying {
+            fs::chmodat(
+                &descriptors,
+                name.as_str(),
+                Mode::from_raw_mode(mode),
+                AtFlags::empty(),
+            )
+            .map_err(std::io::Error::from)?;
+        }
+        let target = fs::statat(&descriptors, name.as_str(), AtFlags::empty())
+            .map_err(std::io::Error::from)?;
+        if target.st_dev != pinned.st_dev || target.st_ino != pinned.st_ino {
+            return Err(Error::UnsafePath);
+        }
+    }
+    cancel.check()
 }
 
 const fn validate_owner(entry: &super::Entry) -> Result<(), Error> {
@@ -488,6 +619,54 @@ mod tests {
         let mut unsupported = link;
         unsupported.mode = 0o600;
         assert!(root.finish_symlink(&unsupported, &cancel).is_err());
+        assert_eq!(
+            file.metadata().unwrap().permissions().mode() & 0o7777,
+            0o600
+        );
+    }
+    #[test]
+    fn reviewed_character_node_metadata_uses_captured_inode_without_opening_device() {
+        use super::super::Kind;
+        use std::os::unix::fs::{FileTypeExt, MetadataExt};
+        let (root, directory) = root();
+        let cancel = Cancellation::default();
+        root.create_directory("dev", &cancel).unwrap();
+        let mut node = entry("dev/null", Kind::Character, 0o666, "");
+        node.uid = 0;
+        node.gid = 0;
+        node.major = 1;
+        node.minor = 3;
+        if rustix::process::geteuid().as_raw() != 0 {
+            assert!(root.create_character(&node, &cancel).is_err());
+            return;
+        }
+        root.create_character(&node, &cancel).unwrap();
+        root.finish_character(&node, &cancel).unwrap();
+        let stat = std::fs::symlink_metadata(directory.path().join("dev/null")).unwrap();
+        assert!(stat.file_type().is_char_device());
+        assert_eq!((fs::major(stat.rdev()), fs::minor(stat.rdev())), (1, 3));
+        assert_eq!(stat.permissions().mode() & 0o7777, 0o666);
+        assert_eq!((stat.uid(), stat.gid()), (0, 0));
+        assert!(root.create_character(&node, &cancel).is_err());
+    }
+
+    #[test]
+    fn changed_character_identity_or_symlink_node_rejected_without_target_mutation() {
+        use super::super::Kind;
+        let (root, directory) = root();
+        let cancel = Cancellation::default();
+        root.create_directory("dev", &cancel).unwrap();
+        let mut node = entry("dev/null", Kind::Character, 0o666, "");
+        node.uid = 0;
+        node.gid = 0;
+        node.major = 1;
+        node.minor = 5;
+        assert!(root.create_character(&node, &cancel).is_err());
+        assert!(!directory.path().join("dev/null").exists());
+        node.minor = 3;
+        let file = root.create_file("kept", &cancel).unwrap();
+        symlink("../kept", directory.path().join("dev/null")).unwrap();
+        assert!(root.finish_character(&node, &cancel).is_err());
         assert_eq!(
             file.metadata().unwrap().permissions().mode() & 0o7777,
             0o600

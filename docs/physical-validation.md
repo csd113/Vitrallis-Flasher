@@ -408,3 +408,20 @@ fail before mutation. Strict ARM Clippy passes. These remain temporary host
 filesystem tests, not a physical UBI installation or complete stock-rootfs
 extraction. Evidence:
 `evidence/batch3/rootfs-contained-links-metadata-fixture-check.json`.
+
+
+### Character-node and installation preflight fixtures
+
+Seven Linux containment tests and 15 parser/replay/preflight tests pass on ARMv7
+under qemu-arm. The root-owned container creates the reviewed `dev/null` node,
+confirms numeric ownership and mode 0666, and rejects changed device identities
+and symlink substitutes without target mutation. Strict ARM Clippy passes.
+These fixtures use a temporary Linux host filesystem, not PocketCHIP NAND.
+
+The complete locked stock archive also passes whole-inventory installation
+metadata preflight and verified replay: 50,950 entries, 1,264,012,666 file bytes
+and semantic SHA-256
+`50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35`.
+No extraction, physical approval or device access occurs. Evidence:
+`evidence/batch3/rootfs-contained-character-preflight-fixture-check.json` and
+`evidence/batch3/rootfs-installation-preflight-stream-check.json`.
