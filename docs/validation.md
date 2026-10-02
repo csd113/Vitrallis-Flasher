@@ -222,3 +222,73 @@ format/mount, LCD/backlight/touch/keyboard behaviour, DIP/product-version
 behaviour, power-loss behaviour and USB transport runtime behaviour. Those
 remain in [physical validation](physical-validation.md) and are explicitly not
 claimed here.
+
+## Batch 2 host seams validation — 2026-10-01
+
+Host: macOS arm64, Rust 1.98.1, Python 3.13.5. **No device was connected or
+opened; no USB access, FEL transfer, RAM upload, NAND/MTD erase or write, UBI/UBIFS
+operation, or destructive action was performed.** No physical manifest was approved,
+`approved_physical_manifest_sha256` remains empty, and `NandPlan::authorize_execution`
+always fails because no executor exists. The selected rootfs and every Batch 1 lock,
+hash, manifest and reproducibility artefact are unchanged.
+
+Batch 2 added the host seams documented in [architecture](architecture.md):
+`ToolRunner` (external tools), `FelTransport` (scripted only; production
+`UnavailableFel`), `NandPlan` (review-only planning from `VerifiedAssets`),
+`HttpClient`, monotonic `Clock` with explicit `SessionConfig` TTL, and the shared
+ordered script harness with terminal failure injection. Session orchestration now
+acquires and rechecks assets through `VerifiedAssets`, builds the review plan at
+preflight, and reports one terminal `Outcome`.
+
+| Check | Result |
+| --- | --- |
+| `cargo fmt --all --check` | Passed |
+| strict Clippy (`-D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery -D clippy::cargo`) | Passed |
+| `cargo test --workspace --all-features --locked` | 106 passed, 6 ignored child fixtures |
+| image tests (`images/test_*.py`) | 60 passed |
+| script tests (`scripts/test_*.py`) | 32 passed |
+| `scripts/provenance.py check` | Passed: 9 repositories, 8 assets, 8 release roles |
+| `scripts/provenance.py check-kernel-config` | Passed for the 6.12.107 config evidence |
+| `images/build.py plan` (both profiles) | Passed; physical plan still blocked |
+| `images/build.py check` (stock) / vitrallis-default | exit 0 / expected exit 2 |
+| `cargo build --workspace --all-features --release --locked` | Passed |
+| CLI manifest validation | Both simulation manifests valid; not approval to flash |
+| `git diff --check` | Passed |
+| `python3 scripts/ci.py validate` | exit 0 (includes the full sequence above) |
+
+### New deterministic coverage
+
+* `ToolRunner`: scripted argv/environment/stdin matching, stdout/stderr capture,
+  exit status, non-zero exit, spawn failure, timeout, cancellation, oversized and
+  malformed output. `SunxiTool` now only ever calls the injected runner, including
+  the read-only `--list` path.
+* `FelTransport`: every operation (discover, identify, device info, RAM upload,
+  execute, read memory, read status) has a scripted success and an injected
+  failure; a failure or cancellation makes later calls fail instead of returning
+  success. The production transport refuses every call with `FelUnavailable`.
+* `VerifiedAssets`: complete inventories pass; incomplete inventories, altered
+  hash/size specs, swapped roles and cancellation are rejected before planning.
+* `NandPlan`: exact ordered steps, SPL-variant selection per NAND fixture,
+  readback verification identity, wrong-variant/missing-digest/overlap/boot-region
+  rejection and the always-failing execution gate.
+* Device decision fixtures: exact `pocketchip` + A13/R8 advance; wrong SoC, wrong
+  board, ambiguous/empty identity and unknown NAND reject; identification alone
+  never uploads or executes.
+* HTTP seam: success, HTTP error, truncated body, wrong `Content-Length`, hash
+  mismatch, timeout, cancellation, bounded redirects and redirect-limit failure;
+  offline acquisition never calls the client and missing offline files fail closed.
+* Clock/session: not-yet-expired, exact TTL boundary, expired confirmation,
+  deterministic advancement, monotonic stages, no byte progress regression, no
+  event after Complete and no success stage after failure or cancellation.
+* Failure/cancellation boundaries: acquisition, snapshot recheck, identification,
+  plan validation, every scripted transport call, external tool invocation,
+  recovery boot, erase, bootloader write, rootfs streaming, verification and
+  session expiry. Terminal `Outcome` is `Success`, `Failure` or `Cancelled`, the
+  prepared plan is dropped on any failure, and retries require a fresh preflight.
+
+Not performed in this batch: physical FEL discovery, USB/driver behaviour, RAM
+upload, recovery boot, NAND erase/write/readback, UBI format/mount, bad-block or
+ECC behaviour, authentication of a recovery endpoint, and any hardware validation.
+The scripted PocketCHIP/R8 + NAND fixtures prove host decision logic only. Those
+items remain in [physical validation](physical-validation.md) and are explicitly
+not claimed here.

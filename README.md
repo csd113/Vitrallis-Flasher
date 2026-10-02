@@ -134,11 +134,19 @@ or manifest-supplied commands are permitted. See [image contract](docs/manifest.
 
 | Component | Implemented |
 | --- | --- |
-| `flasher-core` | Strict manifests; bounded HTTPS and offline ingestion; SHA-256 cache/snapshots; FEL parser; typed NAND; sealed backend; confirmation/recovery state machine |
+| `flasher-core` | Strict manifests; bounded HTTPS and offline ingestion; SHA-256 cache/snapshots; FEL parser; typed NAND; sealed backend; confirmation/recovery state machine; mockable tool/FEL/HTTP/clock seams; review-only NAND planning from verified assets |
 | `flasher-cli` | Doctor, read-only detect, validate, fetch, offline import, interactive simulation and cancellation |
 | `flasher-gui` | Native egui wizard, background work, cancellation, progress, friendly errors, bounded copyable log |
 | `images/` | Pinned input lock, real deterministic host-side image builder (streamed rootfs scan/repack, deterministic SPLs, physical-manifest validation) and tests |
 | GitHub Actions | Five native build targets, strict checks, unsigned ZIP artifacts only |
+
+Batch 2 routes host orchestration through narrow seams: external tools run only via
+`ToolRunner`, future FEL work only via `FelTransport` (production default explicitly
+unavailable), network retrieval only via `HttpClient`, session TTL only via `Clock`,
+and destructive planning only from `VerifiedAssets` into a `NandPlan` that has no
+executor. Scripted doubles with ordered failure injection make all of this
+deterministic in tests. This is host architecture, not hardware validation: no FEL
+transfer, NAND erase/write or approved physical manifest exists.
 
 The reviewed x-chip-tools LIVE method keeps UBIFS geometry work on the device; the
 broken fastboot/SLC path is excluded. Its current script also erases before NAND

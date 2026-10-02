@@ -36,9 +36,11 @@ python3 images/assemble.py reproduce --assets work/assets --output work/batch1/r
 ```
 
 If formatting fails, format only touched packages, then rerun the check. Tests live
-beside their behavior. The three ignored child fixture tests are deliberately invoked
-by the process tests; they are not untested feature coverage. Do not run all ignored
-tests directly: one deliberately fails and another emits excessive output.
+beside their behavior. The six ignored child fixture tests are deliberately invoked
+by the `ToolRunner`/process tests; they are not untested feature coverage. Do not run
+all ignored tests directly: one deliberately fails, one exits non-zero, and another
+emits excessive output. New host seams must keep the `VerifiedAssets` planning gate,
+the scripted failure-injection harness and the no-physical-executor guarantee.
 
 `python scripts/ci.py validate` runs equivalent checks with a locked dependency graph.
 `python scripts/ci.py package` creates host-specific unsigned local artifacts with

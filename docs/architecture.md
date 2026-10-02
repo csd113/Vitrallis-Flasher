@@ -9,11 +9,12 @@ No host Linux filesystem or administrative service is required by the core.
 HTTPS or a regular offline file. `VerifiedAsset` retains a private verified file
 snapshot, eliminating pathname replacement between cache checking and later use.
 
-`Session<B>` owns the backend, manifest, payloads, candidate identity, NAND and
-five-minute preflight lifetime. The sealed `Backend` trait has only two implementations:
-`MockFel` records simulated operations and supports failure injection; `RealFel` can
-list FEL candidates and refuses identity/boot/erase/write/verify/reboot operations.
-There is no generic external-command transport accepting manifest arguments.
+`Session<B>` owns the backend, `VerifiedAssets`, the review-only `NandPlan`, the
+candidate identity, NAND choice, injected `Clock`, `SessionConfig` and terminal
+`Outcome`. The sealed `Backend` trait has only two implementations: `MockFel` records
+simulated operations and supports failure injection; `RealFel` can list FEL
+candidates and refuses identity/boot/erase/write/verify/reboot operations. There is
+no generic external-command transport accepting manifest arguments.
 
 ```mermaid
 stateDiagram-v2
@@ -21,7 +22,7 @@ stateDiagram-v2
     Welcome --> FEL
     FEL --> Detect
     Detect --> Preflight
-    Preflight --> ConfirmErase: exact device and verified inventory
+    Preflight --> ConfirmErase: exact device, verified assets, review plan
     ConfirmErase --> AssetRecheck: exact SID + release + digest phrase
     AssetRecheck --> RecoveryBoot: fresh identity and NAND match
     RecoveryBoot --> Erase: simulation only
@@ -31,7 +32,7 @@ stateDiagram-v2
     Verify --> Complete
     Detect --> Recovery: unknown / multiple / unavailable
     Preflight --> Recovery: physical backend blocked
-    ConfirmErase --> Recovery: wrong / stale confirmation
+    ConfirmErase --> Recovery: wrong / stale / expired confirmation
     AssetRecheck --> Recovery: corruption / cancellation
     Erase --> Recovery: failure
     Verify --> Recovery: failure
@@ -44,10 +45,90 @@ must never depend on a download that has not finished. User cancellation and all
 backend failures invalidate prepared authorization. No automatic destructive retries
 or reboot occur. Partial cached downloads cannot become usable artifacts.
 
+## Batch 2 host seams
+
+Batch 2 makes the host backend deterministic and testable before any hardware work.
+It adds no physical implementation and no executor. The seams are:
+
+| Seam | Purpose | Production | Scripted test double |
+| --- | --- | --- | --- |
+| `tool.rs` | External process execution | `SystemToolRunner` (the only `std::process::Command` user, bounded output/timeout/cancellation) | `ScriptedToolRunner` |
+| `fel.rs` | Future FEL operations | `UnavailableFel` (every call returns `FelUnavailable`) | `ScriptedFel` |
+| `nand.rs` | Reviewable install planning | none: `NandPlan::authorize_execution` always fails | plan fixtures from `VerifiedAssets` |
+| `http.rs` | HTTPS asset retrieval | `UreqHttpClient` (pinned ureq, public hosts, bounded redirects) | `ScriptedHttpClient` + `ScriptedResponse` |
+| `clock.rs` | Monotonic time for TTL logic | `SystemClock` | `TestClock` with explicit advancement |
+| `script.rs` | Ordered expectation/failure injection | — | `Scripted<C, R>` shared by all doubles |
+
+`ToolRequest`/`ToolOutput` cover executable+argv, environment, stdin, stdout,
+stderr and exit status. `FelTransport` covers discovery, identification, device
+information, RAM upload, execution and memory/status readback. Batch 2 uses these
+types only through scripts and fixtures; no USB or FEL code exists.
+
+### Trust flow
+
+Only this ordering reaches destructive planning:
+
+```text
+input artifacts -> manifest validation -> cache/offline/HTTPS ingestion
+                -> hash/size/snapshot verification -> VerifiedAssets
+                -> + IdentifiedTarget -> NandPlan (review only)
+```
+
+`VerifiedAssets` has private fields and one constructor, `VerifiedAssets::verify`,
+which requires a complete inventory matching the manifest role/size/hash for every
+asset and rechecks each private snapshot. Planning accepts only `&VerifiedAssets`
+plus a validated `IdentifiedTarget`; a filesystem path cannot reach planning.
+Downloaded and offline bytes stay untrusted until the existing validation succeeds.
+
+### NAND planning vs execution
+
+`NandPlan` lists the exact ordered operations a future install would attempt:
+operation kind, source artifact role, NAND offset or logical destination, byte
+length and SHA-256 where known, prerequisites, readback verification identity and
+the originating `Stage`. It also carries `PlanGate`s for every unresolved physical
+question: unapproved manifest, missing authenticated recovery protocol, recovery
+RAM address, real NAND/ECC/UBI geometry, bad blocks, the `0xC00000`
+redundant-U-Boot/environment conflict, BROM/SPL acceptance and SPL fallback
+behavior. `plan()` re-validates SPL-variant selection, exact lengths/digests,
+stage order and NAND range non-overlap. There is no executor: `is_executable()`
+is always false and `authorize_execution()` always returns `PhysicalBlocked`.
+
+### Scripted transport testing and failure injection
+
+`script.rs` provides an ordered call/result script. A call that does not match the
+next expectation fails the script; an expected call that arrives after an injected
+error, cancellation or exhaustion is refused instead of returning success. Tests can
+therefore prove that later operations never ran. `ScriptedFel`,
+`ScriptedToolRunner` and `ScriptedHttpClient` wrap this core with typed expectations
+and record exact calls. Cancellation checks poison the script before any call.
+
+### Session and clock behavior
+
+`SessionConfig` exposes the confirmation TTL explicitly. Session code reads time only
+through `Clock`; `TestClock::advance` lets tests cover not-yet-expired, exact-boundary
+and expired confirmations without sleeping. Expiry is monotonic: if the clock ever
+reports a time before `prepared_at`, the session fails closed as timed out.
+
+### Progress model
+
+`Stage::index` is strictly ordered, and `Session::report` emits stage milestones that
+only ever move forward (a debug assertion guards regressions). Byte progress is
+reported per logical item and never decreases inside one item. `Outcome` records one
+terminal state — `Success`, `Failure` or `Cancelled` — and a failed or cancelled
+session emits `Recovery` instead of any later success stage.
+
+## Device decision logic (host-only fixtures)
+
+`IdentifiedTarget::identify` accepts only an exact `PocketCHIP` board identifier with
+the A13/R8 SoC family and a full known NAND part. Mismatched, ambiguous or unknown
+fixtures are rejected; an unknown part never defaults to Hynix. The target exposes
+exactly one SPL role, and the planner validates that every SPL write uses it. These
+fixtures prove host decision logic only; they are not hardware behavior evidence.
+
 Hardware NAND geometry (16 KiB pages, 4 MiB erase blocks; Hynix OOB 1664, Toshiba OOB
-1280) is represented explicitly. Unknown part names are rejected. Physical NAND
-identification cannot safely use upstream's post-erase ID-register heuristic. A
-future reviewed recovery protocol must report board/part/geometry before erase.
+1280) is represented explicitly. Physical NAND identification cannot safely use
+upstream's post-erase ID-register heuristic. A future reviewed recovery protocol must
+report board/part/geometry before erase; the plan keeps that requirement as a gate.
 
 The native UI uses egui/eframe with GL and embedded fonts; no browser, WebView or
 network server is required. Clipboard/log access is explicit. Paths are entered as

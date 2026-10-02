@@ -5,6 +5,13 @@ an archive, not executed. Hardware testing must be separately authorized and rec
 with exact application/upstream revisions, asset hashes, board revision, NAND part,
 host/driver versions and sanitized logs. Never promote a failed or incomplete test.
 
+Batch 2 added host-side `ToolRunner`, `FelTransport`, `NandPlan`, `HttpClient` and
+`Clock` seams with scripted failure injection and a `VerifiedAssets` planning gate.
+These are testable host abstractions only: no hardware was accessed, no FEL transfer
+occurred, no NAND erase/write path exists, no physical manifest is approved and every
+item below remains open. The scripted PocketCHIP/R8+NAND fixtures prove host decision
+logic, not real device behavior.
+
 ## Release gates
 
 - Establish permissions for upstream recovery/image reuse and distribution; review

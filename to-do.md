@@ -3,6 +3,24 @@
 Physical flashing remains disabled. This checklist tracks the work needed for a
 usable hardware release; passing the mock suite alone does not complete these items.
 
+## Host architecture status (Batch 2, 2026-10-01)
+
+Batch 2 refactored the host backend behind narrow, deterministic seams and is
+complete: `ToolRunner` for external tools, `FelTransport` with a scripted test
+double and an explicitly unavailable production transport, review-only `NandPlan`
+planning, `VerifiedAssets` as the only planning input, an `HttpClient` seam, a
+monotonic `Clock` plus `SessionConfig` TTL, and a shared ordered script harness for
+failure injection. `NandPlan::authorize_execution` always fails and no executor
+exists. Every Batch 1 guarantee, hash, lock, manifest rule and test remains in
+place.
+
+**No physical PocketCHIP access, FEL transfer, NAND erase/write, USB operation or
+destructive action occurred during Batch 2.** The seams are host-side architecture
+work; they are not hardware validation and they close none of the release blockers
+below. Batch 3 must add a reviewed, non-destructive real transport behind
+`FelTransport` and prove identification on authorized hardware before any write
+path is considered.
+
 ## Scope: fresh installation, user-managed backups
 
 Flashing erases all existing data on the PocketCHIP's internal NAND. Both `stock` and

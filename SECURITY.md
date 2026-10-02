@@ -30,6 +30,15 @@ extracted on the host. Cancellation/failure drops temporary snapshots and invali
 the session. A hard process kill can leave temporary cache files, but these are never
 recognized as verified hits. Corrupt hash-named cache entries fail closed.
 
+Batch 2 planning consumes only `VerifiedAssets` plus a validated
+`IdentifiedTarget`; filesystem paths and unverified bytes cannot produce a
+`NandPlan`. The plan has no executor, `authorize_execution` always fails, and the
+production FEL transport returns an explicit unavailable error. Scripted
+tool/FEL/HTTP/clock doubles exist for tests and record exact calls; they cannot be
+enabled by a manifest, flag or environment variable. External tools run only
+through the bounded `ToolRunner`, and session TTLs read only the injected monotonic
+clock.
+
 Cache/offline paths reject symlink components and nonregular files. Use a cache owned
 by the current user. Unix group/other-writable cache directories are refused. Windows
 ACL ownership enforcement is not implemented; administrators/users must provide a

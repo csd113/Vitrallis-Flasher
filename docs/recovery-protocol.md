@@ -39,3 +39,17 @@ identities. It does not simulate ECC, real bad blocks, transport authentication,
 physical readback or power-failure atomicity. Those require real engineering and
 explicit hardware validation. The host download pipeline is already reusable for
 future approved payloads without exposing physical erase now.
+
+## Batch 2 host seam mapping
+
+Batch 2 implements the parts of this protocol that need no hardware.
+`FelTransport` names discovery, identification, device information, RAM upload,
+execution and memory/status readback; its production default `UnavailableFel`
+refuses every operation and only `ScriptedFel` answers in tests.
+`IdentifiedTarget::identify` enforces the closed board/SoC/NAND decision and rejects
+ambiguous or unknown fixtures. `NandPlan` records the ordered operations, exact
+lengths/digests and readback checks that steps 5-9 require, with the unresolved
+physical questions attached as hard `PlanGate`s; `authorize_execution` always fails.
+`VerifiedAssets` supplies only manifest-verified bytes. Steps 4-10 still require the
+reviewed protocol, device daemon, session authentication and hardware validation;
+nothing in Batch 2 executes a plan or contacts a device.

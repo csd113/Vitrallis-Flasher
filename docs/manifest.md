@@ -56,6 +56,13 @@ catalog is empty. Future release selection must use reviewed immutable manifest
 hashes/signatures and an explicit compatibility/rollback policy; never “latest”.
 Files from `upstream-lock.json` are research candidates, not a flashable manifest.
 
+A parsed manifest is not planning input by itself. Acquired bytes become usable only
+through `VerifiedAssets::verify`, which requires a complete inventory matching the
+manifest role/size/hash for every asset and rechecks each private snapshot.
+Application-side NAND planning accepts only `VerifiedAssets` plus a validated
+`IdentifiedTarget`; a manifest object, raw bytes or filesystem path cannot produce a
+`NandPlan`, and no plan can execute in Batch 2.
+
 The GUI and CLI default to `stock`. Explicit `vitrallis-default` selection uses
 `manifests/simulation-vitrallis.json`, a distinct nonbootable release. The compiled
 catalog verifies both the release ID and profile against its manifest. Profile is
