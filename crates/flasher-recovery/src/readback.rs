@@ -165,20 +165,17 @@ mod tests {
     }
 
     #[test]
-    fn kernel_ecc_is_available_only_for_uboot() {
+    fn kernel_ecc_is_available_for_both_uboot_slots_and_never_spl() {
         let output = Path::new("/run/private/boot-corrected.bin");
-        let corrected = request(
-            BootRegion::UBoot,
-            ReadInterpretation::KernelCorrected,
-            output,
-        )
-        .unwrap();
-        assert!(!corrected.args.iter().any(|a| a == "--noecc"));
-        for region in [
-            BootRegion::SplPrimary,
-            BootRegion::SplBackup,
-            BootRegion::FourthBootBlock,
-        ] {
+        for region in [BootRegion::UBoot, BootRegion::FourthBootBlock] {
+            let corrected = request(region, ReadInterpretation::KernelCorrected, output).unwrap();
+            assert!(!corrected.args.iter().any(|a| a == "--noecc"));
+            assert_eq!(
+                corrected.args.last().unwrap(),
+                &format!("/dev/mtd{}", region.index())
+            );
+        }
+        for region in [BootRegion::SplPrimary, BootRegion::SplBackup] {
             assert!(request(region, ReadInterpretation::KernelCorrected, output).is_err());
         }
     }

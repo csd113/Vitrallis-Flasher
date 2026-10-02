@@ -11,8 +11,10 @@ use std::{
 
 const ORIGINAL_VERSION: u8 = 1;
 const RELEASE_VERSION: u8 = 2;
+const UBOOT_VERSION: u8 = 3;
 const MAX_BYTES: u64 = 8192;
-const MAX_LINE: usize = 1024;
+// Version 3 binds six U-Boot/SPL hashes in addition to the existing context.
+const MAX_LINE: usize = 2048;
 
 /// Public session identity only. No HMAC key or credentials are serialized.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -59,6 +61,8 @@ pub struct Header {
     pub original_spl_sha256: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub release_spl: Option<super::release::Pins>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uboot_images: Option<super::uboot::Pins>,
 }
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct Report {
@@ -82,9 +86,12 @@ impl Journal {
         context.validate()?;
         let parent = private_parent(path)?;
         let release_trial = context.operation.is_release_trial();
+        let uboot_trial = context.operation.is_uboot_trial();
         let report = Report {
             header: Header {
-                version: if release_trial {
+                version: if uboot_trial {
+                    UBOOT_VERSION
+                } else if release_trial {
                     RELEASE_VERSION
                 } else {
                     ORIGINAL_VERSION
@@ -93,6 +100,7 @@ impl Journal {
                 restoration_sha256: super::RESTORATION_IMAGE.into(),
                 original_spl_sha256: super::ORIGINAL_SPL.into(),
                 release_spl: release_trial.then(super::release::Pins::expected),
+                uboot_images: uboot_trial.then(super::uboot::Pins::expected),
             },
             entries: vec![Entry {
                 sequence: 0,
@@ -239,8 +247,11 @@ pub fn read(path: &Path, cancel: &Cancellation) -> Result<Report, Error> {
     let header: Header = parse(lines.next().ok_or(Error::Length)?)?;
     header.context.validate()?;
     let release_trial = header.context.operation.is_release_trial();
+    let uboot_trial = header.context.operation.is_uboot_trial();
     if header.version
-        != if release_trial {
+        != if uboot_trial {
+            UBOOT_VERSION
+        } else if release_trial {
             RELEASE_VERSION
         } else {
             ORIGINAL_VERSION
@@ -248,6 +259,7 @@ pub fn read(path: &Path, cancel: &Cancellation) -> Result<Report, Error> {
         || header.restoration_sha256 != super::RESTORATION_IMAGE
         || header.original_spl_sha256 != super::ORIGINAL_SPL
         || header.release_spl != release_trial.then(super::release::Pins::expected)
+        || header.uboot_images != uboot_trial.then(super::uboot::Pins::expected)
     {
         return Err(Error::Recovery);
     }
@@ -327,6 +339,41 @@ mod tests {
                 format!("{}\n{entries}", serde_json::to_string(&header).unwrap()),
             )
             .unwrap();
+            assert!(read(&path, &Cancellation::default()).is_err());
+        }
+    }
+
+    #[test]
+    fn uboot_journal_pins_and_version_cannot_be_downgraded_or_removed() {
+        let directory = crate::assets::temporary_directory().unwrap();
+        let path = directory.path().join("uboot.jsonl");
+        let mut ctx = context();
+        ctx.operation = Operation::ProgramReleaseUbootBackup;
+        let journal = Journal::create(&path, ctx, &Cancellation::default()).unwrap();
+        drop(journal);
+        let text = fs::read_to_string(&path).unwrap();
+        let (header, entries) = text.split_once('\n').unwrap();
+        assert_eq!(
+            read(&path, &Cancellation::default())
+                .unwrap()
+                .header
+                .version,
+            3
+        );
+        for change in 0..4 {
+            let mut header: serde_json::Value = serde_json::from_str(header).unwrap();
+            match change {
+                0 => header["version"] = 2.into(),
+                1 => {
+                    header.as_object_mut().unwrap().remove("uboot_images");
+                }
+                2 => header["uboot_images"]["release_program_sha256"] = "0".repeat(64).into(),
+                _ => {
+                    header["uboot_images"]["primary_spl_sha256"] =
+                        super::super::ORIGINAL_SPL.into();
+                }
+            }
+            fs::write(&path, format!("{header}\n{entries}")).unwrap();
             assert!(read(&path, &Cancellation::default()).is_err());
         }
     }

@@ -235,3 +235,11 @@ chunks were acknowledged. Offsets refer to artifact bytes and grant no NAND
 authority. Recovery framing, rootfs extraction, interruption journals and final
 semantic verification still need to consume this path through a validated plan.
 The transfer primitive does not change production authorization gates.
+
+Protocol v9 extends the closed sacrificial-unit diagnostic policy to original
+and release U-Boot snapshots, with fixed primary/fourth-block targets, both
+measured SPL programs and the untouched U-Boot protected. Version-3 journals
+bind the exact pair, both U-Boot programs and both SPL programs. Kernel-corrected
+U-Boot data remains separate from boot0-corrected SPL data. This diagnostic path
+still grants no production NandPlan or manifest authorization; physical release
+U-Boot boot/fallback and the production executor remain pending.

@@ -235,3 +235,14 @@ against this limit, authenticated physical boot and a separately guarded U-Boot
 diagnostic. Exact release U-Boot boot and redundant-slot behavior remain pending.
 Evidence: `evidence/batch3/uboot-pair-host-check.json` and
 `uboot-pair-ram-size-preparation.json` in the same directory.
+
+### Closed U-Boot diagnostic preparation (v9)
+
+The new recovery payload contains the pinned original/release pair and six
+closed mtd2/mtd3 diagnostic operations. Its prerequisites protect the opposite
+U-Boot and the exact mixed SPL chain restored in session 16. Both templates
+are byte-identical, 41,687,740 bytes, below the unchanged 40 MiB load bound.
+Version-3 journals and prepared replies bind all candidate/protected SPL hashes.
+Normal U-Boot ECC remains separate from boot0 SPL ECC. This is software/build
+validation; physical v9 boot, locked release U-Boot acceptance and measured SPL
+fallback to the fourth block remain pending. Production flashing stays blocked.

@@ -33,12 +33,24 @@ pub enum Operation {
     ProgramReleasePrimary,
     EraseBackupForReleasePrimary,
     RestoreBackupForReleasePrimary,
+    ProgramReleaseUbootBackup,
+    EraseOriginalUbootPrimary,
+    RestoreOriginalUbootPrimary,
+    ProgramReleaseUbootPrimary,
+    EraseReleaseUbootBackup,
+    RestoreReleaseUbootBackup,
 }
 impl Operation {
     /// Closed diagnostic target; no user-supplied addresses.
     #[must_use]
     pub const fn target(self) -> BootRegion {
         match self {
+            Self::EraseOriginalUbootPrimary
+            | Self::RestoreOriginalUbootPrimary
+            | Self::ProgramReleaseUbootPrimary => BootRegion::UBoot,
+            Self::ProgramReleaseUbootBackup
+            | Self::EraseReleaseUbootBackup
+            | Self::RestoreReleaseUbootBackup => BootRegion::FourthBootBlock,
             Self::ErasePrimary | Self::RestorePrimary | Self::ProgramReleasePrimary => {
                 BootRegion::SplPrimary
             }
@@ -52,6 +64,12 @@ impl Operation {
     #[must_use]
     pub const fn protected_region(self) -> BootRegion {
         match self {
+            Self::EraseOriginalUbootPrimary
+            | Self::RestoreOriginalUbootPrimary
+            | Self::ProgramReleaseUbootPrimary => BootRegion::FourthBootBlock,
+            Self::ProgramReleaseUbootBackup
+            | Self::EraseReleaseUbootBackup
+            | Self::RestoreReleaseUbootBackup => BootRegion::UBoot,
             Self::ErasePrimary | Self::RestorePrimary | Self::ProgramReleasePrimary => {
                 BootRegion::SplBackup
             }
@@ -70,6 +88,18 @@ impl Operation {
                 | Self::RestoreBackupForReleasePrimary
         )
     }
+    #[must_use]
+    pub const fn is_uboot_trial(self) -> bool {
+        matches!(
+            self,
+            Self::ProgramReleaseUbootBackup
+                | Self::EraseOriginalUbootPrimary
+                | Self::RestoreOriginalUbootPrimary
+                | Self::ProgramReleaseUbootPrimary
+                | Self::EraseReleaseUbootBackup
+                | Self::RestoreReleaseUbootBackup
+        )
+    }
     /// Checks this operation's completion without granting any new authority.
     /// # Errors
     /// Rejects wrong targets, programs, ECC interpretation or incomplete erasure.
@@ -82,6 +112,17 @@ impl Operation {
                 verify_spl(report, self.target())
             }
             Self::ProgramReleasePrimary => release::verify_primary(report),
+            Self::EraseOriginalUbootPrimary | Self::EraseReleaseUbootBackup => {
+                uboot::verify_erased(report, self.target())
+            }
+            Self::RestoreOriginalUbootPrimary => {
+                uboot::verify_program(report, self.target(), uboot::Program::Original)
+            }
+            Self::ProgramReleaseUbootBackup
+            | Self::ProgramReleaseUbootPrimary
+            | Self::RestoreReleaseUbootBackup => {
+                uboot::verify_program(report, self.target(), uboot::Program::Release)
+            }
         }
     }
 }
@@ -359,9 +400,20 @@ pub fn verify_erased_primary(report: &BootReadback) -> Result<(), Error> {
 /// # Errors
 /// Rejects non-SPL regions, wrong partition, un-erased data/OOB or ECC failures.
 pub fn verify_erased(report: &BootReadback, region: BootRegion) -> Result<(), Error> {
+    if !matches!(region, BootRegion::SplPrimary | BootRegion::SplBackup) {
+        return Err(Error::Device);
+    }
+    verify_erased_block(report, region)
+}
+fn verify_erased_block(report: &BootReadback, region: BootRegion) -> Result<(), Error> {
     common_readback(report)?;
-    if !matches!(region, BootRegion::SplPrimary | BootRegion::SplBackup)
-        || report.region != region
+    if !matches!(
+        region,
+        BootRegion::SplPrimary
+            | BootRegion::SplBackup
+            | BootRegion::UBoot
+            | BootRegion::FourthBootBlock
+    ) || report.region != region
         || report.interpretation != ReadInterpretation::Raw
         || !report.spl_copies.is_empty()
         || report.first_data_bytes != [0xff; 32]

@@ -321,3 +321,46 @@ The v8 builder additionally requires `--release-spl` for the pinned Hynix image;
 it rejects the Toshiba size/profile, corruption, oversize and symlink inputs
 before emitting the RAM image. Both original and release files are root-only
 archive entries at fixed paths.
+
+### Protocol v9 closed U-Boot diagnostics
+
+Protocol v9 rejects older sessions and adds six fixed operations:
+`ProgramReleaseUbootBackup`, `EraseOriginalUbootPrimary`,
+`RestoreOriginalUbootPrimary`, `ProgramReleaseUbootPrimary`,
+`EraseReleaseUbootBackup` and `RestoreReleaseUbootBackup`. They target only mtd2
+or mtd3, with the opposite U-Boot protected. Every operation requires the exact
+release primary SPL and original backup SPL measured in session 16, the known
+SID, five-partition RAM inventory, no attached UBI, good boot blocks and zero
+ECC failures. The original SPL diagnostics retain their previous guards.
+
+The builder additionally requires the exact 8 MiB `--uboot-pair`, installed at
+a fixed root-only RAM path. Both decoded 4 MiB programs are checked before
+snapshot creation and again before mutation. Version-3 U-Boot journals and
+prepared replies bind the pair, both programs, source manifest and both SPL
+programs. Missing or changed pins and journal version downgrades fail closed.
+These are diagnostic provenance bindings, not physical manifest approval.
+
+U-Boot programming uses normal kernel ECC (`nandwrite --noskipbad --quiet`);
+SPL uses its separate boot0 encoding. U-Boot corrected readback is available for
+both fixed slots. The corrected program digest, framing, good markers and zero
+ECC failures must pass. Canonical correction diagnostics are permitted, with
+ordered page offsets and bounded counts. The [nanddump source](https://github.com/sigma-star/mtd-utils/blob/master/nand-utils/nanddump.c)
+samples ECCGETSTATS before reading each page's OOB; its final OOB read is therefore
+outside the last printed correction count. Sessions 7 and 16 each measure a
+sysfs correction delta one greater than the diagnostic sum. The verifier bounds
+that remainder by one page's ECC capacity; it rejects uncorrectable or unknown
+messages, counter regression and larger discrepancies.
+
+Each operation freshly checks prerequisites before durable dispatch, verifies
+the entire erased data/OOB block, and verifies the resulting program or erasure
+and untouched chain afterward. RestoreOriginalUbootPrimary permits a healthy raw
+primary of arbitrary contents so a partial release attempt can be rolled back;
+the exact opposite release U-Boot and both SPLs are still mandatory. No host
+input supplies a target path, address, command or replacement digest. The
+single-use ticket, two-dispatch limit, interruption journal and no-retry rules
+are unchanged. Host software tests are not physical U-Boot boot evidence.
+
+The v9 template builds byte-identically twice at 41,687,740 bytes, leaving
+255,300 bytes under the existing 40 MiB bound. Metadata:
+[evidence/batch3/recovery-template-v9.json](evidence/batch3/recovery-template-v9.json).
+Its physical boot and the release U-Boot/fallback tests remain pending here.

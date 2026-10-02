@@ -921,3 +921,21 @@ under qemu-arm (3.13 seconds). Private logs:
 Evidence records: `recovery-backup-restoration-trial-16.json`,
 `recovery-boot-chain-after-backup-restoration-16.json`, `uboot-pair-host-check.json`
 and `uboot-pair-ram-size-preparation.json` under `evidence/batch3/`.
+
+### Protocol v9 U-Boot preparation checkpoint
+
+The closed U-Boot policy and protocol bindings pass full
+`python3 scripts/ci.py validate`: formatting, strict Clippy, 187 core tests
+(six intentional ignored subprocess fixtures), five integration tests,
+11 recovery tests, 73 image tests, 35 script tests, release builds and established
+provenance/kernel/image/manifest checks. Workspace all-target/all-feature check
+passes. The 31 boot-trial tests also pass on ARMv7 under qemu-arm (5.97 seconds).
+Two complete recovery templates are byte-identical and below 40 MiB; rebuilding
+the daemon after host pin updates preserves its exact digest. Software fixtures
+explicitly distinguish the pinned release U-Boot hash from physically observed
+original readback framing. No release U-Boot physical boot is claimed yet.
+
+Private logs: `work/batch3/uboot-v9-full-validation.log`,
+`uboot-v9-workspace-check.log`, `uboot-v9-clippy.log`, `uboot-v9-arm-tests.log`,
+`uboot-v9-final-arm-build.log` and the two recovery-template-v9 build logs.
+Metadata: `evidence/batch3/recovery-template-v9.json`.

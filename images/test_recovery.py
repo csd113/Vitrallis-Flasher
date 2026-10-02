@@ -32,6 +32,20 @@ class RecoveryArchiveTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 recovery.restoration_bytes(link)
 
+    def test_uboot_pair_rejects_truncation_corruption_oversize_and_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'pair'
+            for size in (0, recovery.UBOOT_PAIR_BYTES - 1, recovery.UBOOT_PAIR_BYTES, recovery.UBOOT_PAIR_BYTES + 1):
+                data = bytes(size)
+                path.write_bytes(data)
+                with self.assertRaises(ValueError):
+                    recovery.uboot_pair_bytes(path)
+                self.assertEqual(path.read_bytes(), data)
+            link = pathlib.Path(directory) / 'link'
+            link.symlink_to(path)
+            with self.assertRaises(ValueError):
+                recovery.uboot_pair_bytes(link)
+
     def archive(self, *entries):
         return b''.join(entries) + recovery.record('TRAILER!!!', b'', 0, 0)
 

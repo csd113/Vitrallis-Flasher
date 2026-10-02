@@ -15,7 +15,7 @@ import tarfile
 import uimage
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PROTOCOL = 8
+PROTOCOL = 9
 BASE_SHA256 = '5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25'
 ROOTFS_SHA256 = '1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef'
 RESTORATION_SHA256 = 'd6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03'
@@ -23,6 +23,10 @@ RESTORATION_BYTES = 4620288
 RELEASE_SHA256 = '0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a'
 RELEASE_PROGRAM_SHA256 = '879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0'
 RELEASE_MANIFEST_SHA256 = '48e46f66e4c1b6927b0864f9b285ae46a8c1c6e3c74033947a80643e7f723cc2'
+UBOOT_PAIR_BYTES = 8 * 1024 * 1024
+UBOOT_PAIR_SHA256 = '982e47c825762cb6a88b1c21561ef624bd61dfb1a3a89191f3ccbc7b09e9350b'
+UBOOT_RELEASE_SHA256 = '2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8'
+UBOOT_ORIGINAL_SHA256 = 'c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224'
 MAX_ARCHIVE = 160 * 1024 * 1024
 MAX_FILE = 32 * 1024 * 1024
 MAX_ENTRIES = 20000
@@ -199,7 +203,15 @@ def release_bytes(path):
     return data
 
 
-def build(base, rootfs, daemon, original_spl, release_spl, output):
+def uboot_pair_bytes(path):
+    """The fixed alternating pair is data only, with no caller-selected NAND addresses."""
+    data = regular(path, UBOOT_PAIR_BYTES)
+    if len(data) != UBOOT_PAIR_BYTES or hashlib.sha256(data).hexdigest() != UBOOT_PAIR_SHA256:
+        raise ValueError('unreviewed U-Boot diagnostic pair')
+    return data
+
+
+def build(base, rootfs, daemon, original_spl, release_spl, uboot_pair, output):
     """Validate all inputs before publishing into a new private directory."""
     base_bytes = regular(base, 40 * 1024 * 1024)
     if hashlib.sha256(base_bytes).hexdigest() != BASE_SHA256:
@@ -219,6 +231,7 @@ def build(base, rootfs, daemon, original_spl, release_spl, output):
     replacements['usr/sbin/flasher-recovery'] = (stat.S_IFREG | 0o755, binary)
     replacements['run/vitrallis-original-spl.nand'] = (stat.S_IFREG | 0o600, restoration_bytes(original_spl))
     replacements['run/vitrallis-locked-hynix-spl.nand'] = (stat.S_IFREG | 0o600, release_bytes(release_spl))
+    replacements['run/vitrallis-uboot-pair.bin'] = (stat.S_IFREG | 0o600, uboot_pair_bytes(uboot_pair))
     output = pathlib.Path(output).absolute()
     if output.exists() or output.is_symlink() or any(p.is_symlink() for p in output.parents):
         raise ValueError('output must be a new directory without symlink parents')
@@ -244,7 +257,7 @@ def build(base, rootfs, daemon, original_spl, release_spl, output):
     image = uimage.build({'type': 3, 'compression': 1, 'name': f'Vitrallis recovery v{PROTOCOL}'}, gzip.compress(cpio, compresslevel=9, mtime=0))
     if len(image) > 40 * 1024 * 1024:
         raise ValueError('recovery RAM image bound')
-    metadata = {'protocol': PROTOCOL, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'rootfs-map', 'physical-marker', 'boot-readback', 'return-to-fel', 'prepare-spl-trial', 'execute-spl-trial'], 'nand_writes': 'restricted-pinned-original-and-locked-hynix-spl-trials', 'restoration_sha256': RESTORATION_SHA256, 'release_artifact_sha256': RELEASE_SHA256, 'release_program_sha256': RELEASE_PROGRAM_SHA256, 'release_manifest_sha256': RELEASE_MANIFEST_SHA256}
+    metadata = {'protocol': PROTOCOL, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'rootfs-map', 'physical-marker', 'boot-readback', 'return-to-fel', 'prepare-spl-trial', 'execute-spl-trial'], 'nand_writes': 'restricted-pinned-spl-and-uboot-trials', 'restoration_sha256': RESTORATION_SHA256, 'release_artifact_sha256': RELEASE_SHA256, 'release_program_sha256': RELEASE_PROGRAM_SHA256, 'release_manifest_sha256': RELEASE_MANIFEST_SHA256, 'uboot_pair_sha256': UBOOT_PAIR_SHA256, 'uboot_original_program_sha256': UBOOT_ORIGINAL_SHA256, 'uboot_release_program_sha256': UBOOT_RELEASE_SHA256}
     output.mkdir(mode=0o700)
     files = [('initrd.uimage', image), ('metadata.json', (json.dumps(metadata, indent=2) + '\n').encode())]
     for name, data in files:
@@ -263,9 +276,10 @@ def main():
     parser.add_argument('--daemon', required=True, type=pathlib.Path)
     parser.add_argument('--original-spl', required=True, type=pathlib.Path)
     parser.add_argument('--release-spl', required=True, type=pathlib.Path)
+    parser.add_argument('--uboot-pair', required=True, type=pathlib.Path)
     parser.add_argument('--output', required=True, type=pathlib.Path)
     args = parser.parse_args()
-    build(args.base, args.rootfs, args.daemon, args.original_spl, args.release_spl, args.output)
+    build(args.base, args.rootfs, args.daemon, args.original_spl, args.release_spl, args.uboot_pair, args.output)
 
 
 if __name__ == '__main__':

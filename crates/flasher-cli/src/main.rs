@@ -196,6 +196,12 @@ fn trial_operation(operation: &str) -> Result<flasher_core::boot_trial::Operatio
         "program-release-primary" => Ok(Operation::ProgramReleasePrimary),
         "erase-backup-for-release-primary" => Ok(Operation::EraseBackupForReleasePrimary),
         "restore-backup-for-release-primary" => Ok(Operation::RestoreBackupForReleasePrimary),
+        "program-release-uboot-backup" => Ok(Operation::ProgramReleaseUbootBackup),
+        "erase-original-uboot-primary" => Ok(Operation::EraseOriginalUbootPrimary),
+        "restore-original-uboot-primary" => Ok(Operation::RestoreOriginalUbootPrimary),
+        "program-release-uboot-primary" => Ok(Operation::ProgramReleaseUbootPrimary),
+        "erase-release-uboot-backup" => Ok(Operation::EraseReleaseUbootBackup),
+        "restore-release-uboot-backup" => Ok(Operation::RestoreReleaseUbootBackup),
         _ => Err(Error::State),
     }
 }
@@ -377,7 +383,7 @@ fn boot_readback_diagnostic(
 ) -> Result<(), Error> {
     use flasher_core::recovery::{BootRegion, ReadInterpretation};
     let interpretation = match region {
-        "uboot-corrected" => ReadInterpretation::KernelCorrected,
+        "uboot-corrected" | "fourth-boot-block-corrected" => ReadInterpretation::KernelCorrected,
         "spl-primary-corrected" | "spl-backup-corrected" => ReadInterpretation::Boot0Corrected,
         _ => ReadInterpretation::Raw,
     };
@@ -385,7 +391,7 @@ fn boot_readback_diagnostic(
         "spl-primary" | "spl-primary-corrected" => BootRegion::SplPrimary,
         "spl-backup" | "spl-backup-corrected" => BootRegion::SplBackup,
         "uboot" | "uboot-corrected" => BootRegion::UBoot,
-        "fourth-boot-block" => BootRegion::FourthBootBlock,
+        "fourth-boot-block" | "fourth-boot-block-corrected" => BootRegion::FourthBootBlock,
         _ => return Err(Error::Device),
     };
     let response = flasher_core::recovery::diagnostic_boot_readback(
@@ -404,7 +410,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  uboot-check-pair /absolute/path/to/pinned-pair.bin (read-only original/release snapshots)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  uboot-check-pair /absolute/path/to/pinned-pair.bin (read-only original/release snapshots)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block|fourth-boot-block-corrected\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. U-Boot trial operations: program-release-uboot-backup, erase-original-uboot-primary, restore-original-uboot-primary, program-release-uboot-primary, erase-release-uboot-backup, restore-release-uboot-backup. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

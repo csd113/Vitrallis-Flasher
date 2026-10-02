@@ -20,9 +20,9 @@ use std::{
 };
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
-const TEMPLATE_HASH: &str = "d7d209536c4a17db90e6c36a56e5aa5996d28cca4eb625675da20c983221b781";
-const TEMPLATE_BYTES: usize = 41_215_158;
-const DAEMON_HASH: &str = "4b0ff07681ce7f33e8313f23844edaeb964fa077c0efaaaa077f5659f480188f";
+const TEMPLATE_HASH: &str = "b9e128e6c2b37dac13fe0f5354749a760bd0a2ad8eaea5d3441bd0a02bbe5315";
+const TEMPLATE_BYTES: usize = 41_687_740;
+const DAEMON_HASH: &str = "3247bc2c94786016532912f9825b616d09bfa2252ee4400cbdf1564f383d2dc0";
 const MARKER_DTB_HASH: &str = "55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd";
 const MARKER_DTB_BYTES: usize = 25_639;
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
@@ -308,14 +308,14 @@ mod tests {
     #[test]
     fn bootstrap_pins_match_the_recorded_template_bytes_and_implementation() {
         let metadata: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-template-v8.json"
+            "../../../docs/evidence/batch3/recovery-template-v9.json"
         ))
         .unwrap();
         assert_eq!(
             metadata["image_bytes"].as_u64().unwrap(),
             TEMPLATE_BYTES as u64
         );
-        assert_eq!(metadata["protocol"], 8);
+        assert_eq!(metadata["protocol"], 9);
         assert_eq!(
             metadata["release_artifact_sha256"],
             crate::boot_trial::release::ARTIFACT
@@ -327,6 +327,18 @@ mod tests {
         assert_eq!(
             metadata["release_manifest_sha256"],
             crate::boot_trial::release::MANIFEST
+        );
+        assert_eq!(
+            metadata["uboot_pair_sha256"],
+            crate::boot_trial::uboot::BUNDLE
+        );
+        assert_eq!(
+            metadata["uboot_release_program_sha256"],
+            crate::boot_trial::uboot::RELEASE_PROGRAM
+        );
+        assert_eq!(
+            metadata["uboot_original_program_sha256"],
+            crate::boot_trial::ORIGINAL_UBOOT
         );
         assert_eq!(metadata["image_sha256"].as_str().unwrap(), TEMPLATE_HASH);
         assert_eq!(metadata["daemon_sha256"].as_str().unwrap(), DAEMON_HASH);

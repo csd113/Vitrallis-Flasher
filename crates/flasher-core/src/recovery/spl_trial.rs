@@ -27,6 +27,8 @@ pub struct Prepared {
     pub original_uboot_sha256: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub release_spl: Option<boot_trial::release::Pins>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uboot_images: Option<Box<boot_trial::uboot::Pins>>,
 }
 impl Prepared {
     /// Checks exact known candidate and backup chain; this is not release approval.
@@ -42,6 +44,10 @@ impl Prepared {
                 != operation
                     .is_release_trial()
                     .then(boot_trial::release::Pins::expected)
+            || self.uboot_images
+                != operation
+                    .is_uboot_trial()
+                    .then(|| Box::new(boot_trial::uboot::Pins::expected()))
         {
             return Err(Error::Recovery);
         }
@@ -78,6 +84,9 @@ impl Ticket {
             release_spl: operation
                 .is_release_trial()
                 .then(boot_trial::release::Pins::expected),
+            uboot_images: operation
+                .is_uboot_trial()
+                .then(|| Box::new(boot_trial::uboot::Pins::expected())),
         };
         Ok((ticket, prepared))
     }
@@ -217,6 +226,82 @@ const fn failure_stage(dispatched: bool, error: &Error) -> Stage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn uboot_preparation_rejects_missing_changed_pins_and_spl_operation_substitution() {
+        for operation in [
+            Operation::ProgramReleaseUbootBackup,
+            Operation::RestoreOriginalUbootPrimary,
+        ] {
+            let (_, mut prepared) = Ticket::issue(operation).unwrap();
+            prepared.validate(operation).unwrap();
+            assert!(prepared.validate(Operation::RestorePrimary).is_err());
+            prepared.uboot_images.as_mut().unwrap().backup_spl_sha256 = "0".repeat(64);
+            assert!(prepared.validate(operation).is_err());
+            prepared.uboot_images = None;
+            assert!(prepared.validate(operation).is_err());
+        }
+    }
+
+    #[test]
+    fn changed_uboot_preparation_never_dispatches_and_wrong_readback_is_indeterminate() {
+        for before_dispatch in [true, false] {
+            let directory = crate::assets::temporary_directory().unwrap();
+            let path = directory.path().join("uboot.jsonl");
+            let operation = Operation::ProgramReleaseUbootBackup;
+            let cancel = Cancellation::default();
+            let mut journal = Journal::create(
+                &path,
+                Context {
+                    sid: boot_trial::SID,
+                    session: [1; 16],
+                    daemon_sha256: [2; 32],
+                    operation,
+                },
+                &cancel,
+            )
+            .unwrap();
+            let mut calls = 0;
+            let result = perform(
+                &mut journal,
+                operation,
+                |request| {
+                    calls += 1;
+                    if calls == 1 {
+                        assert!(matches!(request, Request::PrepareSplTrial { .. }));
+                        let (_, mut prepared) = Ticket::issue(operation).unwrap();
+                        if before_dispatch {
+                            prepared.uboot_images.as_mut().unwrap().manifest_sha256 =
+                                "0".repeat(64);
+                        }
+                        return Ok(Response::SplTrialPrepared(prepared));
+                    }
+                    assert!(matches!(request, Request::ExecuteSplTrial { .. }));
+                    Ok(Response::SplTrialVerified {
+                        operation,
+                        readback: Box::new(erased()),
+                    })
+                },
+                &cancel,
+            );
+            assert!(result.is_err());
+            assert_eq!(calls, if before_dispatch { 1 } else { 2 });
+            let stage = boot_trial::journal::read(&path, &cancel)
+                .unwrap()
+                .entries
+                .last()
+                .unwrap()
+                .stage;
+            assert_eq!(
+                stage,
+                if before_dispatch {
+                    Stage::FailedBeforeDispatch
+                } else {
+                    Stage::Indeterminate
+                }
+            );
+        }
+    }
 
     #[test]
     fn prepared_release_pins_bind_exact_artifact_program_manifest_and_operation() {
