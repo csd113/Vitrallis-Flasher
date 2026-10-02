@@ -1,0 +1,25 @@
+{
+  "protocol": 4,
+  "records": [
+    {
+      "case": "wrong-key",
+      "exit": 1,
+      "stderr": "recovery authentication or protocol failed"
+    },
+    {
+      "case": "wrong-sid",
+      "exit": 1,
+      "stderr": "recovery authentication or protocol failed"
+    },
+    {
+      "case": "stale-session",
+      "exit": 1,
+      "stderr": "recovery authentication or protocol failed"
+    },
+    {
+      "case": "valid-session-after-rejections",
+      "response": "Pong"
+    }
+  ],
+  "nand_mutation_performed": false
+}

@@ -196,4 +196,5 @@ mutation. Cancellation before dispatch sends no execute request; cancellation or
 response loss after dispatch is indeterminate. Device RAM journals survive socket
 loss, and verified replies require primary readback plus the unchanged backup boot
 chain. This diagnostic does not enable the production `NandPlan`, release catalog
-or GUI flash path. Its physical mutation and fallback results remain unmeasured.
+or GUI flash path. Its primary erasure and normal backup boot are physically verified; clean restoration
+remains pending.

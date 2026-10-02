@@ -215,16 +215,11 @@ mod tests {
     use super::*;
     fn erased() -> BootReadback {
         let evidence: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../docs/evidence/batch3/recovery-boot-readbacks-5.json"
+            "../../../../docs/evidence/batch3/recovery-primary-erase-trial-8.json"
         ))
         .unwrap();
-        // The measured erased fourth block supplies semantics only; this host
-        // fixture explicitly models an erased primary, not a physical claim.
-        let mut value = evidence["records"][3]["response"].clone();
-        value["region"] = serde_json::json!("SplPrimary");
-        value["interpretation"] = serde_json::json!("Raw");
-        value["spl_copies"] = serde_json::json!([]);
-        serde_json::from_value(value).unwrap()
+        serde_json::from_value(evidence["response"]["SplTrialVerified"]["readback"].clone())
+            .unwrap()
     }
 
     #[test]

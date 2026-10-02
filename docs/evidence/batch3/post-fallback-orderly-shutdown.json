@@ -1,0 +1,9 @@
+{
+  "operation": "orderly-normal-OS-poweroff-before-original-SPL-restoration",
+  "active_package_processes": false,
+  "ssh_exit": 0,
+  "stdout": "",
+  "stderr": "",
+  "boot_id": "ed39f489-88cd-4b32-bbc3-f40227e18d26",
+  "sid": "174225165838305030303331c088020e"
+}

@@ -499,3 +499,30 @@ as `docs/evidence/batch3/recovery-template-v4.json`. Rebuilding the daemon after
 updating bootstrap pins preserves its exact digest. Physical v4 preflight,
 primary mutation, BROM fallback and clean restoration remain pending. Production
 manifest approval, `NandPlan` execution and the complete OS reflash remain blocked.
+
+### Batch 3 first controlled primary erase and physical backup boot
+
+The eighth authenticated recovery boot passes local trial preparation. Actual
+host SIGINT after 0.7 seconds produces CancelledBeforeDispatch; all four primary
+program digests still match afterward. Wrong key, SID and stale session are
+physically rejected, followed by a valid-session Pong.
+
+`recovery-spl-trial erase-primary` exits 0 in 18.041 seconds, with a durable
+Verified host journal and exact raw erasure of all 4 MiB data and 425,984 OOB
+bytes. Independent backup SPL and corrected U-Boot remain unchanged with zero
+ECC failures. After user power-off, bridge removal and cold power-on, Vitrallis
+appears and strict-host-key SSH succeeds. A new boot ID, matching SID/kernel and
+original UBIFS UUID are captured. Independent post-boot NAND read still verifies
+the entire primary is FF. Normal backup boot is therefore measured on this
+Hynix unit. All ECC failure counters are zero; bad-block counts are unchanged.
+No production reflash or generated-program BROM acceptance is claimed.
+
+The primary-erasure and transaction regression tests now consume this actual
+erased-primary fixture, replacing the explicitly adapted fourth-block fixture.
+`python3 scripts/ci.py validate` and the separate all-target/all-feature workspace
+check both exit 0; logs: `work/batch3/primary-erase-physical-validation.log` and
+`work/batch3/primary-erase-physical-workspace-check.log`. These retain all required
+formatting, strict Clippy, workspace tests, release, image/script, provenance,
+stock/Vitrallis plan and manifest checks. Evidence is indexed under
+`docs/evidence/batch3/README.md`. Clean original-SPL restoration, redundant U-Boot
+behavior and the full approved application installation/verification remain required.

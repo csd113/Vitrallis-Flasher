@@ -378,7 +378,7 @@ fn validate_image(bytes: &[u8], cancel: &Cancellation) -> Result<(), Error> {
 mod tests {
     use super::*;
     use crate::tool::ScriptedToolRunner;
-    use serde_json::{Value, json};
+    use serde_json::Value;
 
     const MOUNTS: &str = "rootfs / rootfs rw 0 0\nproc /proc proc rw 0 0\nsys /sys sysfs rw 0 0\n";
 
@@ -555,13 +555,13 @@ mod tests {
     #[test]
     fn actual_erased_capture_semantics_require_all_bytes_and_correct_partition() {
         let raw: Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-boot-readbacks-5.json"
+            "../../../docs/evidence/batch3/recovery-primary-erase-trial-8.json"
         ))
         .unwrap();
-        let mut erased = raw["records"][3]["response"].clone();
-        erased["interpretation"] = json!("Raw");
-        erased["spl_copies"] = json!([]);
-        let mut report: BootReadback = serde_json::from_value(erased).unwrap();
+        let mut report: BootReadback =
+            serde_json::from_value(raw["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        report.region = BootRegion::FourthBootBlock;
         assert!(verify_erased_primary(&report).is_err());
         report.region = BootRegion::SplPrimary;
         verify_erased_primary(&report).unwrap();

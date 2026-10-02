@@ -1,0 +1,97 @@
+{
+  "protocol": 4,
+  "host_interrupt_sent_after_seconds": 0.7,
+  "exit": 1,
+  "stderr": "operation cancelled; start a fresh preflight before retrying",
+  "journal": {
+    "header": {
+      "version": 1,
+      "context": {
+        "sid": [
+          23,
+          66,
+          37,
+          22,
+          88,
+          56,
+          48,
+          80,
+          48,
+          48,
+          51,
+          49,
+          192,
+          136,
+          2,
+          14
+        ],
+        "session": [
+          30,
+          192,
+          180,
+          180,
+          81,
+          153,
+          121,
+          158,
+          5,
+          167,
+          137,
+          245,
+          40,
+          144,
+          143,
+          49
+        ],
+        "daemon_sha256": [
+          56,
+          238,
+          15,
+          20,
+          155,
+          49,
+          71,
+          155,
+          222,
+          103,
+          50,
+          132,
+          36,
+          160,
+          234,
+          42,
+          68,
+          177,
+          128,
+          36,
+          207,
+          172,
+          214,
+          43,
+          185,
+          90,
+          183,
+          160,
+          93,
+          13,
+          121,
+          174
+        ],
+        "operation": "ErasePrimary"
+      },
+      "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+      "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb"
+    },
+    "entries": [
+      {
+        "sequence": 0,
+        "stage": "Intent"
+      },
+      {
+        "sequence": 1,
+        "stage": "CancelledBeforeDispatch"
+      }
+    ]
+  },
+  "nand_dispatch_recorded": false
+}

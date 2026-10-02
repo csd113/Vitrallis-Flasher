@@ -88,5 +88,11 @@ Protocol v4 integrates the reviewed fixed mtd0 trial. Host/ARMv7 tests cover
 tickets, pre-dispatch cancellation, lost responses and exact verified completion.
 The recovery template contains the pinned private original-SPL restoration image;
 local tool capabilities and backup boot-chain health are checked before dispatch.
-Physical v4 trial and BROM fallback measurements are still pending. The production
+Physical v4 preparation, host cancellation, wrong-key/SID/stale-session rejection
+and fixed primary erase are measured. The raw primary readback is completely
+erased, and backup SPL/U-Boot retain their original digests without ECC failures.
+Normal backup boot is independently confirmed over SSH while full raw primary
+readback remains erased. SID/kernel/root UUID are unchanged, all ECC failure
+counters are zero and bad-block counts remain stable. Clean restoration and
+new-release SPL acceptance remain pending. The production
 manifest/plan and full reflash remain blocked until their required evidence exists.

@@ -165,3 +165,27 @@ selection is claimed.
   the exact private original-SPL restoration encoding for the restricted trial;
   no original executable bytes or session secrets are tracked. Physical v4
   preflight/mutation measurements are not claimed by this build record.
+
+- `recovery-boot-8-tool.json`: exact pinned v4 RAM boot after authenticated return
+  to FEL and independent same-SID discovery.
+- `recovery-trial-preflight-8.json`: successful device-local preparation followed
+  by disconnect, with the discarded connection token omitted.
+- `recovery-trial-cancellation-8.json`: actual host SIGINT during preparation,
+  terminal CancelledBeforeDispatch host journal and no Execute record.
+- `recovery-auth-rejections-8.json`: actual wrong-key, wrong-SID and stale-session
+  rejection, followed by valid-session Pong. No mutation was requested.
+- `recovery-primary-after-cancellation-8.json`: all four primary copies still
+  match the original after cancellation and authentication rejection.
+- `recovery-primary-erase-trial-8.json`: application-only fixed primary erase,
+  exact full raw data/OOB erasure and durable Verified journal (18.041 seconds).
+- `recovery-boot-chain-after-primary-erase-8.json`: independent post-erase backup
+  SPL, corrected U-Boot and inventory, with unchanged digests and zero ECC errors.
+  Primary erasure and BROM fallback are physically proven; clean restoration is pending.
+
+- `normal-backup-spl-boot-8.json`: new cold NAND boot after bridge removal,
+  independent matching SID/kernel/root UUID, unchanged bad blocks, zero ECC failures
+  and complete post-boot primary raw readback still FF. This proves backup SPL
+  boot on the measured Hynix unit; it does not identify the selected copy within
+  that backup block or validate a new installation.
+- `post-fallback-orderly-shutdown.json`: no active apt/dpkg process and successful
+  orderly original-OS shutdown before reentering FEL for clean primary restoration.

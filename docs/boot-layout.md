@@ -79,7 +79,8 @@ is seven bits in one codeword, and each complete block read/decode takes about
 2.1 seconds. Corrected U-Boot again matches the original digest, with 6,496 bits
 corrected and zero uncorrectable errors. See
 [the live SPL evidence](evidence/batch3/recovery-spl-bch64-readbacks-7.json).
-BROM primary/backup selection and generated-image acceptance remain unproven.
+The subsequent controlled trial proves backup boot on this Hynix unit; generated-image
+acceptance remains unproven, as described below.
 
 The fourth boot block at `0xC00000` remains completely FF in data and OOB,
 and its raw hashes match the original backup. The Linux `env` label does not
@@ -90,8 +91,8 @@ After removing the FEL bridge, the original installation boots to the Vitrallis
 shell and SSH returns. Its root UBIFS identity matches the baseline, with no
 uncorrectable NAND/UBI failure in the captured boot log. See
 [the normal-boot evidence](evidence/batch3/original-nand-normal-boot.json).
-Generated SPL acceptance and controlled primary/backup fallback still require
-physical testing. No NAND erase or write has occurred.
+Generated SPL acceptance still requires physical testing. The original normal-boot
+record predates the controlled primary erase and backup-boot result below.
 
 ## The `0xC00000` conflict
 
@@ -139,3 +140,25 @@ redundant U-Boot copy. The current review plan still schedules no operation ther
 * [image provenance](image-provenance.md) — artifact identities/hashes
 * [recovery protocol](recovery-protocol.md) — host/device behavioural contract
 * [physical validation](physical-validation.md) — hardware gates
+
+### Controlled primary-SPL erase
+
+The eighth authenticated RAM session erased only mtd0 through the fixed Flasher
+trial. Full raw readback verifies 4,194,304 data bytes and 425,984 OOB bytes are FF,
+including all 256 page markers; zero ECC failures remain. The durable host journal
+records Verified. Independent backup SPL and corrected U-Boot readbacks still
+match their original digests. The unit has an erased primary and intact backup. After removing the FEL bridge
+and power-cycling, it boots the original Vitrallis installation through the backup. This
+is a controlled diagnostic, not a newly flashed OS or approved release.
+
+The cold backup boot has a new Linux boot ID
+`ed39f489-88cd-4b32-bbc3-f40227e18d26`, matching nvmem SID, kernel
+`6.12.107+deb13-chip` and original root UUID
+`D4C5E196-7073-43CD-B90D-3CCF2A1AF8A1`. An independent SSH raw NAND
+read after boot still finds every primary data/OOB byte FF, with interleaved digest
+`71c220404abcfabfbeb7480a98fcbc9e44e64290ee9c0c9b8a65d6aabefefdab`.
+This establishes BROM fallback to the preserved SPL backup block on this unit,
+not which of its four identical copies was selected. All MTD ECC failure counters
+are zero and bad-block inventory is unchanged. The result does not prove Toshiba
+behavior, newly generated SPL acceptance or interruption during a write. See
+[the backup-boot evidence](evidence/batch3/normal-backup-spl-boot-8.json).

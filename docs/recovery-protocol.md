@@ -183,8 +183,11 @@ but RAM-only, retained across connections and lost at reboot/power loss. Host
 journals provide persistent diagnosis. Protocol v4 allows 60 seconds per transport
 component with 500 ms cancellation polling, replacing the former 15-second bound.
 Neither the ticket nor this diagnostic constitutes release-manifest approval.
-`NandPlan` production authorization remains denied. Physical trial measurements
-are still required; no v4 erase/write has been dispatched yet.
+`NandPlan` production authorization remains denied. The eighth RAM session physically passes preparation and cancellation/authentication
+rejection checks. Its fixed primary erase completes with exact raw data/OOB
+verification and a durable Verified host journal. Backup SPL and U-Boot remain
+unchanged. Normal backup boot with a still-erased primary is physically proven on the
+measured Hynix unit. Clean restoration remains pending.
 
 The host trial journal publishes a new private intent file atomically without
 overwrite and fsyncs it before preparation or dispatch. It records public SID,
@@ -200,7 +203,7 @@ unmeasured. `trial-journal-read` provides read-only inspection. The journal is
 connected to `recovery-spl-trial`: intent precedes preparation, fsynced dispatch
 precedes the Execute frame, and exact verified readback precedes Verified.
 `recovery-spl-preflight` prepares then disconnects without dispatch, dropping the
-device ticket. No destructive request has been dispatched yet.
+device ticket. The first fixed primary erase is physically verified; this is not a production reflash.
 
 The v4 builder requires `--original-spl` pointing to the private, pinned clean
 restoration candidate. It rejects changed bytes before output creation and puts
