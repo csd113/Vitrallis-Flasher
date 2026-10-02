@@ -962,3 +962,22 @@ on ARMv7 under qemu-arm (6.78 seconds). Private logs:
 `uboot-physical-17-workspace-check.log`, `uboot-physical-17-arm-tests.log` and
 `uboot-v9-physical-fixture-tests.log`. Physical evidence is indexed in
 `evidence/batch3/README.md` and the session 17 physical-validation section.
+
+### Bounded Rust rootfs inspector checkpoint
+
+Full `python3 scripts/ci.py validate` passes: formatting, strict Clippy,
+197 core tests (six intentional ignored subprocess fixtures), five integration
+tests, 11 recovery tests, 73 image tests, 35 script tests, release builds and
+established provenance/kernel/image/manifest checks.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. All eight rootfs inspector tests also pass cross-built
+on ARMv7 under qemu-arm. The final release CLI inspects the complete locked
+stock archive in 4.541 seconds and reproduces the independent Python audit's
+50,950 members, 1,264,012,666 regular-file bytes and semantic digest. This is
+host-only validation; production decoding, installation and readback remain
+unimplemented. No write authorization is added.
+
+Private logs: `work/batch3/rootfs-parser-final-validation.log`,
+`rootfs-parser-final-workspace-check.log`, `rootfs-parser-arm-tests-final.log`
+and `rootfs-parser-targeted-tests.log` in the same directory. Evidence:
+`evidence/batch3/rootfs-rust-parser-stream-check.json`.

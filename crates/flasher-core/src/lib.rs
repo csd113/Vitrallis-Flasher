@@ -17,6 +17,7 @@ pub mod recovery;
 #[cfg(feature = "native-fel")]
 pub mod recovery_boot;
 pub mod releases;
+pub mod rootfs;
 pub mod script;
 pub mod session;
 pub mod simulation;
@@ -31,6 +32,8 @@ use std::sync::{
 /// Errors contain diagnostics, never manifest-controlled command text.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("rootfs archive rejected: {0}")]
+    RootfsArchive(&'static str),
     #[error("invalid manifest: {0}")]
     Manifest(&'static str),
     #[error("asset length differs from the manifest")]

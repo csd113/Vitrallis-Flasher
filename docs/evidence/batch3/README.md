@@ -333,3 +333,9 @@ selection is claimed.
   Member/data counts and actual kernel/DTB/overlay/boot-script bytes match the
   preserved Batch 1 report/artifacts. This performs no extraction or NAND write
   and is not runtime rootfs verification or physical manifest approval.
+
+- `rootfs-rust-parser-stream-check.json`: complete locked-archive inspection by
+  the shared Rust parser/CLI, independently matching Python member/data counts
+  and the canonical semantic digest. The decoder and parser must both exit
+  successfully; no extraction or NAND access occurs. This does not approve
+  assets, implement streaming installation or prove runtime filesystem contents.

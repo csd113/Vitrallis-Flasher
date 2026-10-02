@@ -243,3 +243,16 @@ bind the exact pair, both U-Boot programs and both SPL programs. Kernel-correcte
 U-Boot data remains separate from boot0-corrected SPL data. This diagnostic path
 still grants no production NandPlan or manifest authorization; physical release
 U-Boot boot/fallback and the production executor remain pending.
+
+The rootfs tar inspector is shared Rust code over a Read provider. It performs
+no extraction and grants no installation authority. It validates GNU/POSIX
+headers, checksums, GNU long-name/link and PAX path/link records, normalized
+paths and directory ancestry, earlier-file hardlinks, numeric ownership/modes,
+the eight reviewed character-device identities, bounded file contents and
+terminal padding. It retains bounded metadata and hashes content in 8 KiB
+reads. The complete ordered semantic digest uses the existing image repacker's
+metadata/content encoding. Providers must bound blocking reads; cancellation
+is checked for every fragment, including short/interrupted reads and final
+ancestry validation. Inspection does not replace VerifiedAssets or physical
+manifest authorization. Bounded decoder/transport integration and the actual
+UBI/rootfs installer remain required behind the validated NAND plan.

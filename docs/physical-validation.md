@@ -310,3 +310,27 @@ remain required. Evidence:
 `evidence/batch3/rootfs-installation-stream-audit.json`; private audit script/log:
 `work/batch3/audit-rootfs-installation.py` and
 `work/batch3/rootfs-installation-stream-audit.log`.
+
+### Rust rootfs parser: complete locked-archive cross-check
+
+The shared Rust tar inspector and read-only `rootfs-audit-tar` CLI consume the
+complete decompressed stock archive without extraction. The inspector accepts
+the measured GNU format and its 71 long-name records, preserves numeric
+ownership/modes, validates links and all data, and reproduces the Python audit's
+50,950 members, 1,264,012,666 file bytes and exact ordered semantic digest
+`50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35`.
+The diagnostic uses a fixed external gzip decoder, whose exit and stderr are
+checked separately. This is host-only parser evidence. It neither implements
+production decoder/transport integration nor installs/verifies a filesystem.
+The inspection result is data, not asset trust or write authority.
+
+Bounds include 8 KiB content reads, 200,000 entries, a 32 MiB metadata-accounting
+budget, 4 KiB paths, 8 KiB extensions, 512 MiB per regular file and 8 GiB total
+file data. Providers must separately enforce blocking-read timeouts. Fragmented
+and interrupted reads remain cancellable; completion requires all headers,
+contents, path ancestry, both terminal blocks and bounded zero padding to pass.
+Regression tests reject unsafe/duplicate paths, symlink ancestors, forward or
+escaping hardlinks, unsupported/changed device nodes, malformed extensions,
+checksum changes, truncation, nonzero/partial padding, appended payloads and
+cancellation. Evidence:
+`evidence/batch3/rootfs-rust-parser-stream-check.json`.
