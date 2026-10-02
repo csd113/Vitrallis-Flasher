@@ -1,11 +1,12 @@
 # PocketCHIP NAND boot layout — evidence and open questions
 
-This document is the Batch 0 source of truth for the on-NAND boot layout. It is
-derived from upstream source and configuration; **nothing here has been validated
-on hardware**. Every claim cites its evidence. Conflicts are preserved instead of
-resolved by assumption.
+The original layout below was derived in Batch 0 from upstream source and
+configuration. Batch 3 has now measured the development PocketCHIP's geometry,
+raw boot-region contents and corrected U-Boot readback. Source-derived fallback
+behavior remains separate from physical boot validation; unresolved claims are
+retained until measured. Evidence is indexed in [the Batch 3 record](evidence/batch3/README.md).
 
-## Established offsets
+## Source-derived layout
 
 | Offset | Size | U-Boot `mtdparts` name | Linux DTS partition label | Written by upstream x-chip-tools | Evidence |
 | --- | --- | --- | --- | --- | --- |
@@ -38,6 +39,45 @@ Supporting facts:
 * The installer boot script erases the whole boot region before rewriting it:
   `nand erase 0x0 0x1000000` (`flash-live.sh:137-140`).
 
+## Batch 3 measured state
+
+The actual NAND is Hynix H27UCG8T2ETR-BC, manufacturer/device ID `ad:de`,
+with 8 GiB physical capacity, 16 KiB pages, 4 MiB physical eraseblocks and
+1,664-byte OOB. The four boot partitions expose one physical eraseblock each
+at the source-derived offsets above. Their bad-block counts are zero. Both
+original Linux observations and authenticated RAM recovery agree on the layout.
+The normal kernel ECC policy is 56 bits per 1,024 bytes; SPL's boot0 image uses
+its separate source-derived 64-bit ECC layout.
+
+The rootfs partition starts at physical `0x1000000` and enables SLC-on-MLC
+emulation. It exposes 4,286,578,688 logical bytes in 2 MiB eraseblocks, rather
+than an 8 GiB flat write range. Original ioctl enumeration found 65 unavailable
+logical blocks, consistent with 61 bad blocks plus four reserved BBT blocks.
+Original UBI uses 2,064,384-byte LEBs, a 16,384-byte VID-header offset and
+32,768-byte data offset. These values must constrain the eventual per-part
+executor; they do not authorize execution by themselves.
+
+Raw data/OOB reads of the programmed boot regions differ across captures.
+Kernel-corrected U-Boot data matches the original 4 MiB backup SHA256 exactly:
+`c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224`.
+The authenticated corrected read recorded 6,136 corrected bits and zero
+uncorrectable errors. Raw digest equality cannot be the verification rule for
+these programmed regions.
+
+Analysis of the original raw SPL backups found four eGON boot0 groups per
+block, with 64-page spacing and a declared 16 KiB SPL size. A bit-majority
+reconstruction across eight copies matches the stored SPL checksum. That is
+host analysis of uncorrected bytes, not BCH correction or physical BROM search
+validation. See [the analysis](evidence/batch3/spl-original-raw-analysis.json).
+
+The fourth boot block at `0xC00000` remains completely FF in data and OOB,
+and its raw hashes match the original backup. The Linux `env` label does not
+establish a stored environment. The exact reviewed source/configuration hashes
+and redundant-load behavior are preserved in
+[the source-policy evidence](evidence/batch3/uboot-backup-source-policy.json).
+Normal NAND boot, generated SPL acceptance and controlled primary/backup
+fallback still require physical testing. No NAND erase or write has occurred.
+
 ## The `0xC00000` conflict
 
 Two upstream components claim the same `0x400000`-byte slot:
@@ -58,17 +98,18 @@ Consequences and status:
 
 * The offset and size are agreed by both sources; only the name/purpose differ.
 * Whether the redundant U-Boot fallback can succeed after an upstream-style
-  flash is **UNRESOLVED** without hardware: the fallback slot is never
-  populated, so a failed primary read should fail.
+  flash is **UNRESOLVED** physically: the measured slot is erased, and source-derived
+  fallback requires a valid programmed redundant payload.
 * Whether U-Boot or Linux ever writes an environment to `0xC00000` is
   **UNRESOLVED**; the reviewed configuration provides no environment location.
 
-This must be resolved before Batch 5 (write path) chooses whether to populate a
-redundant U-Boot copy. Batch 0 deliberately does not modify flashing code.
+This must be resolved before Batch 3 destructive execution chooses whether to populate a
+redundant U-Boot copy. The current review plan still schedules no operation there.
 
 ## Other unresolved layout facts (require hardware)
 
-* Actual NAND geometry (usable pages, bad blocks, ECC strength/layout) per part.
+* Hynix geometry is measured above; executable bad-block handling, SPL ECC-aware
+  verification and Toshiba geometry remain unresolved.
 * Whether the BROM/SPL accepts the `sunxi-nand-image-builder` output for both
   the Hynix H27UCG8T2ETR (OOB 1664) and Toshiba TC58TEG5DCLTA00 (OOB 1280)
   parts (`lib-nand.sh:22-34`).
