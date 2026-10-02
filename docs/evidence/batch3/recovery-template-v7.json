@@ -20,10 +20,12 @@
   "nand_writes": "restricted-original-spl-block-trial",
   "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
   "byte_identical_repeat": true,
-  "physical_boot": "pending",
-  "physical_marker_read": "pending",
+  "physical_boot": "Authenticated v7 Pong in session 13 with the exact marker-alias DTB",
+  "physical_marker_read": "Repeated identical checked raw physical page 255 observation in recovery-physical-marker-13.json; original boot chain preserved",
   "marker_alias_dtb_sha256": "55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd",
   "marker_alias_dtb_bytes": 25639,
   "marker_operation": "Fixed raw physical page 255 of read-only non-SLC mtd5 at physical 0x38800000; no caller-selected address/path",
-  "trial_write_policy": "Original-SPL trial requires exactly five partitions; marker alias produces six and denies trial writes"
+  "trial_write_policy": "Original-SPL trial requires exactly five partitions; marker alias produces six and denies trial writes",
+  "physical_trial_with_alias": "PrepareSplTrial rejected; no Execute dispatched; fresh v7 Pong and readback remain healthy",
+  "physical_standard_boot": "Authenticated v7 Pong and original five-partition inventory in session 14; marker request denied and SPL prepare succeeds without Execute"
 }

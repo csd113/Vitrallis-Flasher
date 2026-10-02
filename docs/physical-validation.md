@@ -98,8 +98,8 @@ digests and zero uncorrectable failures. Protocol v5 also physically erases the
 backup while protecting the primary. Host SIGINT after dispatch produces an
 Indeterminate journal and no success; independent authenticated readback proves
 the device completed erasure with primary/U-Boot intact. Isolated restored-primary acceptance is now measured by normal SSH boot with
-independent full backup data/OOB still erased. Backup restoration awaits FEL
-re-entry, and new-release SPL acceptance remains pending. The production
+independent full backup data/OOB still erased. Backup restoration is subsequently verified in RAM session 12 with independent
+primary/backup/U-Boot checks. New-release SPL acceptance remains pending. The production
 manifest/plan and full reflash remain blocked until their required evidence exists.
 
 ### Fresh recovery rootfs bad-block map

@@ -215,6 +215,31 @@ const fn failure_stage(dispatched: bool, error: &Error) -> Stage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn physical_backup_restoration_checks_corrected_programs_and_exact_target() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-backup-restoration-trial-12.json"
+        ))
+        .unwrap();
+        let mut report: BootReadback =
+            serde_json::from_value(evidence["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        assert_ne!(
+            report.interleaved_sha256,
+            "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03"
+        );
+        assert!(
+            report
+                .spl_copies
+                .iter()
+                .any(|copy| copy.corrected_bits.iter().any(|bits| *bits > 0))
+        );
+        verify(Operation::RestoreBackup, &report).unwrap();
+        assert!(verify(Operation::RestorePrimary, &report).is_err());
+        report.spl_copies[2].data_sha256 = "0".repeat(64);
+        assert!(verify(Operation::RestoreBackup, &report).is_err());
+    }
     fn erased() -> BootReadback {
         let evidence: serde_json::Value = serde_json::from_str(include_str!(
             "../../../../docs/evidence/batch3/recovery-primary-erase-trial-8.json"

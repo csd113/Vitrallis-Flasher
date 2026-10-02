@@ -758,3 +758,47 @@ build, provenance and established image/plan checks pass in the same sequence.
 `work/batch3/physical-marker-v7-final-workspace-check.log`,
 `work/batch3/physical-marker-v7-arm-core-tests.log` and
 `work/batch3/physical-marker-v7-arm-daemon-tests.log`.
+
+### Batch 3 backup restoration and physical marker/standard v7 validation
+
+After independently measured isolated primary boot, the actual fixed backup
+restoration command finishes in 19.344 seconds with a durable Verified host
+journal. All four backup native-decoded programs match the original SHA256,
+with 61 total correctable bit errors and maximum three in one BCH step; kernel
+ECC failure count remains zero. Independent original primary/backup/U-Boot
+readbacks preserve their known digests. A physical fixture verifies that the
+raw programmed digest may differ from the clean encoding while corrected
+program identity succeeds; wrong target and changed program identity fail.
+
+The exact v7 payload and read-only/non-SLC alias DTB physically authenticate in
+RAM session 13. All original MTD indices are preserved. Repeated page 255 raw
+reads return identical checked evidence: all 1,664 OOB bytes are zero and the
+data digest matches a 16 KiB zero page. This observes marker bytes on one known
+bad physical block and does not establish factory/runtime origin. v6 hello and
+SPL prepare with the alias fail; fresh v7 requests, rootfs map and independent
+original boot-chain readbacks remain healthy with zero ECC failures. No Execute
+is dispatched. A second physical fixture reconstructs the observed page summary
+and verifies exact geometry/OOB/hash preservation.
+
+An authenticated RAM-only return to FEL then loads the same v7 payload with
+the standard DTB in session 14. All five original partitions return; marker read
+without the alias is rejected, and SPL prepare succeeds without Execute. Both
+SPL blocks and U-Boot still match original digests with zero ECC failures. The
+device is left in standard authenticated RAM recovery with both original SPL
+blocks restored. No locked release SPL/U-Boot acceptance, approved production
+manifest or full production reflash is claimed by these diagnostics.
+
+`python3 scripts/ci.py validate` exits 0: 165 core tests pass with six intentional
+child-process fixture ignores, five integration and eleven daemon tests pass,
+plus 71 image and 35 script tests. Formatting, strict workspace Clippy, release
+build, provenance and established image/plan checks pass in the same sequence.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. The two physical fixture tests also pass on cross-built
+ARMv7 under qemu-arm. Logs:
+`work/batch3/marker-physical-13-final-validation.log`,
+`work/batch3/marker-physical-13-final-workspace-check.log`,
+`work/batch3/backup-restoration-12-arm-fixture.log` and
+`work/batch3/marker-physical-13-arm-fixture.log`.
+Structured physical records for sessions 12–14 are indexed in
+`docs/evidence/batch3/README.md`; private session 12 journal remains at
+`work/batch3/original-spl-trial-session-12/restore-backup.jsonl`.

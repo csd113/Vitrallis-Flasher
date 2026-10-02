@@ -233,16 +233,16 @@ node/property and child order. Standard overlay merging was rejected: its new
 child appeared first in offline testing and would renumber the existing MTD
 paths. The diagnostic DTB is reproducible and independently parses with dtc;
 it is integrated into the closed protocol v7 diagnostic bootstrap/read operation
-but has not been loaded on hardware. Direct physical marker observation remains
-pending. This preparation
+and has now been loaded on hardware in RAM session 13. Repeated physical
+last-page OOB observations are identical; see the record below. This preparation
 changes no NAND plan or production authorization.
 
 Recovery inventory now enumerates bounded canonical MTD class entries, including
 an optional sixth alias. Missing, noncanonical or larger layouts fail closed.
 The original-SPL trial continues to require exactly five partitions, so a
 physical marker alias blocks both preparation and fresh execution preflight.
-Host and ARMv7 tests cover this boundary; physical loading of the updated
-implementation remains pending.
+Host and ARMv7 tests cover this boundary. RAM session 13 physically preserves
+all original indices, reports the alias and rejects SPL preflight.
 
 ### Isolated clean restored-primary acceptance
 
@@ -254,4 +254,16 @@ encoding, independently of the erased backup. It does not select one of the
 four primary intra-block copies or validate the locked release program. UBI
 attaches with the original root UUID, zero corrupted PEBs and zero MTD ECC
 failures. See [the isolated boot record](evidence/batch3/normal-restored-primary-isolated-boot-10.json).
-The original backup must still be restored before this diagnostic is finished.
+The original backup is subsequently restored and independently verified in
+[RAM session 12](evidence/batch3/recovery-backup-restoration-trial-12.json).
+
+The first probed bad block at physical `0x38800000` has a 4 MiB eraseblock,
+16 KiB page, 1,664 OOB bytes and zero access flags (read-only, non-SLC). The
+alias reports one bad block and no BBT reservation. Repeated fixed raw reads of
+physical page 255 return identical evidence: all OOB bytes are zero and the data
+digest matches a 16 KiB zero page. This directly observes non-`0xff` marker
+bytes on one BBT-reported bad block; it does not establish factory/runtime
+origin or the contents of all other bad blocks. The rootfs map and original
+primary/backup/U-Boot readbacks remain healthy with zero ECC failures.
+See [the physical read](evidence/batch3/recovery-physical-marker-13.json) and
+[policy/boot-chain checks](evidence/batch3/recovery-marker-policy-and-protected-chain-13.json).

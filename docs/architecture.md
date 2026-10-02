@@ -223,4 +223,5 @@ Device-local geometry, flags, fresh rootfs map and unchanged post-read facts are
 required. Inventory includes the alias, causing existing exact-five-partition
 write preflight to deny SPL mutation. Standard recovery retains its original
 DTB. This diagnostic grants no NAND-plan or physical-manifest approval; payload
-loading and marker observation remain physically unvalidated.
+loading, marker observation and trial rejection with the alias are physically
+measured in RAM session 13. This does not validate production NAND execution.

@@ -1,0 +1,174 @@
+{
+  "protocol": 6,
+  "records": [
+    {
+      "command": "recovery-ping",
+      "arguments": [],
+      "exit": 0,
+      "elapsed_seconds": 0.012,
+      "stderr": "",
+      "response": "Pong"
+    },
+    {
+      "command": "recovery-inventory",
+      "arguments": [],
+      "exit": 0,
+      "elapsed_seconds": 0.093,
+      "stderr": "",
+      "response": {
+        "Inventory": {
+          "model": "NextThing PocketC.H.I.P.",
+          "compatible": [
+            "nextthing,pocketchip",
+            "nextthing,chip",
+            "allwinner,sun5i-r8",
+            "allwinner,sun5i-a13"
+          ],
+          "kernel": "6.12.107+deb13-chip",
+          "command_line": "console=ttyS0,115200 panic=0 rdinit=/init",
+          "memory_reg": [
+            64,
+            0,
+            0,
+            0,
+            30,
+            0,
+            240,
+            0
+          ],
+          "mtd": [
+            {
+              "index": 0,
+              "name": "SPL",
+              "size": 4194304,
+              "erase_size": 4194304,
+              "page_size": 16384,
+              "oob_size": 1664,
+              "bad_blocks": 0,
+              "bbt_blocks": 0,
+              "ecc_strength": 56,
+              "ecc_step": 1024,
+              "corrected_bits": 0,
+              "ecc_failures": 0,
+              "offset": 0
+            },
+            {
+              "index": 1,
+              "name": "SPL.backup",
+              "size": 4194304,
+              "erase_size": 4194304,
+              "page_size": 16384,
+              "oob_size": 1664,
+              "bad_blocks": 0,
+              "bbt_blocks": 0,
+              "ecc_strength": 56,
+              "ecc_step": 1024,
+              "corrected_bits": 0,
+              "ecc_failures": 0,
+              "offset": 4194304
+            },
+            {
+              "index": 2,
+              "name": "U-Boot",
+              "size": 4194304,
+              "erase_size": 4194304,
+              "page_size": 16384,
+              "oob_size": 1664,
+              "bad_blocks": 0,
+              "bbt_blocks": 0,
+              "ecc_strength": 56,
+              "ecc_step": 1024,
+              "corrected_bits": 0,
+              "ecc_failures": 0,
+              "offset": 8388608
+            },
+            {
+              "index": 3,
+              "name": "env",
+              "size": 4194304,
+              "erase_size": 4194304,
+              "page_size": 16384,
+              "oob_size": 1664,
+              "bad_blocks": 0,
+              "bbt_blocks": 0,
+              "ecc_strength": 56,
+              "ecc_step": 1024,
+              "corrected_bits": 0,
+              "ecc_failures": 0,
+              "offset": 12582912
+            },
+            {
+              "index": 4,
+              "name": "rootfs",
+              "size": 4286578688,
+              "erase_size": 2097152,
+              "page_size": 16384,
+              "oob_size": 1664,
+              "bad_blocks": 61,
+              "bbt_blocks": 4,
+              "ecc_strength": 56,
+              "ecc_step": 1024,
+              "corrected_bits": 0,
+              "ecc_failures": 0,
+              "offset": 16777216
+            }
+          ],
+          "boot_log": "[    0.000000] Booting Linux on physical CPU 0x0\n[    0.000000] Linux version 6.12.107+deb13-chip (debian-kernel@lists.debian.org) (arm-linux-gnueabihf-gcc-14 (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44) #1 SMP Debian 6.12.107-1.31 (2026-08-29)\n[    0.000000] CPU: ARMv7 Processor [413fc082] revision 2 (ARMv7), cr=10c5387d\n[    0.000000] CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache\n[    0.000000] OF: fdt: Machine model: NextThing PocketC.H.I.P.\n[    0.000000] Memory policy: Data cache writeback\n[    0.000000] efi: UEFI not found.\n[    0.000000] Reserved memory: created CMA memory pool at 0x4a000000, size 96 MiB\n[    0.000000] OF: reserved mem: initialized node default-pool, compatible id shared-dma-pool\n[    0.000000] OF: reserved mem: 0x4a000000..0x4fffffff (98304 KiB) map reusable default-pool\n[    0.000000] Zone ranges:\n[    0.000000]   DMA      [mem 0x0000000040000000-0x000000005e00efff]\n[    0.000000]   Normal   empty\n[    0.000000]   HighMem  empty\n[    0.000000] Movable zone start for each node\n[    0.000000] Early memory node ranges\n[    0.000000]   node   0: [mem 0x0000000040000000-0x000000005e00efff]\n[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x000000005e00efff]\n[    0.000000] CPU: All CPU(s) started in SVC mode.\n[    0.000000] percpu: Embedded 20 pages/cpu s50828 r8192 d22900 u81920\n[    0.000000] pcpu-alloc: s50828 r8192 d22900 u81920 alloc=20*4096\n[    0.000000] pcpu-alloc: [0] 0 \n[    0.000000] Kernel command line: console=ttyS0,115200 panic=0 rdinit=/init\n[    0.000000] Dentry cache hash table entries: 65536 (order: 6, 262144 bytes, linear)\n[    0.000000] Inode-cache hash table entries: 32768 (order: 5, 131072 bytes, linear)\n[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 122895\n[    0.000000] allocated 499772 bytes of page_ext\n[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off\n[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1\n[    0.000000] ftrace: allocating 48553 entries in 143 pages\n[    0.000000] ftrace: allocated 143 pages with 5 groups\n[    0.000000] rcu: Hierarchical RCU implementation.\n[    0.000000] rcu: \tRCU restricting CPUs from NR_CPUS=8 to nr_cpu_ids=1.\n[    0.000000] \tRude variant of Tasks RCU enabled.\n[    0.000000] \tTracing variant of Tasks RCU enabled.\n[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.\n[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=1\n[    0.000000] RCU Tasks Rude: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.\n[    0.000000] RCU Tasks Trace: Setting shift to 0 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=1.\n[    0.000000] NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16\n[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.\n[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns\n[    0.000007] sched_clock: 32 bits at 24MHz, resolution 41ns, wraps every 89478484971ns\n[    0.000041] clocksource: timer: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 79635851949 ns\n[    0.001582] Console: colour dummy device 80x25\n[    0.001682] Calibrating delay loop... 1001.47 BogoMIPS (lpj=2002944)\n[    0.048106] CPU: Testing write buffer coherency: ok\n[    0.048167] CPU0: Spectre v2: firmware did not set auxiliary control register IBE bit, system vulnerable\n[    0.048177] pid_max: default: 32768 minimum: 301\n[    0.054229] LSM: initializing lsm=lockdown,capability,landlock,yama,apparmor,tomoyo,bpf,ipe,ima,evm\n[    0.056567] landlock: Up and running.\n[    0.056575] Yama: disabled by default; enable with sysctl kernel.yama.*\n[    0.056967] AppArmor: AppArmor initialized\n[    0.057073] TOMOYO Linux initialized\n[    0.057802] LSM support for eBPF active\n[    0.059554] Mount-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)\n[    0.059580] Mountpoint-cache hash table entries: 1024 (order: 0, 4096 bytes, linear)\n[    0.064685] CPU0: thread -1, cpu 0, socket -1, mpidr 0\n[    0.067314] Setting up static identity map for 0x40300000 - 0x403000ac\n[    0.068552] rcu: Hierarchical SRCU implementation.\n[    0.068568] rcu: \tMax phase no-delay instances is 1000.\n[    0.071433] EFI services will not be available.\n[    0.071999] smp: Bringing up secondary CPUs ...\n[    0.072062] smp: Brought up 1 node, 1 CPU\n[    0.072171] SMP: Total of 1 processors activated (1001.47 BogoMIPS).\n[    0.072187] CPU: All CPU(s) started in SVC mode.\n[    0.072402] Memory: 324856K/491580K available (14336K kernel code, 1870K rwdata, 4800K rodata, 2048K init, 440K bss, 66276K reserved, 98304K cma-reserved, 0K highmem)\n[    0.074018] devtmpfs: initialized\n[    0.082323] VFP support v0.3: implementor 41 architecture 3 part 30 variant c rev 3\n[    0.082810] futex hash table entries: 256 (order: 2, 16384 bytes, linear)\n[    0.097110] pinctrl core: initialized pinctrl subsystem\n[    0.098443] DMI not present or invalid.\n[    0.099799] NET: Registered PF_NETLINK/PF_ROUTE protocol family\n[    0.109647] DMA: preallocated 256 KiB pool for atomic coherent allocations\n[    0.110337] audit: initializing netlink subsys (disabled)\n[    0.110894] audit: type=2000 audit(0.108:1): state=initialized audit_enabled=0 res=1\n[    0.112965] thermal_sys: Registered thermal governor 'fair_share'\n[    0.112979] thermal_sys: Registered thermal governor 'bang_bang'\n[    0.112989] thermal_sys: Registered thermal governor 'step_wise'\n[    0.112994] thermal_sys: Registered thermal governor 'user_space'\n[    0.113000] thermal_sys: Registered thermal governor 'power_allocator'\n[    0.113269] No ATAGs?\n[    0.113280] hw-breakpoint: debug architecture 0x4 unsupported.\n[    0.115346] Serial: AMBA PL011 UART driver\n[    0.121370] /soc/lcd-controller@1c0c000: Fixed dependency cycle(s) with /panel\n[    0.121561] /soc/lcd-controller@1c0c000: Fixed dependency cycle(s) with /soc/display-backend@1e60000\n[    0.121899] /soc/display-backend@1e60000: Fixed dependency cycle(s) with /soc/lcd-controller@1c0c000\n[    0.123944] /panel: Fixed dependency cycle(s) with /soc/lcd-controller@1c0c000\n[    0.124076] /soc/lcd-controller@1c0c000: Fixed dependency cycle(s) with /panel\n[    0.124279] /soc/lcd-controller@1c0c000: Fixed dependency cycle(s) with /soc/display-backend@1e60000\n[    0.131182] /soc/lcd-controller@1c0c000: Fixed dependency cycle(s) with /soc/display-backend@1e60000\n[    0.131311] /soc/display-backend@1e60000: Fixed dependency cycle(s) with /soc/lcd-controller@1c0c000\n[    0.136431] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.\n[    0.163144] iommu: Default domain type: Translated\n[    0.163168] iommu: DMA domain TLB invalidation policy: strict mode\n[    0.168330] usbcore: registered new interface driver usbfs\n[    0.168394] usbcore: registered new interface driver hub\n[    0.168457] usbcore: registered new device driver usb\n[    0.169195] pps_core: LinuxPPS API ver. 1 registered\n[    0.169206] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>\n[    0.169233] PTP clock support registered\n[    0.171675] NetLabel: Initializing\n[    0.171693] NetLabel:  domain hash size = 128\n[    0.171701] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO\n[    0.171806] NetLabel:  unlabeled traffic allowed by default\n[    0.172316] vgaarb: loaded\n[    0.176160] clocksource: Switched to clocksource timer\n[    0.260332] VFS: Disk quotas dquot_6.6.0\n[    0.260606] VFS: Dquot-cache hash table entries: 1024 (order 0, 4096 bytes)\n[    0.262395] AppArmor: AppArmor Filesystem Enabled\n[    0.278566] NET: Registered PF_INET protocol family\n[    0.278930] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)\n[    0.280999] tcp_listen_portaddr_hash hash table entries: 512 (order: 0, 4096 bytes, linear)\n[    0.281326] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)\n[    0.281372] TCP established hash table entries: 4096 (order: 2, 16384 bytes, linear)\n[    0.281476] TCP bind hash table entries: 4096 (order: 4, 65536 bytes, linear)\n[    0.281816] TCP: Hash tables configured (established 4096 bind 4096)\n[    0.282240] MPTCP token hash table entries: 512 (order: 1, 8192 bytes, linear)\n[    0.282415] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)\n[    0.282449] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)\n[    0.282988] NET: Registered PF_UNIX/PF_LOCAL protocol family\n[    0.283061] NET: Registered PF_XDP protocol family\n[    0.283086] PCI: CLS 0 bytes, default 64\n[    0.283987] Trying to unpack rootfs image as initramfs...\n[    0.292375] Initialise system trusted keyrings\n[    0.292505] Key type blacklist registered\n[    0.293536] workingset: timestamp_bits=14 max_order=17 bucket_order=3\n[    0.293672] zbud: loaded\n[    0.298434] fuse: init (API version 7.41)\n[    0.301620] integrity: Platform Keyring initialized\n[    0.301679] integrity: Machine keyring initialized\n[    0.753854] Key type asymmetric registered\n[    0.753887] Asymmetric key parser 'x509' registered\n[    3.114837] Freeing initrd memory: 35740K\n[    3.120713] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 247)\n[    3.121117] io scheduler mq-deadline registered\n[    3.136977] gpio gpiochip0: Static allocation of GPIO base is deprecated, use dynamic allocation.\n[    3.139768] sun5i-pinctrl 1c20800.pinctrl: initialized sunXi PIO driver\n[    3.143408] ledtrig-cpu: registered to indicate activity on CPUs\n[    3.164321] Serial: 8250/16550 driver, 5 ports, IRQ sharing enabled\n[    3.169372] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pg not found, using dummy regulator\n[    3.170500] printk: legacy console [ttyS0] disabled\n[    3.191410] 1c28400.serial: ttyS0 at MMIO 0x1c28400 (irq = 51, base_baud = 1500000) is a U6_16550A\n[    3.191563] printk: legacy console [ttyS0] enabled\n[    4.082283] 1c28c00.serial: ttyS1 at MMIO 0x1c28c00 (irq = 52, base_baud = 1500000) is a U6_16550A\n[    4.091880] serial serial0: tty port ttyS1 registered\n[    4.098344] Serial: AMBA driver\n[    4.102645] STM32 USART driver initialized\n[    4.110517] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    4.123232] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pc not found, using dummy regulator\n[    4.132615] nand: device found, Manufacturer ID: 0xad, Chip ID: 0xde\n[    4.139116] nand: Hynix H27UCG8T2ETR-BC 64G 3.3V 8-bit\n[    4.144304] nand: 8192 MiB, MLC, erase size: 4096 KiB, page size: 16384, OOB size: 1664\n[    4.161554] Bad block table found at page 524032, version 0x01\n[    4.174424] Bad block table found at page 523776, version 0x01\n[    4.180656] nand_read_bbt: bad block at 0x000038800000\n[    4.185823] nand_read_bbt: bad block at 0x00003f800000\n[    4.190977] nand_read_bbt: bad block at 0x000040000000\n[    4.196135] nand_read_bbt: bad block at 0x000044800000\n[    4.201288] nand_read_bbt: bad block at 0x00005fc00000\n[    4.206441] nand_read_bbt: bad block at 0x000065400000\n[    4.211594] nand_read_bbt: bad block at 0x000072800000\n[    4.216746] nand_read_bbt: bad block at 0x000086c00000\n[    4.221898] nand_read_bbt: bad block at 0x000089000000\n[    4.227050] nand_read_bbt: bad block at 0x000089800000\n[    4.232202] nand_read_bbt: bad block at 0x000093800000\n[    4.237354] nand_read_bbt: bad block at 0x000095000000\n[    4.242513] nand_read_bbt: bad block at 0x000098400000\n[    4.247669] nand_read_bbt: bad block at 0x00009e000000\n[    4.252823] nand_read_bbt: bad block at 0x0000bbc00000\n[    4.257975] nand_read_bbt: bad block at 0x0000c0800000\n[    4.263128] nand_read_bbt: bad block at 0x0000c7400000\n[    4.268280] nand_read_bbt: bad block at 0x0000cec00000\n[    4.273431] nand_read_bbt: bad block at 0x0000d2000000\n[    4.278583] nand_read_bbt: bad block at 0x0000de800000\n[    4.283735] nand_read_bbt: bad block at 0x0000e1000000\n[    4.288886] nand_read_bbt: bad block at 0x0000e1800000\n[    4.294041] nand_read_bbt: bad block at 0x0000e5800000\n[    4.299217] nand_read_bbt: bad block at 0x0000e6400000\n[    4.304372] nand_read_bbt: bad block at 0x0000e6c00000\n[    4.309526] nand_read_bbt: bad block at 0x0000f8c00000\n[    4.314678] nand_read_bbt: bad block at 0x000101000000\n[    4.319831] nand_read_bbt: bad block at 0x000103800000\n[    4.324984] nand_read_bbt: bad block at 0x000107400000\n[    4.330135] nand_read_bbt: bad block at 0x000108000000\n[    4.335287] nand_read_bbt: bad block at 0x00010a800000\n[    4.340440] nand_read_bbt: bad block at 0x000134000000\n[    4.345597] nand_read_bbt: bad block at 0x000138400000\n[    4.350753] nand_read_bbt: bad block at 0x00013e000000\n[    4.355906] nand_read_bbt: bad block at 0x000143c00000\n[    4.361058] nand_read_bbt: bad block at 0x000148000000\n[    4.366210] nand_read_bbt: bad block at 0x000151800000\n[    4.371362] nand_read_bbt: bad block at 0x00015c800000\n[    4.376515] nand_read_bbt: bad block at 0x00015cc00000\n[    4.381667] nand_read_bbt: bad block at 0x000163000000\n[    4.386818] nand_read_bbt: bad block at 0x000164c00000\n[    4.391971] nand_read_bbt: bad block at 0x00017d800000\n[    4.397123] nand_read_bbt: bad block at 0x000186400000\n[    4.402279] nand_read_bbt: bad block at 0x000191000000\n[    4.407432] nand_read_bbt: bad block at 0x000197000000\n[    4.412583] nand_read_bbt: bad block at 0x0001a6400000\n[    4.417737] nand_read_bbt: bad block at 0x0001a8000000\n[    4.422888] nand_read_bbt: bad block at 0x0001a8c00000\n[    4.428040] nand_read_bbt: bad block at 0x0001aec00000\n[    4.433193] nand_read_bbt: bad block at 0x0001af800000\n[    4.438345] nand_read_bbt: bad block at 0x0001c4800000\n[    4.443498] nand_read_bbt: bad block at 0x0001cac00000\n[    4.448651] nand_read_bbt: bad block at 0x0001d3000000\n[    4.453809] nand_read_bbt: bad block at 0x0001d4400000\n[    4.458963] nand_read_bbt: bad block at 0x0001d7000000\n[    4.464116] nand_read_bbt: bad block at 0x0001e0800000\n[    4.469268] nand_read_bbt: bad block at 0x0001e3800000\n[    4.474419] nand_read_bbt: bad block at 0x0001eb800000\n[    4.479572] nand_read_bbt: bad block at 0x0001f4c00000\n[    4.484724] nand_read_bbt: bad block at 0x0001f8000000\n[    4.489877] nand_read_bbt: bad block at 0x0001fa800000\n[    4.496335] 5 fixed-partitions partitions found on MTD device 1c03000.nand-controller\n[    4.504239] Creating 5 MTD partitions on \"1c03000.nand-controller\":\n[    4.510538] 0x000000000000-0x000000400000 : \"SPL\"\n[    4.516404] 0x000000400000-0x000000800000 : \"SPL.backup\"\n[    4.522573] 0x000000800000-0x000000c00000 : \"U-Boot\"\n[    4.528365] 0x000000c00000-0x000001000000 : \"env\"\n[    4.533829] 0x000001000000-0x000200000000 : \"rootfs\"\n[    4.543609] mousedev: PS/2 mouse device common for all mice\n[    4.552301] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pb not found, using dummy regulator\n[    4.562428] axp20x-i2c 0-0034: AXP20x variant AXP209 found\n[    4.583887] axp20x-i2c 0-0034: AXP20X driver loaded\n[    4.597840] axp20x-usb-power-supply axp20x-usb-power-supply: DMA mask not set\n[    4.609100] clocksource: timer: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 6370868154 ns\n[    4.618816] hid: raw HID events driver (C) Jiri Kosina\n[    4.625026] usbcore: registered new interface driver usbhid\n[    4.630705] usbhid: USB HID core driver\n[    4.636237] axp20x-adc axp20x-adc: DMA mask not set\n[    4.646022] NET: Registered PF_INET6 protocol family\n[    4.657442] Segment Routing with IPv6\n[    4.661453] In-situ OAM (IOAM) with IPv6\n[    4.665657] mip6: Mobile IPv6\n[    4.668668] NET: Registered PF_PACKET protocol family\n[    4.674129] mpls_gso: MPLS GSO support\n[    4.678256] ThumbEE CPU extension supported.\n[    4.682742] Registering SWP/SWPB emulation handler\n[    4.703806] registered taskstats version 1\n[    4.708846] Loading compiled-in X.509 certificates\n[    4.984099] Loaded X.509 cert 'Build time autogenerated kernel key: b5511f849950f344ea1b95debaf48aa0738c1123'\n[    5.009231] Key type .fscrypt registered\n[    5.013269] Key type fscrypt-provisioning registered\n[    5.033063] Key type encrypted registered\n[    5.037428] AppArmor: AppArmor sha256 policy hashing enabled\n[    5.043425] ima: No TPM chip found, activating TPM-bypass!\n[    5.049075] ima: Allocated hash algorithm: sha256\n[    5.054067] ima: No architecture policies found\n[    5.058892] evm: Initialising EVM extended attributes:\n[    5.064081] evm: security.selinux\n[    5.067422] evm: security.SMACK64 (disabled)\n[    5.071710] evm: security.SMACK64EXEC (disabled)\n[    5.076341] evm: security.SMACK64TRANSMUTE (disabled)\n[    5.081413] evm: security.SMACK64MMAP (disabled)\n[    5.086045] evm: security.apparmor\n[    5.089490] evm: security.ima\n[    5.092461] evm: security.capability\n[    5.096055] evm: HMAC attrs: 0x1\n[    5.302640] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    5.748950] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    5.772671] usb_phy_generic usb_phy_generic.0.auto: dummy supplies not allowed for exclusive requests (id=vbus)\n[    5.799730] musb-hdrc musb-hdrc.1.auto: MUSB HDRC host driver\n[    5.865351] musb-hdrc musb-hdrc.1.auto: new USB bus registered, assigned bus number 1\n[    5.881572] usb usb1: New USB device found, idVendor=1d6b, idProduct=0002, bcdDevice= 6.12\n[    5.889880] usb usb1: New USB device strings: Mfr=3, Product=2, SerialNumber=1\n[    5.897123] usb usb1: Product: MUSB HDRC host driver\n[    5.902108] usb usb1: Manufacturer: Linux 6.12.107+deb13-chip musb-hcd\n[    5.908652] usb usb1: SerialNumber: musb-hdrc.1.auto\n[    6.001517] hub 1-0:1.0: USB hub found\n[    6.009385] hub 1-0:1.0: 1 port detected\n[    6.019888] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    6.094306] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    6.116336] clk: Disabling unused clocks\n[    6.125400] PM: genpd: Disabling unused power domains\n[    6.199750] Freeing unused kernel image (initmem) memory: 2048K\n[    6.218421] Run /init as init process\n[    6.222182]   with arguments:\n[    6.222199]     /init\n[    6.222209]   with environment:\n[    6.222217]     HOME=/\n[    6.222226]     TERM=linux\n[    6.384938] configfs-gadget.vitrallis gadget.0: HOST MAC de:ad:be:ef:53:02\n[    6.392111] configfs-gadget.vitrallis gadget.0: MAC de:ad:be:ef:53:01\n[    6.414784] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    9.373202] random: crng init done\n[    9.472341] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[    9.567866] sunxi-wdt 1c20c90.watchdog: Watchdog enabled (timeout=16 sec, nowayout=0)\n[    9.579121] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[   19.682648] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[   19.695407] sun5i-pinctrl 1c20800.pinctrl: supply vcc-pd not found, using dummy regulator\n[   19.704933] platform 1c0c000.lcd-controller: deferred probe pending: (reason unknown)\n",
+          "mtd_report": "Count of MTD devices:           5\nPresent MTD devices:            mtd0, mtd1, mtd2, mtd3, mtd4\nSysfs interface supported:      yes\n\nmtd0\nName:                           SPL\nType:                           mlc-nand\nEraseblock size:                4194304 bytes, 4.0 MiB\nAmount of eraseblocks:          1 (4194304 bytes, 4.0 MiB)\nMinimum input/output unit size: 16384 bytes\nSub-page size:                  16384 bytes\nOOB size:                       1664 bytes\nCharacter device major/minor:   90:0\nBad blocks are allowed:         true\nDevice is writable:             true\n\nmtd1\nName:                           SPL.backup\nType:                           mlc-nand\nEraseblock size:                4194304 bytes, 4.0 MiB\nAmount of eraseblocks:          1 (4194304 bytes, 4.0 MiB)\nMinimum input/output unit size: 16384 bytes\nSub-page size:                  16384 bytes\nOOB size:                       1664 bytes\nCharacter device major/minor:   90:2\nBad blocks are allowed:         true\nDevice is writable:             true\n\nmtd2\nName:                           U-Boot\nType:                           mlc-nand\nEraseblock size:                4194304 bytes, 4.0 MiB\nAmount of eraseblocks:          1 (4194304 bytes, 4.0 MiB)\nMinimum input/output unit size: 16384 bytes\nSub-page size:                  16384 bytes\nOOB size:                       1664 bytes\nCharacter device major/minor:   90:4\nBad blocks are allowed:         true\nDevice is writable:             true\n\nmtd3\nName:                           env\nType:                           mlc-nand\nEraseblock size:                4194304 bytes, 4.0 MiB\nAmount of eraseblocks:          1 (4194304 bytes, 4.0 MiB)\nMinimum input/output unit size: 16384 bytes\nSub-page size:                  16384 bytes\nOOB size:                       1664 bytes\nCharacter device major/minor:   90:6\nBad blocks are allowed:         true\nDevice is writable:             true\n\nmtd4\nName:                           rootfs\nType:                           mlc-nand\nEraseblock size:                2097152 bytes, 2.0 MiB\nAmount of eraseblocks:          2044 (4286578688 bytes, 3.9 GiB)\nMinimum input/output unit size: 16384 bytes\nSub-page size:                  16384 bytes\nOOB size:                       1664 bytes\nCharacter device major/minor:   90:8\nBad blocks are allowed:         true\nDevice is writable:             true\n\n",
+          "nanddump_help": "Usage: nanddump [OPTIONS] MTD-device\nDumps the contents of a nand mtd partition.\n\n-h         --help               Display this help and exit\n           --version            Output version information and exit\n           --bb=METHOD          Choose bad block handling method (see below).\n-a         --forcebinary        Force printing of binary data to tty\n-c         --canonicalprint     Print canonical Hex+ASCII dump\n-f file    --file=file          Dump to file\n-l length  --length=length      Length\n-n         --noecc              Read without error correction\n           --omitoob            Omit OOB data (default)\n-o         --oob                Dump OOB data\n-p         --prettyprint        Print nice (hexdump)\n-q         --quiet              Don't display progress and status messages\n-s addr    --startaddress=addr  Start address\n           --skip-bad-blocks-to-start\n                                Skip bad blocks when seeking to the start address\n-C         --continuous         Continuous read up to a block of data at a time\n\n--bb=METHOD, where METHOD can be `padbad', `dumpbad', or `skipbad':\n    padbad:  dump flash data, substituting 0xFF for any bad blocks\n    dumpbad: dump flash data, including any bad blocks\n    skipbad: dump good data, completely skipping any bad blocks (default)\n"
+        }
+      }
+    },
+    {
+      "command": "recovery-spl-preflight",
+      "arguments": [
+        "restore-backup"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 4.891,
+      "stderr": "",
+      "response": {
+        "SplTrialPrepared": {
+          "operation": "RestoreBackup",
+          "token": [
+            33,
+            179,
+            81,
+            185,
+            134,
+            240,
+            42,
+            181,
+            155,
+            77,
+            255,
+            113,
+            136,
+            248,
+            154,
+            63,
+            143,
+            242,
+            59,
+            94,
+            3,
+            121,
+            202,
+            114,
+            55,
+            144,
+            59,
+            142,
+            231,
+            235,
+            45,
+            103
+          ],
+          "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+          "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+          "original_uboot_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224"
+        }
+      }
+    }
+  ]
+}

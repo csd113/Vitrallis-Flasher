@@ -164,7 +164,7 @@ Detailed supporting requirements: [image build](docs/image-build.md),
 [physical validation](docs/physical-validation.md), [USB/driver guidance](docs/fel-drivers.md),
 [recovery behavior](docs/recovery.md) and [upstream licensing](docs/upstream-licenses.md).
 
-## Batch 3 progress (2026-10-01)
+## Batch 3 progress (2026-10-02)
 
 - [x] Pin Rust 1.99.0 and pass the required Rust baseline without lint suppression.
 - [x] Preserve initial live inventory, full boot data/OOB readbacks, corrected
@@ -176,7 +176,12 @@ Detailed supporting requirements: [image build](docs/image-build.md),
 - [x] Establish recovery load addresses, authenticated endpoint and boot on macOS.
 - [x] Prove authenticated RAM-only return to FEL and recheck the same SID.
 - [ ] Validate NCM and Windows recovery gadget workflows.
-- [ ] Resolve SPL/ECC/fallback and logical/physical bad-block semantics.
+- [x] Measure original backup BROM fallback with primary erased, isolated clean
+  restored-primary boot with backup erased, then restore and verify both SPLs.
+- [x] Read a physical bad-block last-page marker through a pinned read-only
+  non-SLC alias; measure protocol v7 alias write denial and standard-mode policy.
+- [ ] Validate exact locked release SPL/U-Boot acceptance, write skip behavior
+  and remaining logical/physical bad-block semantics.
 - [ ] Approve exact physical artifacts, enable the gated executor and demonstrate
   production flashing, readback, rootfs verification and successful boot.
 

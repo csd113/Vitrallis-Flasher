@@ -112,6 +112,24 @@ mod tests {
     use super::*;
 
     #[test]
+    fn measured_last_page_preserves_raw_oob_and_exact_physical_geometry() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-physical-marker-13.json"
+        ))
+        .unwrap();
+        let measured = &evidence["records"][2]["response"]["PhysicalMarker"];
+        let report: MarkerReadback = serde_json::from_value(measured.clone()).unwrap();
+        report.validate().unwrap();
+        let expected = MarkerReadback::from_raw(
+            serde_json::from_value(measured["info"].clone()).unwrap(),
+            0,
+            &vec![0; PAGE + OOB],
+        )
+        .unwrap();
+        assert_eq!(report, expected);
+    }
+
+    #[test]
     fn raw_marker_bytes_do_not_imply_origin_and_data_are_not_returned() {
         let report = scripted_fixture();
         report.validate().unwrap();

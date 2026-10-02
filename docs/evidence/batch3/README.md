@@ -283,5 +283,39 @@ selection is claimed.
 - `recovery-template-v7.json`: reproducible pinned protocol v7 payload and
   closed physical last-page diagnostic through the exact read-only alias DTB.
   Host and ARMv7 qemu tests cover alias/status/page bounds, authentication and
-  response mismatch; current physical load/marker read remain pending. This
-  preserves historical v6 evidence and grants no production authorization.
+  response mismatch. Subsequent session 13 records below measure the exact
+  payload/alias load and read. This preserves historical v6 evidence and grants
+  no production authorization.
+
+- `recovery-boot-12-tool.json`,
+  `recovery-backup-restoration-preflight-12.json`,
+  `recovery-backup-restoration-trial-12.json` and
+  `recovery-boot-chain-after-backup-restoration-12.json`: pinned previously
+  measured v6 RAM reload after isolated primary boot, authenticated local
+  preflight, actual fixed original backup restoration in 19.344 seconds and
+  durable Verified journal. All four backup programs match the original digest
+  after 61 total correctable bit errors (maximum three in one BCH step), with
+  zero uncorrectable errors. Independent reads confirm both original SPL blocks
+  and unchanged corrected U-Boot; all MTD ECC failure counts remain zero.
+  Raw programmed bytes differ from the clean encoding, so verification uses
+  corrected program identity. A host/ARM regression fixture preserves that
+  distinction and rejects wrong target or altered program digest.
+
+- `recovery-boot-13-marker-tool.json`, `recovery-physical-marker-13.json` and
+  `recovery-marker-policy-and-protected-chain-13.json`: actual pinned v7 RAM
+  boot with the reviewed alias DTB, authenticated six-partition inventory and
+  repeated identical raw page 255/OOB observations. The alias is read-only,
+  non-SLC and at the fixed physical offset; original indices are unchanged.
+  All 1,664 OOB bytes are zero and data digest matches a zero page. A v6 hello
+  and SPL preflight with the alias are rejected; fresh v7 requests remain healthy.
+  Independent original primary/backup/U-Boot readback and rootfs map preserve
+  digests, geometry and zero ECC failure counts. No application NAND mutation
+  was dispatched. Factory/runtime bad-block origin remains unproved.
+
+- `recovery-boot-14-standard-tool.json` and
+  `recovery-standard-v7-policy-and-boot-chain-14.json`: authenticated v7 reload
+  using the original standard DTB. Inventory has exactly five original
+  partitions; marker requests are rejected without the alias and original-SPL
+  preflight succeeds without Execute. Independent both-SPL/U-Boot checks retain
+  original digests and zero ECC failure counts. No application NAND mutation
+  was dispatched. Device is left in this standard RAM recovery session.

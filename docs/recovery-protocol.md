@@ -252,8 +252,9 @@ rootfs map. All 65 unavailable logical indices match the original ioctl capture.
 The initially stale bootstrap byte-length pin rejected before upload; a regression
 test now binds length and both digests to recorded metadata. No NAND write was
 performed in this session. A subsequent normal boot with independent full backup
-data/OOB still erased confirms restored-primary acceptance; backup restoration
-remains pending FEL re-entry.
+data/OOB still erased confirms restored-primary acceptance. Backup restoration
+and independent original boot-chain readback are subsequently verified in RAM
+session 12.
 
 The parser requires the measured Hynix SLC geometry, a complete ordered map,
 matching offsets and unavailable count, no diagnostics or unexpected flags, and
@@ -283,7 +284,10 @@ Observed OOB bytes do not establish factory/runtime origin or authorize writes.
 
 Any sixth partition denies original-SPL trial preflight, including this alias.
 A marker request on the standard five-partition DTB is rejected. The v7 template
-builds identically twice; host and ARMv7 qemu tests pass. No v7 payload load or
-physical marker observation has occurred yet. Production plan/manifest gates
+builds identically twice; host and ARMv7 qemu tests pass. RAM session 13 physically authenticates this v7 payload with the exact alias
+DTB and repeats the fixed last-page observation identically. Original partition
+indices are preserved, older v6 is rejected and SPL preflight with the alias is
+rejected. Fresh v7 requests and independent original boot-chain readback remain
+healthy. Production plan/manifest gates
 remain denied. Metadata is in
 [evidence/batch3/recovery-template-v7.json](evidence/batch3/recovery-template-v7.json).
