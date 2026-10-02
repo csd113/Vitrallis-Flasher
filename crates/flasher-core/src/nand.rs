@@ -114,15 +114,15 @@ const GATES: &[PlanGate] = &[
     },
     PlanGate {
         id: GateId::AuthenticatedRecovery,
-        description: "authenticated recovery protocol and device daemon are not implemented or reviewed",
+        description: "diagnostic SID-bound recovery is measured; approved release recovery identity and executor binding remain unresolved",
     },
     PlanGate {
         id: GateId::RecoveryLoadAddress,
-        description: "the reviewed recovery payload RAM address is not established",
+        description: "diagnostic recovery load addresses are measured; release-specific recovery asset approval remains unresolved",
     },
     PlanGate {
         id: GateId::NandGeometry,
-        description: "actual per-part usable pages, ECC strength/layout and UBI geometry are unverified on hardware",
+        description: "Hynix geometry is measured; final ECC-aware verification and executable per-part platform policy remain unresolved",
     },
     PlanGate {
         id: GateId::BadBlocks,

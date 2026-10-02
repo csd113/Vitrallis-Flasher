@@ -111,3 +111,10 @@ original corrected backup exactly (`c76993ede3ceab2ba56e37b027c43896f4e4a79058cf
 with 6,136 corrected bits and zero uncorrectable errors. The per-page correction
 totals do not establish the maximum errors in a single ECC codeword. No new
 bootloader was written, and normal NAND boot/fallback remains to be tested.
+
+`uboot-backup-source-policy.json` preserves exact source/configuration hashes and
+separates proposed redundant-U-Boot behavior from actual NAND contents. The source
+tries `0xc00000` after a primary-load error and disables saved environments, but
+that does not prove the original installed SPL used those compiled options or
+that fallback has physically succeeded. The plan gate descriptions now acknowledge
+measured diagnostic recovery while retaining release/executor approval barriers.

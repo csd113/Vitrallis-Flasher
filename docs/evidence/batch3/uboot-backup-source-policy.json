@@ -1,0 +1,47 @@
+{
+  "evidence_class": "source-derived, not physical fallback validation",
+  "sources": [
+    {
+      "role": "generated_configuration",
+      "path": "work/uboot/builds/head-repro/.config",
+      "sha256": "32ec4a7a3a3428f33273855609c8ec03d69d66d7abfbdef19ea929ec01bdb0b1"
+    },
+    {
+      "role": "spl_loader",
+      "path": "work/uboot/u-boot-v2022.01/common/spl/spl_nand.c",
+      "sha256": "c650e678dddbe6fe40ce14833893766badb61c638fac7ae4608526190fee5519"
+    },
+    {
+      "role": "sunxi_nand_reader",
+      "path": "work/uboot/u-boot-v2022.01/drivers/mtd/nand/raw/sunxi_nand_spl.c",
+      "sha256": "3698102b95a5fd90bad2f4ec6386f4a97bb528261310ac72972b7c701fc4cde5"
+    },
+    {
+      "role": "historical_platform_instructions",
+      "path": "work/uboot/u-boot-v2022.01/board/sunxi/README.nand",
+      "sha256": "d3a25fdfef613516d7bf2d742b92039b956bf17d1a8ee97c34b7edf6fc0d686b"
+    }
+  ],
+  "configuration": {
+    "CONFIG_SYS_NAND_U_BOOT_OFFS": "0x800000",
+    "CONFIG_SYS_NAND_U_BOOT_OFFS_REDUND": "0xc00000",
+    "CONFIG_ENV_IS_NOWHERE": true,
+    "CONFIG_SPL_RAW_IMAGE_SUPPORT": true,
+    "CONFIG_SPL_LEGACY_IMAGE_SUPPORT": true,
+    "CONFIG_SPL_LEGACY_IMAGE_CRC_CHECK": false
+  },
+  "source_behavior": [
+    "SPL first calls spl_nand_load_element at 0x800000. If it returns an error, it calls the redundant location 0xc00000.",
+    "The sunxi SPL NAND reader detects normal ECC/randomizer configuration at the requested location. An empty first ECC sector prevents configuration detection and returns EINVAL.",
+    "The historical NAND instructions program SPL at 0 and 0x400000 and U-Boot at 0x800000; they do not independently demonstrate programming or use of 0xc00000."
+  ],
+  "measured_relation": [
+    "Linux labels 0xc00000 env, but all raw data and OOB are erased. The label does not determine current firmware use.",
+    "Both original and RAM-recovery observations agree that this fourth boot block is erased."
+  ],
+  "limitations": [
+    "Generated configuration is build evidence; it does not prove the original installed SPL used identical compiled options.",
+    "Redundant U-Boot behavior and BROM primary/backup search require controlled physical testing.",
+    "The final plan still schedules no operation at 0xc00000."
+  ]
+}
