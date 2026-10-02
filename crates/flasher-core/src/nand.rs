@@ -21,7 +21,7 @@ pub const SPL_OFFSET: u64 = 0x0;
 pub const SPL_BACKUP_OFFSET: u64 = 0x40_0000;
 /// Padded U-Boot slot.
 pub const UBOOT_OFFSET: u64 = 0x80_0000;
-/// The disputed redundant-U-Boot/environment slot; never written by this plan.
+/// Hynix U-Boot fallback slot, physically booted in Batch 3 session 17.
 pub const UBOOT_BACKUP_OFFSET: u64 = 0xC0_0000;
 /// Rootfs UBI volume start.
 pub const ROOTFS_OFFSET: u64 = 0x100_0000;
@@ -151,7 +151,7 @@ pub struct NandPlan {
     manifest_digest: String,
     target: IdentifiedTarget,
     steps: Vec<NandStep>,
-    gates: &'static [PlanGate],
+    gates: Vec<PlanGate>,
 }
 impl NandPlan {
     #[must_use]
@@ -171,8 +171,8 @@ impl NandPlan {
         &self.steps
     }
     #[must_use]
-    pub const fn gates(&self) -> &'static [PlanGate] {
-        self.gates
+    pub fn gates(&self) -> &[PlanGate] {
+        &self.gates
     }
     /// Always false in Batch 2; there is no executor.
     #[must_use]
@@ -200,14 +200,28 @@ pub fn plan(assets: &VerifiedAssets, target: &IdentifiedTarget) -> Result<NandPl
     let uboot = assets.asset(Role::UbootNand)?;
     let rootfs = assets.asset(Role::Rootfs)?;
     let mut steps = Vec::from(boot_steps(spl_role, spl, recovery, uboot));
+    if target.nand() == Nand::Hynix {
+        steps.push(uboot_backup_step(uboot, PlanKind::WriteUboot, Stage::Flash));
+    }
     steps.push(install_rootfs_step(rootfs));
     steps.extend(verify_steps(uboot, rootfs));
+    if target.nand() == Nand::Hynix {
+        steps.push(uboot_backup_step(
+            uboot,
+            PlanKind::VerifyBootloader,
+            Stage::Verify,
+        ));
+    }
     let plan = NandPlan {
         release: assets.manifest().release().to_owned(),
         manifest_digest: assets.manifest().digest().to_owned(),
         target: target.clone(),
         steps,
-        gates: GATES,
+        gates: GATES
+            .iter()
+            .copied()
+            .filter(|gate| target.nand() != Nand::Hynix || gate.id != GateId::UbootBackupAmbiguity)
+            .collect(),
     };
     validate(&plan)?;
     Ok(plan)
@@ -286,6 +300,29 @@ fn boot_steps(
             stage: Stage::Flash,
         },
     ]
+}
+
+fn uboot_backup_step(
+    uboot: &crate::assets::VerifiedAsset,
+    kind: PlanKind,
+    stage: Stage,
+) -> NandStep {
+    NandStep {
+        kind,
+        source: Some(Role::UbootNand),
+        placement: Placement::Nand {
+            offset: UBOOT_BACKUP_OFFSET,
+        },
+        length: Some(uboot.size()),
+        sha256: Some(uboot.sha256().to_owned()),
+        prerequisites: vec![if kind == PlanKind::WriteUboot {
+            Prerequisite::BootRegionErased
+        } else {
+            Prerequisite::BootloaderWritten
+        }],
+        verification: readback(UBOOT_BACKUP_OFFSET, uboot),
+        stage,
+    }
 }
 
 fn install_rootfs_step(rootfs: &crate::assets::VerifiedAsset) -> NandStep {
@@ -476,10 +513,62 @@ mod tests {
                 "{nand:?} used the other SPL variant"
             );
             assert_eq!(plan.target().nand(), nand);
-            assert_eq!(plan.steps().len(), 8);
+            assert_eq!(plan.steps().len(), if nand == Nand::Hynix { 10 } else { 8 });
         }
         Ok(())
     }
+    #[test]
+    fn measured_hynix_backup_has_exact_source_and_readback_without_authorization()
+    -> Result<(), Error> {
+        let (assets, _dir) = verified()?;
+        let plan = plan(&assets, &target(Nand::Hynix)?)?;
+        let uboot = assets.asset(Role::UbootNand)?;
+        let backup: Vec<_> = plan
+            .steps()
+            .iter()
+            .filter(|step| {
+                step.placement
+                    == Placement::Nand {
+                        offset: UBOOT_BACKUP_OFFSET,
+                    }
+            })
+            .collect();
+        assert_eq!(backup.len(), 2);
+        assert_eq!(backup[0].kind, PlanKind::WriteUboot);
+        assert_eq!(backup[1].kind, PlanKind::VerifyBootloader);
+        for step in backup {
+            assert_eq!(step.source, Some(Role::UbootNand));
+            assert_eq!(step.length, Some(uboot.size()));
+            assert_eq!(step.sha256.as_deref(), Some(uboot.sha256()));
+            assert_eq!(step.verification, readback(UBOOT_BACKUP_OFFSET, uboot));
+        }
+        assert!(
+            !plan
+                .gates()
+                .iter()
+                .any(|gate| gate.id == GateId::UbootBackupAmbiguity)
+        );
+        assert!(!plan.is_executable());
+        assert!(matches!(
+            plan.authorize_execution(),
+            Err(Error::PhysicalBlocked)
+        ));
+        let unmeasured = super::plan(&assets, &target(Nand::Toshiba)?)?;
+        assert!(!unmeasured.steps().iter().any(|step| {
+            step.placement
+                == Placement::Nand {
+                    offset: UBOOT_BACKUP_OFFSET,
+                }
+        }));
+        assert!(
+            unmeasured
+                .gates()
+                .iter()
+                .any(|gate| gate.id == GateId::UbootBackupAmbiguity)
+        );
+        Ok(())
+    }
+
     #[test]
     fn wrong_spl_variant_fails_plan_validation() -> Result<(), Error> {
         let (assets, _dir) = verified()?;

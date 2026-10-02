@@ -84,3 +84,9 @@ rootfs at `0x1000000`, immutable provenance for every input, and an approval
 record that binds the manifest hash and every artifact hash. The approved list
 in `upstream-lock.json` stays empty, so no physical manifest can authorize a
 write; this document set is not yet the application's release manifest.
+
+The measured Hynix review layout uses the single verified `uboot_nand` artifact
+for primary and redundant U-Boot slots; no new role or manifest-controlled
+address is introduced. Session 17 physically proves the redundant slot at
+`0xC00000`. This does not approve the manifest or enable execution. Toshiba
+backup behavior remains unmeasured and its review plan stays unchanged.

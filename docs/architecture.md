@@ -256,3 +256,13 @@ is checked for every fragment, including short/interrupted reads and final
 ancestry validation. Inspection does not replace VerifiedAssets or physical
 manifest authorization. Bounded decoder/transport integration and the actual
 UBI/rootfs installer remain required behind the validated NAND plan.
+
+### Measured Hynix U-Boot backup planning
+
+Session 17's isolated normal boot establishes the fourth boot block as a working
+release U-Boot fallback. Hynix review plans now write the same verified
+`UbootNand` asset at `0x800000` and `0xC00000` and include readback steps for both.
+The Hynix ambiguity gate is removed; remaining approval, recovery, geometry,
+bad-block and boot-profile gates still deny execution. Toshiba retains its
+previous layout and unresolved backup gate. This describes planning only; the
+final executor still needs ECC-aware completion and rootfs installation.

@@ -2,9 +2,8 @@
 
 The original layout below was derived in Batch 0 from upstream source and
 configuration. Batch 3 has now measured the development PocketCHIP's geometry,
-raw boot-region contents and corrected U-Boot readback. Source-derived fallback
-behavior remains separate from physical boot validation; unresolved claims are
-retained until measured. Evidence is indexed in [the Batch 3 record](evidence/batch3/README.md).
+raw boot-region contents and corrected U-Boot readback. Session 17 also physically proves release U-Boot fallback
+to the fourth boot block; remaining unresolved claims are retained until measured. Evidence is indexed in [the Batch 3 record](evidence/batch3/README.md).
 
 ## Source-derived layout
 
@@ -110,17 +109,22 @@ that slot (`lib-nand.sh:70-80`). The resolved U-Boot configuration has
 `CONFIG_ENV_IS_IN_*` is unset), so a stored environment at `0xC00000` is not
 established by the reviewed configuration.
 
-Consequences and status:
+Measured resolution for Hynix:
 
-* The offset and size are agreed by both sources; only the name/purpose differ.
-* Whether the redundant U-Boot fallback can succeed after an upstream-style
-  flash is **UNRESOLVED** physically: the measured slot is erased, and source-derived
-  fallback requires a valid programmed redundant payload.
-* Whether U-Boot or Linux ever writes an environment to `0xC00000` is
-  **UNRESOLVED**; the reviewed configuration provides no environment location.
+Session 17 programs the exact release U-Boot in this slot and erases the original
+primary U-Boot. After a bridge-free cold boot, SSH returns with a new boot ID.
+Fresh raw primary readback remains entirely FF and corrected fourth-block data
+matches the exact release digest, with zero ECC failures. Together with the
+source configuration, this proves working U-Boot fallback at `0xC00000`.
+The Linux `env` label does not describe the configured firmware storage role.
+This does not make claims about other historical firmware or Toshiba hardware.
+Evidence: [isolated backup boot](evidence/batch3/normal-release-uboot-backup-isolated-boot-17.json).
 
-This must be resolved before Batch 3 destructive execution chooses whether to populate a
-redundant U-Boot copy. The current review plan still schedules no operation there.
+The Hynix review plan now includes a second write of the verified `UbootNand`
+asset and a separate readback at this offset. Toshiba retains the unresolved
+backup gate and its previous layout. Production execution remains blocked by
+manifest/recovery/platform, bad-block and installation verification gates;
+this planning change itself grants no authorization.
 
 ## Other unresolved layout facts (require hardware)
 

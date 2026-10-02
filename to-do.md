@@ -192,3 +192,14 @@ Detailed supporting requirements: [image build](docs/image-build.md),
 
 [evidence](docs/evidence/batch3/README.md) separates observations, source-derived
 claims and open gates. Batch 3 is not complete.
+
+### Measured U-Boot backup checkpoint
+
+- [x] Program/read back the locked release U-Boot backup, erase the primary, and
+  prove bridge-free normal boot with a fresh boot ID and independent erased
+  primary/exact corrected backup readbacks (session 17).
+- [x] Reflect the measured Hynix backup role in the review plan with the same
+  verified artifact and separate readback, retaining remaining execution gates.
+- [ ] Measure release U-Boot primary-only boot, then restore release redundancy.
+- [ ] Complete production bad-block-aware UBI installation, approved manifest,
+  gated executor, semantic readback, GUI integration and full end-to-end reflash.

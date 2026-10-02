@@ -991,3 +991,23 @@ Same SID, zero ECC failures, unchanged bad/BBT counts and healthy kernel logs
 confirm the measured backup fallback. Evidence is the separate normal-boot
 record indexed above. `git diff --check` passes for this evidence/documentation
 checkpoint. No source changes occur after the full parser validation.
+
+### Measured Hynix backup planning checkpoint
+
+The Hynix review plan now includes exact verified-source write and readback
+steps for the physically booted fourth-block U-Boot backup. A regression test
+checks both steps' role, length, digest and readback placement, confirms the
+Hynix ambiguity gate is removed, and proves execution still returns
+`PhysicalBlocked`. Toshiba retains its previous layout and unresolved gate.
+
+`cargo test -p flasher-core nand::tests --locked` passes all nine planning tests.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. Full `python3 scripts/ci.py validate` passes formatting,
+strict Clippy, 198 core tests (six intentional ignored subprocess fixtures),
+five integration tests, 11 recovery tests, 73 image tests, 35 script tests,
+release builds and established provenance/kernel/image/manifest checks.
+All nine planning tests also pass on ARMv7 under qemu-arm. Private logs:
+`work/batch3/hynix-backup-plan-full-validation.log`,
+`hynix-backup-plan-workspace-check.log` and `hynix-backup-plan-arm-tests.log`.
+This planning change neither uploads a revised daemon nor authorizes production
+installation. The next hardware test uses the previously frozen v9 payload.
