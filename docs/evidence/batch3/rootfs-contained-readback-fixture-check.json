@@ -1,0 +1,50 @@
+{
+  "evidence_kind": "deterministic contained Linux semantic filesystem readback under ARMv7 qemu",
+  "device_accessed": false,
+  "nand_mutated": false,
+  "production_reflash": false,
+  "full_stock_rootfs_extracted": false,
+  "readback_source_sha256": "8427ce408a97016647b31f643a84b80f0e2fc547d20cda991ca7a2e73d943c4d",
+  "installer_source_sha256": "1bd8d210a759ce3020fc570ff799ccaf1c7c29166071cbe1e377f0f45ca16b87",
+  "verified_asset_source_sha256": "39c02ba60f8573a414351013c61075efff8e2c7a3a736b1f89bfcc98d111277a",
+  "rootfs_filter_tests_passed": 38,
+  "stock_workload_ignored_in_standard_suite": true,
+  "test_seconds": 0.49,
+  "strict_arm_clippy_passed": true,
+  "container_process_uid": 0,
+  "full_host_validation_passed": true,
+  "workspace_check_passed": true,
+  "validated_behaviors": [
+    "regular content SHA-256 and exact length/EOF checked in 8192 byte reads",
+    "regular files reopened through trusted procfs links to captured no-follow regular inodes",
+    "all kinds, modes, numeric ownership and filesystem device identity checked",
+    "captured symlink targets read without resolving",
+    "character major/minor checked without content I/O",
+    "hardlinks require source device/inode identity and exact inventory link count",
+    "distinct regular entries cannot share inodes",
+    "every expected directory enumerated and missing/extra/unknown names rejected",
+    "stable inode/metadata and path reachability checked after verification",
+    "verified installation wrapper requires semantic readback before returning success"
+  ],
+  "rejected_damage_cases": [
+    "changed content",
+    "changed mode",
+    "changed owner",
+    "missing entry",
+    "extra entry",
+    "changed symlink target",
+    "hardlink replaced with content-identical copy",
+    "external hardlink",
+    "regular file replaced with character device",
+    "directory parent replaced with symlink",
+    "changed character minor",
+    "pre-cancellation"
+  ],
+  "limitations": [
+    "temporary Linux filesystem fixtures, not PocketCHIP UBI",
+    "quiescent filesystem required; this is not an atomic filesystem snapshot",
+    "physical UBI attach/volume geometry, ECC and bad-block checks remain separate required gates",
+    "authenticated device receiving and physical production execution remain unfinished",
+    "full locked stock workload result not yet recorded; frozen hardware payload unchanged"
+  ]
+}

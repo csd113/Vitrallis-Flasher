@@ -1176,3 +1176,33 @@ Private logs: `work/batch3/rootfs-installer-full-validation.log`,
 and `rootfs-installer-complete-arm-clippy.log`. This checkpoint does not prove a
 full stock-rootfs extraction, semantic filesystem readback, device receiving
 or physical UBI installation. The frozen v9 recovery payload is unchanged.
+
+
+### Contained semantic readback checkpoint
+
+All 38 ARMv7 tests selected by `rootfs` pass under qemu-arm (0.49 seconds).
+One additional Linux-only stock workload is intentionally ignored in the
+standard suite because it requires root and the exact 516 MB locked archive.
+The readback fixtures reject ten independent content/metadata/membership/link
+changes, substituted device nodes and symlink parents, changed character
+identity and pre-cancellation. The verified installation wrapper now performs
+semantic filesystem readback before returning success. Strict ARM Clippy passes
+with all targets/features, locked graph and the full established lint flags.
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+209 native core tests (six intentional ignored subprocess fixtures), five
+integration tests, 11 recovery tests, 73 image tests, 35 script tests, locked
+release builds and established provenance/kernel/image/manifest checks.
+Workspace all-target/all-feature check and diff check pass. Private logs:
+`work/batch3/rootfs-readback-final-full-validation.log`,
+`rootfs-readback-workspace-check.log`, `rootfs-readback-reviewed-arm-tests.log`
+and `rootfs-readback-reviewed-arm-clippy.log`.
+
+The full stock workload can be run inside the isolated root-owned recovery
+builder by setting `VITRALLIS_STOCK_ROOTFS_ARCHIVE` to the locked archive and
+running `cargo test --locked -p flasher-core --target armv7-unknown-linux-gnueabihf rootfs_installation_complete_stock_archive_with_semantic_readback -- --ignored --nocapture`
+with the established qemu runner. It imports only the pinned rootfs role into
+a private test cache, installs under a private parent directory, verifies every
+entry and removes the temporary tree afterward. Other simulation manifest roles
+are not acquired or approved. This checkpoint records fixture validation only;
+no full stock workload result or PocketCHIP UBI/NAND completion is claimed.

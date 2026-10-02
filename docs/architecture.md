@@ -338,12 +338,12 @@ never reopened, and no shell/process boundary is involved. Safe APIs from the
 already-locked `rustix` 1.1.4 crate provide the Linux descriptor operations; no
 new package/version is added.
 
-This is a filesystem capability rather than a NAND/plan authorization. Held-descriptor metadata and inspected link helpers are now implemented, as
-described below. A contained replay sink is now implemented. Authenticated device delivery
-and semantic installed-filesystem readback remain unfinished. Cancellation is checked
-before and after syscalls; a cancellation after creation may leave a new entry,
-so the future installer must preserve truthful interruption state. The recovery
-payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
+This capability supports held-descriptor metadata, inspected links, contained
+replay and semantic filesystem readback, as described below. Authenticated
+device delivery and physical plan authorization remain unfinished.
+Cancellation is checked before and after syscalls; an error after creation may
+leave partial output, so callers must preserve truthful interruption state.
+The recovery payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
 validate containment separately from the native macOS suite. API review:
 [descriptor-relative open](https://docs.rs/rustix/1.1.4/rustix/fs/fn.openat.html).
 
@@ -361,8 +361,7 @@ before final chmod, preserving setuid/setgid bits cleared by chown. Metadata
 is checked afterward and the object fsynced. UID/GID `u32::MAX` sentinels and
 unsupported modes are rejected before metadata mutation. Directory metadata
 must be deferred until descendants are installed. These primitives do not
-replace semantic installed-content verification or authenticated device
-delivery.
+replace authenticated device delivery or physical UBI health checks.
 
 
 ### Character nodes and installation metadata preflight
@@ -382,8 +381,8 @@ root-owned root-directory metadata, rejects reserved UID/GID sentinels and
 unsupported modes, and requires hardlink owner/mode equality with its earlier
 regular-file target. This prevents discovering an unsupported inode metadata
 contract only after earlier entries have been delivered. The complete stock
-archive passes this check. These are installation building blocks; authenticated receiving and semantic
-readback are still required before physical rootfs execution.
+archive passes this check. These are installation building blocks; authenticated receiving and physical UBI health checks are still required
+before physical rootfs execution.
 
 
 ### Verified contained rootfs installation
@@ -406,8 +405,32 @@ partial output, performs no automatic retry/rollback and returns no completion.
 The consumer and its finalization are internal; public callers cannot finalize
 a directory tree after a failed source recheck.
 
-This library installation result does not grant a physical NAND plan, authorize
-UBI mutation or prove semantic installed-filesystem readback. Those gates and
-the authenticated bounded host-to-device receiving path remain required. The
-current implementation has Linux/ARM filesystem fixture coverage; it has not
-been uploaded to the PocketCHIP or used for a complete stock-rootfs extraction.
+The library installation result now requires contained semantic filesystem
+readback before success. It does not grant a physical NAND plan or authorize
+UBI mutation. Physical UBI health gates and the authenticated bounded
+host-to-device receiving path remain required. The implementation has not
+been uploaded to the PocketCHIP.
+
+
+### Contained semantic filesystem readback
+
+After directory finalization, verified installation checks every expected entry
+through the retained root descriptor. Leaves are captured with
+`O_PATH | O_NOFOLLOW`, checked for kind, numeric ownership, mode and filesystem
+device identity, and checked again afterward for stable inode/metadata and
+continued reachability at the expected path. Regular files are reopened only
+through a verified kernel procfs descriptor link to the already-captured
+regular inode. Reads are bounded to 8 KiB and require exact length, EOF and
+content SHA-256. Character devices receive identity checks without content I/O;
+symlink targets are read from captured link inodes with bounded `readlinkat`.
+
+Hardlinks must reference the same device/inode as their earlier regular target.
+Regular files must have distinct inodes and exactly the link count described
+by the inventory, rejecting unexpected aliases outside the installation root.
+Every expected directory is enumerated without following links; unknown or
+non-UTF-8 names and extra entries fail. Total directory membership must exactly
+match the complete inventory. No raw UBIFS/NAND byte equality is assumed.
+Verification requires a quiescent installation filesystem; observed inode,
+mode, ownership, size, link-count or modification/ctime changes fail closed.
+This verifies installed contents against the inspected inventory. It does not
+replace UBI attach/volume geometry, ECC or bad-block completion checks.

@@ -53,7 +53,7 @@ impl<'a> Installer<'a> {
     }
 
     // Only the verified-asset wrapper calls this after all source checks pass.
-    pub(crate) fn complete(self) -> Result<(), Error> {
+    pub(crate) fn complete(self) -> Result<Root, Error> {
         self.cancel.check()?;
         if self.active || self.file.is_some() || self.index != self.expected.entries().len() {
             return Err(Error::Length);
@@ -61,7 +61,8 @@ impl<'a> Installer<'a> {
         for entry in self.directories.into_iter().rev() {
             self.root.finish_directory(entry, self.cancel)?;
         }
-        self.cancel.check()
+        self.cancel.check()?;
+        Ok(self.root)
     }
 
     fn entry(&self) -> Result<&Entry, Error> {
@@ -205,7 +206,8 @@ mod tests {
             std::fs::metadata(directory.path()).unwrap().mode() & 0o7777,
             0o700
         );
-        installer.complete().unwrap();
+        let root = installer.complete().unwrap();
+        root.verify_rootfs(&expected, &cancel).unwrap();
         let file = std::fs::metadata(directory.path().join("late/file")).unwrap();
         let hard = std::fs::metadata(directory.path().join("hard")).unwrap();
         assert_eq!(
@@ -306,6 +308,147 @@ mod tests {
         assert_eq!(
             std::fs::metadata(directory.path()).unwrap().mode() & 0o7777,
             0o700
+        );
+    }
+
+    #[test]
+    fn semantic_readback_rejects_content_metadata_membership_and_link_changes() {
+        use rustix::{
+            fs,
+            process::{Gid, Uid},
+        };
+        use std::io::{Seek, SeekFrom};
+        use std::os::unix::fs::symlink;
+        if rustix::process::geteuid().as_raw() != 0 {
+            return;
+        }
+        for damage in [
+            "content",
+            "mode",
+            "owner",
+            "missing",
+            "extra",
+            "symlink",
+            "hardlink",
+            "external-hardlink",
+            "device-substitute",
+            "symlink-parent",
+        ] {
+            let (bytes, expected) = fixture();
+            let (root, directory) = root();
+            let cancel = Cancellation::default();
+            let mut installer = Installer::new(root, &expected, &cancel).unwrap();
+            replay_gzip(
+                compressed(&bytes).as_slice(),
+                &expected,
+                &mut installer,
+                &cancel,
+            )
+            .unwrap();
+            let root = installer.complete().unwrap();
+            root.verify_rootfs(&expected, &cancel).unwrap();
+            let file = directory.path().join("late/file");
+            let outside = tempfile::tempdir().unwrap();
+            match damage {
+                "content" => {
+                    let mut changed = std::fs::OpenOptions::new().write(true).open(&file).unwrap();
+                    changed.seek(SeekFrom::Start(0)).unwrap();
+                    changed.write_all(b"X").unwrap();
+                    std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o6750))
+                        .unwrap();
+                }
+                "mode" => {
+                    std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o600))
+                        .unwrap();
+                }
+                "owner" => {
+                    fs::chown(&file, Some(Uid::from_raw(0)), Some(Gid::from_raw(0))).unwrap();
+                }
+                "missing" => std::fs::remove_file(&file).unwrap(),
+                "extra" => std::fs::write(directory.path().join("late/extra"), b"extra").unwrap(),
+                "symlink" => {
+                    std::fs::remove_file(directory.path().join("link")).unwrap();
+                    symlink("/unexpected", directory.path().join("link")).unwrap();
+                }
+                "hardlink" => {
+                    let hard = directory.path().join("hard");
+                    std::fs::remove_file(&hard).unwrap();
+                    std::fs::copy(&file, &hard).unwrap();
+                    fs::chown(&hard, Some(Uid::from_raw(1000)), Some(Gid::from_raw(1000))).unwrap();
+                    std::fs::set_permissions(&hard, std::fs::Permissions::from_mode(0o6750))
+                        .unwrap();
+                }
+                "external-hardlink" => {
+                    std::fs::hard_link(&file, outside.path().join("alias")).unwrap();
+                }
+                "device-substitute" => {
+                    std::fs::remove_file(&file).unwrap();
+                    fs::mknodat(
+                        &root.directory,
+                        "late/file",
+                        fs::FileType::CharacterDevice,
+                        fs::Mode::from_raw_mode(0o6750),
+                        fs::makedev(1, 3),
+                    )
+                    .unwrap();
+                }
+                "symlink-parent" => {
+                    std::fs::rename(directory.path().join("late"), outside.path().join("moved"))
+                        .unwrap();
+                    symlink(outside.path().join("moved"), directory.path().join("late")).unwrap();
+                }
+                _ => unreachable!(),
+            }
+            assert!(root.verify_rootfs(&expected, &cancel).is_err(), "{damage}");
+        }
+    }
+
+    #[test]
+    fn semantic_readback_verifies_character_identity_without_device_io_and_honors_cancel() {
+        use rustix::fs;
+        if rustix::process::geteuid().as_raw() != 0 {
+            return;
+        }
+        let mut node = member("./dev/null", b'3', b"", "");
+        node[100..108].copy_from_slice(b"0000666\0");
+        node[329..337].copy_from_slice(b"0000001\0");
+        node[337..345].copy_from_slice(b"0000003\0");
+        repair(&mut node);
+        let bytes = archive(&[
+            member("./", b'5', b"", ""),
+            member("./dev", b'5', b"", ""),
+            node,
+        ]);
+        let cancel = Cancellation::default();
+        let expected = inspect(bytes.as_slice(), &cancel).unwrap();
+        let (root, directory) = root();
+        let mut installer = Installer::new(root, &expected, &cancel).unwrap();
+        replay_gzip(
+            compressed(&bytes).as_slice(),
+            &expected,
+            &mut installer,
+            &cancel,
+        )
+        .unwrap();
+        let root = installer.complete().unwrap();
+        root.verify_rootfs(&expected, &cancel).unwrap();
+        cancel.cancel();
+        assert!(matches!(
+            root.verify_rootfs(&expected, &cancel),
+            Err(Error::Cancelled)
+        ));
+        std::fs::remove_file(directory.path().join("dev/null")).unwrap();
+        fs::mknodat(
+            &root.directory,
+            "dev/null",
+            fs::FileType::CharacterDevice,
+            fs::Mode::from_raw_mode(0o666),
+            fs::makedev(1, 5),
+        )
+        .unwrap();
+        assert!(
+            root.verify_rootfs(&expected, &Cancellation::default())
+                .is_err()
         );
     }
 }

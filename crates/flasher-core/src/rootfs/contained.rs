@@ -1,6 +1,7 @@
 //! Linux descriptor-relative creation beneath an empty private installation root.
 //! This is a filesystem capability, not a NAND or physical-plan authorization.
 mod installer;
+mod readback;
 pub(crate) use installer::Installer;
 
 use crate::{Cancellation, Error};
@@ -328,6 +329,31 @@ fn chmod_captured(node: &OwnedFd, mode: u32, cancel: &Cancellation) -> Result<()
     cancel.check()?;
     // Only this kernel-controlled namespace is followed, never an archive link.
     // The locked rustix API cannot apply chmod directly to an O_PATH descriptor.
+    let descriptors = proc_descriptors(cancel)?;
+    let name = node.as_raw_fd().to_string();
+    let pinned = fs::fstat(node).map_err(std::io::Error::from)?;
+    for applying in [false, true] {
+        cancel.check()?;
+        if applying {
+            fs::chmodat(
+                &descriptors,
+                name.as_str(),
+                Mode::from_raw_mode(mode),
+                AtFlags::empty(),
+            )
+            .map_err(std::io::Error::from)?;
+        }
+        let target = fs::statat(&descriptors, name.as_str(), AtFlags::empty())
+            .map_err(std::io::Error::from)?;
+        if target.st_dev != pinned.st_dev || target.st_ino != pinned.st_ino {
+            return Err(Error::UnsafePath);
+        }
+    }
+    cancel.check()
+}
+
+fn proc_descriptors(cancel: &Cancellation) -> Result<OwnedFd, Error> {
+    cancel.check()?;
     let proc = fs::open(
         "/proc",
         OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
@@ -351,26 +377,8 @@ fn chmod_captured(node: &OwnedFd, mode: u32, cancel: &Cancellation) -> Result<()
     {
         return Err(Error::UnsafePath);
     }
-    let name = node.as_raw_fd().to_string();
-    let pinned = fs::fstat(node).map_err(std::io::Error::from)?;
-    for applying in [false, true] {
-        cancel.check()?;
-        if applying {
-            fs::chmodat(
-                &descriptors,
-                name.as_str(),
-                Mode::from_raw_mode(mode),
-                AtFlags::empty(),
-            )
-            .map_err(std::io::Error::from)?;
-        }
-        let target = fs::statat(&descriptors, name.as_str(), AtFlags::empty())
-            .map_err(std::io::Error::from)?;
-        if target.st_dev != pinned.st_dev || target.st_ino != pinned.st_ino {
-            return Err(Error::UnsafePath);
-        }
-    }
-    cancel.check()
+    cancel.check()?;
+    Ok(descriptors)
 }
 
 const fn validate_owner(entry: &super::Entry) -> Result<(), Error> {

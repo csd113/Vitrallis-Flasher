@@ -15,7 +15,8 @@ impl VerifiedAsset {
     /// directories are created privately before replay; final directory metadata
     /// is deferred until replay, gzip EOF and the retained asset recheck pass.
     /// Failure can leave partial installation and never retries or rolls back.
-    /// This grants no NAND authority and does not verify installed-file readback.
+    /// Completion additionally requires contained installed-filesystem readback.
+    /// This grants no NAND authority or physical UBI/volume authorization.
     /// # Errors
     /// Rejects source changes, unsupported metadata, non-root execution,
     /// cancellation, filesystem errors or incomplete replay.
@@ -35,7 +36,9 @@ impl VerifiedAsset {
         )?;
         self.recheck(cancel)?;
         cancel.check()?;
-        installer.complete()?;
+        let root = installer.complete()?;
+        root.verify_rootfs(&result, cancel)?;
+        cancel.check()?;
         Ok(result)
     }
 
@@ -344,6 +347,64 @@ mod tests {
             }
             assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
         }
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    #[ignore = "requires root and the exact locked 516 MB stock archive; isolated filesystem workload"]
+    fn rootfs_installation_complete_stock_archive_with_semantic_readback() {
+        use crate::rootfs::contained::Root;
+        use std::fmt::Write as _;
+        use std::{fs::File, os::unix::fs::PermissionsExt, time::Instant};
+        assert_eq!(rustix::process::geteuid().as_raw(), 0);
+        let started = Instant::now();
+        let path = std::env::var_os("VITRALLIS_STOCK_ROOTFS_ARCHIVE").unwrap();
+        let source = File::open(path).unwrap();
+        assert!(source.metadata().unwrap().is_file());
+        let mut raw: serde_json::Value = serde_json::from_str(simulation::MANIFEST).unwrap();
+        let asset = raw["assets"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|asset| asset["role"] == "rootfs")
+            .unwrap();
+        asset["size"] = 516_563_033_u64.into();
+        asset["sha256"] = "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef".into();
+        let manifest = Manifest::read(serde_json::to_vec(&raw).unwrap().as_slice()).unwrap();
+        let spec = manifest
+            .assets()
+            .iter()
+            .find(|asset| asset.role() == Role::Rootfs)
+            .unwrap();
+        // Only this role is acquired; the other simulation roles grant no trust.
+        let private = tempfile::tempdir().unwrap();
+        let cache_path = private.path().join("cache");
+        std::fs::create_dir(&cache_path).unwrap();
+        std::fs::set_permissions(&cache_path, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let cancel = Cancellation::default();
+        let mut asset = Cache::open(&cache_path)
+            .unwrap()
+            .import(spec, source, &cancel, |_, _| {})
+            .unwrap();
+        let root_path = private.path().join("root");
+        std::fs::create_dir(&root_path).unwrap();
+        std::fs::set_permissions(&root_path, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let root = Root::new(File::open(&root_path).unwrap(), &cancel).unwrap();
+        let result = asset.install_rootfs(root, &cancel).unwrap();
+        assert_eq!(result.entries().len(), 50_950);
+        assert_eq!(result.file_bytes, 1_264_012_666);
+        let mut semantic = String::with_capacity(64);
+        for byte in result.semantic_sha256 {
+            write!(semantic, "{byte:02x}").unwrap();
+        }
+        assert_eq!(
+            semantic,
+            "50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35"
+        );
+        println!(
+            "{}",
+            serde_json::json!({"stock_archive_installed":true,"installed_filesystem_semantic_readback":true,"device_accessed":false,"nand_mutated":false,"entries":result.entries().len(),"file_bytes":result.file_bytes,"semantic_sha256":semantic,"elapsed_seconds":started.elapsed().as_secs_f64()})
+        );
     }
 
     #[test]

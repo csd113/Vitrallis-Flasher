@@ -395,3 +395,10 @@ selection is claimed.
   directory headers, hardlink ownership/inode preservation and bounded writes
   succeed; late CRC/cancellation failures preserve private partial trees.
   No full stock extraction, semantic readback or physical NAND work is claimed.
+
+
+- `rootfs-contained-readback-fixture-check.json`: contained Linux semantic
+  readback fixtures on ARMv7. Contents, inode metadata, directory membership,
+  symlink/character identities and exact hardlink topology must match before
+  verified installation succeeds. Twelve damage/cancellation cases reject.
+  This does not claim a full stock extraction or physical UBI/NAND health.

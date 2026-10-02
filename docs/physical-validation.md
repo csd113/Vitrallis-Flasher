@@ -441,3 +441,15 @@ These are temporary Linux filesystem fixtures. No PocketCHIP mutation, full
 stock-rootfs extraction, physical manifest approval or installed-filesystem
 semantic readback is claimed. Evidence:
 `evidence/batch3/rootfs-contained-installer-fixture-check.json`.
+
+
+### Contained semantic readback fixtures
+
+ARMv7 fixtures now verify installed file bytes, numeric ownership/modes,
+character identities, verbatim symlink targets, exact hardlink inode/link-count
+relationships and complete directory membership. Ten independent damage
+cases fail verification: changed contents, mode, owner, missing/extra entries,
+changed symlink, copied hardlink, external hardlink, character substitution for
+a regular file and a substituted symlink parent. Pre-cancellation and changed
+character identity also fail. These fixtures use a temporary Linux filesystem;
+physical UBI/NAND health and authenticated device receiving remain unproven.
