@@ -270,3 +270,12 @@ selection is claimed.
   Original-SPL write preflight still requires exactly five partitions. This
   updated payload has not yet been loaded; session 11 uses the preceding v6
   implementation. ARMv7 qemu and host tests cover enumeration and alias rejection.
+
+- `normal-restored-primary-isolated-boot-10.json`: normal OS SSH inventory and
+  boot log on the same SID, new boot ID `5f110c7b-5b90-40ce-b067-667d17295156`,
+  after the requested bridge-removed power cycle. An independent full raw
+  backup read remains entirely erased in data and OOB, proving acceptance of
+  the clean restored primary. UBI has 1,979 good, 65 unavailable and zero
+  corrupted PEBs; original root UUID and zero NAND ECC failures are preserved.
+  No locked release boot is claimed. Package activity was absent before clean
+  poweroff; backup restoration remains pending FEL re-entry.

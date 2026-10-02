@@ -706,3 +706,22 @@ build, provenance and established image/plan checks pass in that sequence.
 `work/batch3/marker-inventory-guard-final-validation.log`,
 `work/batch3/marker-inventory-guard-final-workspace-check.log` and
 `work/batch3/marker-inventory-guard-arm-test.log`.
+
+### Batch 3 isolated original-primary normal boot
+
+Normal SSH returns after the requested bridge-removed power cycle on the same
+SID and a new boot ID. Independent raw backup readback is exactly 4,620,288
+bytes with every data/OOB byte `0xff` and SHA256
+`71c220404abcfabfbeb7480a98fcbc9e44e64290ee9c0c9b8a65d6aabefefdab`.
+This proves the clean restored primary encoding is accepted while backup is
+unavailable. The original root UUID is unchanged; UBI has 1,979 good and 65
+unavailable PEBs, zero corruption, and all five MTD ECC failure counts are zero.
+No locked release SPL/U-Boot or full production reflash is validated by this
+original-program diagnostic. No package process was active; SSH poweroff exits
+0. Backup restoration is the next hardware operation once FEL is re-entered.
+
+Evidence: `docs/evidence/batch3/normal-restored-primary-isolated-boot-10.json`;
+private all-erased raw capture:
+`work/batch3/original-spl-trial-session-8/backup-after-isolated-primary-raw.nand`.
+No Rust or image code is part of this evidence-only milestone; `git diff --check`
+passes. The next recovery protocol work remains separate and uncommitted.

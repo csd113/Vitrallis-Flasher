@@ -242,3 +242,15 @@ The original-SPL trial continues to require exactly five partitions, so a
 physical marker alias blocks both preparation and fresh execution preflight.
 Host and ARMv7 tests cover this boundary; physical loading of the updated
 implementation remains pending.
+
+### Isolated clean restored-primary acceptance
+
+After the requested bridge-removed power cycle, normal SSH returns on the same
+SID with a new boot ID. Independent `nanddump --noecc --oob --bb=dumpbad` of
+the full backup block confirms every data and OOB byte is still `0xff`. The
+normal boot therefore establishes BROM acceptance of the clean restored primary
+encoding, independently of the erased backup. It does not select one of the
+four primary intra-block copies or validate the locked release program. UBI
+attaches with the original root UUID, zero corrupted PEBs and zero MTD ECC
+failures. See [the isolated boot record](evidence/batch3/normal-restored-primary-isolated-boot-10.json).
+The original backup must still be restored before this diagnostic is finished.
