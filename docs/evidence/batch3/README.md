@@ -388,3 +388,10 @@ selection is claimed.
   archive verified replay after whole-inventory owner/mode/hardlink preflight.
   Counts and semantic digest match the independent audit. Host-only delivery
   creates a private verified snapshot but performs no extraction or NAND work.
+
+
+- `rootfs-contained-installer-fixture-check.json`: Linux ARMv7 fixtures for the
+  verified-asset installation wrapper and contained replay consumer. Late
+  directory headers, hardlink ownership/inode preservation and bounded writes
+  succeed; late CRC/cancellation failures preserve private partial trees.
+  No full stock extraction, semantic readback or physical NAND work is claimed.

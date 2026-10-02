@@ -1,5 +1,5 @@
-//! Bounded delivery and rootfs inspection of private verified snapshots.
-//! Neither operation grants NAND authority.
+//! Bounded delivery, inspection and Linux installation of private snapshots.
+//! These operations grant no NAND authority.
 use super::VerifiedAsset;
 use crate::{Cancellation, Error};
 use sha2::{Digest, Sha256};
@@ -9,6 +9,36 @@ use std::io::{Read, Seek};
 pub const TRANSFER_CHUNK_BYTES: usize = 8192;
 
 impl VerifiedAsset {
+    /// Install this rootfs beneath an owned, empty Linux root capability.
+    ///
+    /// Complete source inspection and metadata preflight precede creation. All
+    /// directories are created privately before replay; final directory metadata
+    /// is deferred until replay, gzip EOF and the retained asset recheck pass.
+    /// Failure can leave partial installation and never retries or rolls back.
+    /// This grants no NAND authority and does not verify installed-file readback.
+    /// # Errors
+    /// Rejects source changes, unsupported metadata, non-root execution,
+    /// cancellation, filesystem errors or incomplete replay.
+    #[cfg(target_os = "linux")]
+    pub fn install_rootfs(
+        &mut self,
+        root: crate::rootfs::contained::Root,
+        cancel: &Cancellation,
+    ) -> Result<crate::rootfs::Inspection, Error> {
+        let expected = self.inspect_rootfs(cancel)?;
+        let mut installer = crate::rootfs::contained::Installer::new(root, &expected, cancel)?;
+        let result = crate::rootfs::replay_gzip(
+            self.snapshot.as_file_mut(),
+            &expected,
+            &mut installer,
+            cancel,
+        )?;
+        self.recheck(cancel)?;
+        cancel.check()?;
+        installer.complete()?;
+        Ok(result)
+    }
+
     /// Inspect the compressed rootfs from this retained private snapshot.
     ///
     /// The exact asset length/hash is rechecked before decoding and again before
@@ -270,6 +300,50 @@ mod tests {
         encoder.write_all(&header).unwrap();
         encoder.write_all(&[0; 1024]).unwrap();
         encoder.finish().unwrap()
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn rootfs_installation_finishes_only_a_complete_verified_snapshot() {
+        use crate::rootfs::contained::Root;
+        use std::fs::File;
+        use std::os::unix::fs::PermissionsExt;
+        for malformed in [false, true] {
+            let mut bytes = rootfs_gzip();
+            if malformed {
+                let crc = bytes.len() - 8;
+                bytes[crc] ^= 1;
+            }
+            let (mut asset, _cache) = snapshot(&bytes);
+            let directory = tempfile::tempdir().unwrap();
+            std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o700))
+                .unwrap();
+            let cancel = Cancellation::default();
+            let root = Root::new(File::open(directory.path()).unwrap(), &cancel).unwrap();
+            let result = asset.install_rootfs(root, &cancel);
+            if !malformed && rustix::process::geteuid().as_raw() == 0 {
+                assert_eq!(result.unwrap().entries().len(), 1);
+                assert_eq!(
+                    std::fs::metadata(directory.path())
+                        .unwrap()
+                        .permissions()
+                        .mode()
+                        & 0o7777,
+                    0o755
+                );
+            } else {
+                assert!(result.is_err());
+                assert_eq!(
+                    std::fs::metadata(directory.path())
+                        .unwrap()
+                        .permissions()
+                        .mode()
+                        & 0o7777,
+                    0o700
+                );
+            }
+            assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
+        }
     }
 
     #[test]

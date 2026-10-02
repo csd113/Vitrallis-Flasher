@@ -425,3 +425,19 @@ and semantic SHA-256
 No extraction, physical approval or device access occurs. Evidence:
 `evidence/batch3/rootfs-contained-character-preflight-fixture-check.json` and
 `evidence/batch3/rootfs-installation-preflight-stream-check.json`.
+
+
+### Contained installation replay fixtures
+
+The Linux verified-asset installation wrapper and private replay consumer now
+create a rootfs tree beneath the retained private root descriptor. ARMv7 fixtures
+exercise late directory headers, 20,000-byte bounded file delivery, numeric
+UID/GID 1000, mode 06750, preserved hardlink inode identity and verbatim absolute
+symlink storage. Directory modes remain private until source completion; late
+CRC failure and cancellation preserve partial output without completion or
+retry. Invalid complete-inventory metadata fails before directory creation.
+
+These are temporary Linux filesystem fixtures. No PocketCHIP mutation, full
+stock-rootfs extraction, physical manifest approval or installed-filesystem
+semantic readback is claimed. Evidence:
+`evidence/batch3/rootfs-contained-installer-fixture-check.json`.

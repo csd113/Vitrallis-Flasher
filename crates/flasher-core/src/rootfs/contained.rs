@@ -1,5 +1,8 @@
 //! Linux descriptor-relative creation beneath an empty private installation root.
 //! This is a filesystem capability, not a NAND or physical-plan authorization.
+mod installer;
+pub(crate) use installer::Installer;
+
 use crate::{Cancellation, Error};
 use rustix::{
     fd::{AsFd, AsRawFd, OwnedFd},

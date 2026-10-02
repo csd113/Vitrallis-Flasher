@@ -1154,3 +1154,25 @@ audit. Private logs: `work/batch3/rootfs-character-full-validation.log`,
 This does not complete the installer sink, tree sync/readback, authenticated
 receiving or physical UBI installation. The frozen v9 hardware payload is
 unchanged.
+
+
+### Verified contained installer checkpoint
+
+All 36 ARMv7 tests selected by the `rootfs` filter pass under qemu-arm (0.53
+seconds), including four new private installer tests and the Linux verified
+asset installation wrapper test. Strict ARM Clippy passes with all targets,
+features, the locked graph and complete established lint flags. The fixtures
+cover late directory headers, final numeric ownership/setuid metadata, hardlink
+identity, bounded offsets, pre-mutation invalid-inventory rejection and truthful
+late-CRC/cancellation failure without directory completion.
+
+Full `python3 scripts/ci.py validate`, workspace all-target/all-feature check
+and `git diff --check` pass. Native core test count remains 209 passed with six
+intentional ignored fixtures; Linux-only tests are separately measured on ARM.
+The established five integration, 11 recovery, 73 image and 35 script tests,
+locked release builds and provenance/kernel/image/manifest checks pass.
+Private logs: `work/batch3/rootfs-installer-full-validation.log`,
+`rootfs-installer-workspace-check.log`, `rootfs-installer-final-arm-tests.log`
+and `rootfs-installer-complete-arm-clippy.log`. This checkpoint does not prove a
+full stock-rootfs extraction, semantic filesystem readback, device receiving
+or physical UBI installation. The frozen v9 recovery payload is unchanged.

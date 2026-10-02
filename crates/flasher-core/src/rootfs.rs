@@ -1,4 +1,5 @@
-//! Bounded rootfs tar inspection. No extraction, installation or NAND authority.
+//! Bounded rootfs inspection/replay and Linux contained installation primitives.
+//! No operation in this module grants NAND authority.
 #[cfg(target_os = "linux")]
 pub mod contained;
 
@@ -729,18 +730,18 @@ mod tests {
         checksum(&mut h);
         h
     }
-    fn checksum(h: &mut [u8; BLOCK]) {
+    pub(super) fn checksum(h: &mut [u8; BLOCK]) {
         h[148..156].fill(b' ');
         let sum: u64 = h.iter().map(|b| u64::from(*b)).sum();
         h[148..156].copy_from_slice(format!("{sum:06o}\0 ").as_bytes());
     }
-    fn member(name: &str, kind: u8, data: &[u8], link: &str) -> Vec<u8> {
+    pub(super) fn member(name: &str, kind: u8, data: &[u8], link: &str) -> Vec<u8> {
         let mut result = header(name, kind, data.len() as u64, link).to_vec();
         result.extend_from_slice(data);
         result.resize(result.len().next_multiple_of(BLOCK), 0);
         result
     }
-    fn archive(entries: &[Vec<u8>]) -> Vec<u8> {
+    pub(super) fn archive(entries: &[Vec<u8>]) -> Vec<u8> {
         let mut result = entries.concat();
         result.extend_from_slice(&[0; 2 * BLOCK]);
         result
@@ -986,7 +987,7 @@ mod tests {
         };
         assert!(matches!(inspect(source, &cancel), Err(Error::Cancelled)));
     }
-    fn compressed(bytes: &[u8]) -> Vec<u8> {
+    pub(super) fn compressed(bytes: &[u8]) -> Vec<u8> {
         use std::io::Write;
         let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
         encoder.write_all(bytes).unwrap();

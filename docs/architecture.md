@@ -339,8 +339,8 @@ already-locked `rustix` 1.1.4 crate provide the Linux descriptor operations; no
 new package/version is added.
 
 This is a filesystem capability rather than a NAND/plan authorization. Held-descriptor metadata and inspected link helpers are now implemented, as
-described below. The complete installer sink, whole-tree completion and semantic readback
-remain unfinished. Cancellation is checked
+described below. A contained replay sink is now implemented. Authenticated device delivery
+and semantic installed-filesystem readback remain unfinished. Cancellation is checked
 before and after syscalls; a cancellation after creation may leave a new entry,
 so the future installer must preserve truthful interruption state. The recovery
 payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
@@ -361,8 +361,8 @@ before final chmod, preserving setuid/setgid bits cleared by chown. Metadata
 is checked afterward and the object fsynced. UID/GID `u32::MAX` sentinels and
 unsupported modes are rejected before metadata mutation. Directory metadata
 must be deferred until descendants are installed. These primitives do not
-replace a contained replay installer, whole-tree sync or semantic
-installed-content verification.
+replace semantic installed-content verification or authenticated device
+delivery.
 
 
 ### Character nodes and installation metadata preflight
@@ -382,6 +382,32 @@ root-owned root-directory metadata, rejects reserved UID/GID sentinels and
 unsupported modes, and requires hardlink owner/mode equality with its earlier
 regular-file target. This prevents discovering an unsupported inode metadata
 contract only after earlier entries have been delivered. The complete stock
-archive passes this check. These are installation building blocks; the complete
-sink, authenticated receiving, tree completion and semantic readback are still
-required before physical rootfs execution.
+archive passes this check. These are installation building blocks; authenticated receiving and semantic
+readback are still required before physical rootfs execution.
+
+
+### Verified contained rootfs installation
+
+Linux `VerifiedAsset::install_rootfs` consumes an empty private `Root`
+capability. Effective UID 0, complete source inspection and whole-inventory
+metadata preflight are required before filesystem creation. Validated
+directories are precreated by increasing depth with private initial modes,
+including directories whose archive headers follow their children. Replay then
+creates regular files, symlinks, hardlinks and reviewed character nodes without
+replacement or following archive symlink targets.
+
+The private consumer checks entry order, active-entry boundaries, nonempty
+chunks of at most 8 KiB, exact file offsets and final lengths. Regular files
+receive final ownership/mode and fsync after entry content verification.
+Directories retain private modes until complete replay, gzip CRC/EOF and the
+final retained compressed-snapshot recheck succeed. Their ownership/mode and
+fsync then apply from descendants to root. Cancellation or error preserves
+partial output, performs no automatic retry/rollback and returns no completion.
+The consumer and its finalization are internal; public callers cannot finalize
+a directory tree after a failed source recheck.
+
+This library installation result does not grant a physical NAND plan, authorize
+UBI mutation or prove semantic installed-filesystem readback. Those gates and
+the authenticated bounded host-to-device receiving path remain required. The
+current implementation has Linux/ARM filesystem fixture coverage; it has not
+been uploaded to the PocketCHIP or used for a complete stock-rootfs extraction.

@@ -1,0 +1,36 @@
+{
+  "evidence_kind": "deterministic contained Linux rootfs installation fixtures under ARMv7 qemu",
+  "device_accessed": false,
+  "nand_mutated": false,
+  "production_reflash": false,
+  "full_stock_rootfs_extracted": false,
+  "installed_filesystem_semantic_readback": false,
+  "installer_source_sha256": "3af8fcd1365088141f90281868900f816fca5622facbe7b17cb85f4f0987006d",
+  "verified_asset_source_sha256": "655204405a5aa18000df381bde903620f8d5ca2b8cbaca98d069e8853195ca95",
+  "rootfs_filter_tests_passed": 36,
+  "new_installer_tests_passed": 4,
+  "new_verified_installation_wrapper_tests_passed": 1,
+  "test_seconds": 0.53,
+  "container_process_uid": 0,
+  "strict_arm_clippy_passed": true,
+  "full_host_validation_passed": true,
+  "workspace_check_passed": true,
+  "validated_behaviors": [
+    "complete source inspection and metadata preflight precede creation",
+    "late directory headers supported by private depth-ordered precreation",
+    "regular file chunks bounded to 8192 bytes and strictly ordered offsets",
+    "numeric UID/GID 1000 and mode 06750 preserved",
+    "hardlink device/inode identity preserved",
+    "absolute symlink target stored verbatim without resolving",
+    "directory metadata deferred until complete replay and retained asset recheck",
+    "late gzip CRC failure leaves private partial tree without completion or retry",
+    "cancellation and invalid offsets never complete or duplicate writes",
+    "verified asset wrapper rejects malformed source before root finalization"
+  ],
+  "limitations": [
+    "temporary Linux host filesystem fixtures, not PocketCHIP UBI",
+    "complete stock extraction and semantic installed-filesystem readback still required",
+    "authenticated bounded receiving and physical plan/UBI execution remain unfinished",
+    "frozen hardware recovery payload unchanged"
+  ]
+}
