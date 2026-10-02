@@ -218,7 +218,7 @@ selection is claimed.
 
 - `rootfs-bad-block-offset-correlation.json`: source-derived eraseblock-start
   translation cross-checked against the original 65 ioctl-unavailable blocks and
-  all 61 factory-bad physical addresses in the tenth recovery boot log. The four
+  all 61 BBT-reported bad physical addresses in the tenth recovery boot log. The four
   remaining addresses are the final four physical blocks, consistent with the
   BBT count. Source hashes and exact input hashes are recorded. This does not
   establish page mapping, live recovery ioctl enumeration or write skip behavior.
@@ -258,3 +258,9 @@ selection is claimed.
   locked generated Hynix image: all four programs match the locked input digest
   and checksum with zero corrections. No physical write or BROM boot is claimed.
   A guard test rejects treating this program as the original restoration image.
+
+- `hynix-marker-probe-preparation.json`: Linux stable v6.12.107 source hashes,
+  physical-last-page versus SLC pairing distinction, offline overlay ordering
+  discrepancy and metadata for the reproducible append-only read-only marker
+  alias DTB. Six deterministic tests protect transformation and file boundaries.
+  No diagnostic DTB load, raw marker read or NAND write has occurred.

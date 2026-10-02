@@ -182,10 +182,10 @@ The upstream [Linux v6.12 MTD core](https://raw.githubusercontent.com/torvalds/l
 translates SLC eraseblock starts before adding the partition offset:
 `physical = 0x1000000 + (logical_partition_offset / 0x200000) * 0x400000`.
 Applying this source-derived rule to the original read-only ioctl enumeration
-matches all 61 factory-bad physical addresses in the tenth RAM recovery log.
+matches all 61 BBT-reported bad physical addresses in the tenth RAM recovery log.
 The four additional unavailable addresses are the final four physical blocks,
 consistent with the separately measured four BBT blocks. The ioctl alone does
-not distinguish reserved from factory-bad blocks. See
+not by itself classify reservation or factory/runtime origin. See
 [the exact correlation fixture](evidence/batch3/rootfs-bad-block-offset-correlation.json).
 
 This is an eraseblock-start rule, not a page/byte translation: SLC reads and
@@ -213,3 +213,25 @@ The full corrected original U-Boot and locked padded release U-Boot differ at
 remain unreviewed. Original-program boot and restoration evidence therefore do
 not validate the locked release U-Boot. See
 [the U-Boot comparison](evidence/batch3/original-vs-locked-release-uboot.json).
+
+### Hynix physical marker access preparation
+
+Linux stable v6.12.107 selects `NAND_BBM_LASTPAGE` for Hynix MLC and the
+`dist3` pairing scheme for H27UCG8T2ETR-BC. A physical 4 MiB block has 256 pages;
+its marker page is 255. SLC group 0 exposes 128 pages: page 0 maps to physical
+0 and subsequent logical pages map to `2 * page - 1`. The final SLC page maps
+to physical 253. Thus a raw read through the SLC rootfs partition still does not
+directly expose the physical last-page marker. These are source-derived rules,
+not a newly measured raw marker. Exact Debian/platform patch equivalence remains
+under review. Sources and hashes are in
+[the marker preparation record](evidence/batch3/hynix-marker-probe-preparation.json).
+
+`images/marker_probe.py` prepares a pinned RAM diagnostic DTB with one read-only,
+non-SLC alias for the first BBT-reported bad block observed at physical `0x38800000`.
+It appends the alias after all original partitions and checks every original
+node/property and child order. Standard overlay merging was rejected: its new
+child appeared first in offline testing and would renumber the existing MTD
+paths. The diagnostic DTB is reproducible and independently parses with dtc;
+it has not been integrated into bootstrap or loaded on hardware. A closed read
+operation and direct physical marker observation remain pending. This preparation
+changes no NAND plan or production authorization.

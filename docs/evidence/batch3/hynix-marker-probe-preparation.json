@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.107/drivers/mtd/nand/raw/nand_base.c",
+      "sha256": "769126f37e916d3657bbdf9c0ee49b860672bef654809742dc2448c927cc24c4",
+      "bytes": 180218
+    },
+    {
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.107/drivers/mtd/nand/raw/nand_hynix.c",
+      "sha256": "8c748b0f68e161300a3fc37e18903fa4baa70ec839429b96b25557742a87ed35",
+      "bytes": 18142
+    },
+    {
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.107/drivers/mtd/mtdcore.c",
+      "sha256": "11ae0faee497363b290ad7f8b92c809f4d90668d49058405970687140120df3f",
+      "bytes": 67755
+    },
+    {
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.107/drivers/mtd/nand/raw/nand_bbt.c",
+      "sha256": "87d3e08c4331b9439a5f646e44782e7f2188e14c99e691912049f7628a2638e1",
+      "bytes": 41703
+    },
+    {
+      "url": "https://raw.githubusercontent.com/gregkh/linux/v6.12.107/drivers/mtd/parsers/ofpart_core.c",
+      "sha256": "c755350aa863671807882da8a0c0b9120074062cc1e8bed8d80fada06feffdb1",
+      "bytes": 7789
+    }
+  ],
+  "source_scope": "Linux stable v6.12.107; Debian/platform patch equivalence still requires review",
+  "source_findings": [
+    "H27UCG8T2ETR-BC enables scrambling and dist3 pairing with two groups",
+    "Hynix MLC selects NAND_BBM_LASTPAGE",
+    "Physical eraseblock has 256 pages; marker page is 255",
+    "SLC group 0 has 128 pages: logical page 0 maps to physical 0; pages 1 through 127 map to 2*page-1",
+    "Final SLC page maps to physical 253 and cannot directly expose marker page 255",
+    "Default flash BBT reserves the final scan range; reserved status does not establish a physical bad marker, and marker presence does not identify factory/runtime origin"
+  ],
+  "diagnostic_preparation": {
+    "base_sha256": "0132f7fa312542c374c7e5dfec2a1a12893b9cbe490d22e165fd7a89de51762e",
+    "derived_sha256": "55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd",
+    "derived_bytes": 25639,
+    "physical_probe_offset": 947912704,
+    "physical_probe_bytes": 4194304,
+    "probe_label": "BBM.probe",
+    "read_only": true,
+    "slc_mode": false,
+    "existing_nodes_properties_and_partition_order_unchanged": true,
+    "scope": "Pinned diagnostic RAM DTB preparation only; no physical load/read/write performed"
+  },
+  "derived_partition_order": [
+    "partition@0",
+    "partition@400000",
+    "partition@800000",
+    "partition@c00000",
+    "partition@1000000",
+    "partition@38800000"
+  ],
+  "repeated_build_byte_identical": true,
+  "overlay_merge_review": {
+    "merged_node_order": [
+      "partition@38800000",
+      "partition@0",
+      "partition@400000",
+      "partition@800000",
+      "partition@c00000",
+      "partition@1000000"
+    ],
+    "reason_not_used": "New overlay child is first and would renumber MTD paths; append-only derived DTB preserves all five original indices."
+  },
+  "physical_probe_load_or_read": "pending",
+  "new_nand_writes": false,
+  "remaining": [
+    "Review running-kernel patch equivalence",
+    "Integrate exact pinned diagnostic DTB and closed read operation",
+    "Physically read marker and read-only alias geometry",
+    "Verify original boot chain remains intact"
+  ]
+}

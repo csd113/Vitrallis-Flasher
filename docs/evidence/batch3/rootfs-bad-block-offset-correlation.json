@@ -29,7 +29,8 @@
   "physical_eraseblock_bytes": 4194304,
   "formula": "physical_offset = rootfs_physical_offset + (partition_offset / logical_eraseblock_bytes) * physical_eraseblock_bytes",
   "ioctl_unavailable_count": 65,
-  "logged_factory_bad_count": 61,
+  "logged_bad_count": 61,
+  "bad_block_origin": "BBT-reported bad; factory versus runtime origin is not established",
   "all_logged_bad_blocks_match": true,
   "unlogged_unavailable_physical_offsets": [
     8573157376,

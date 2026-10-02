@@ -662,3 +662,20 @@ provenance and established image/plan checks pass in the same sequence.
 `work/batch3/recovery-map-physical-final-validation.log`,
 `work/batch3/recovery-map-physical-final-workspace-check.log` and
 `work/batch3/recovery-map-physical-arm-fixture.log`.
+
+### Batch 3 read-only physical marker DTB preparation
+
+The pinned DTB transformation appends one read-only, non-SLC block alias without
+changing any original node, property or partition ordering. Two builds are byte
+identical (25,639 bytes, SHA256
+`55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd`).
+An offline overlay experiment instead prepended the alias and renumbered the
+existing partitions; the regression tests reject that ordering. The derived
+DTB has not been loaded and no physical marker read is claimed. BBT-reported
+bad blocks are not evidence of factory versus runtime origin.
+
+`python3 -m unittest discover -s images -p 'test_marker_probe.py'` passes six
+tests. `python3 scripts/ci.py validate` exits 0, including formatting, strict
+Clippy, workspace tests, release build, provenance and established image/plan
+checks. The log is `work/batch3/marker-probe-preparation-validation.log`.
+`git diff --check` passes.
