@@ -145,3 +145,30 @@ established here. Evidence: `evidence/batch3/recovery-program-release-primary-tr
 `recovery-erase-backup-for-release-primary-trial-15.json`, and
 `recovery-release-primary-isolated-preboot-15.json` in the same directory. Private
 version-2 journals are under `work/batch3/locked-release-trial-session-15/`.
+
+### Original and release U-Boot provenance cross-check
+
+Current byte comparisons bind the saved original kernel-corrected 4 MiB U-Boot
+exactly to the preserved `tag-0612-epoch` rebuild after zero padding. The exact
+locked 4 MiB artifact similarly matches `head-epoch`. Both corresponding rebuilt
+SPL programs match their original/locked pins. The generated configurations are
+byte-identical; embedded U-Boot DTBs are byte-identical at 25,864 bytes and SHA256
+`6dbd6067868a79d08e6f4e9d5bd2dcffafa1b4cab936410609f0073725736736`,
+although the release DTB is shifted 176 bytes later. Common NAND/SLC and w1
+patches match exactly. The September build inputs additionally contain two
+composite-video patches and use its release timestamp. This narrows the earlier
+unattributed binary discrepancy using exact preserved rebuild bytes, rather than
+assuming a changed banner is the only difference. No new rebuild was run here.
+
+The identical configuration selects `CONFIG_ENV_IS_NOWHERE`, primary U-Boot
+at `0x800000` and redundant U-Boot at `0xc00000`. SPL source tries the redundant
+location after a primary load error. Its NAND reader advances consecutive
+physical pages; it does not establish a boot-region bad-block skip policy.
+Strict good-block prerequisites remain necessary for raw boot slots. The Linux
+`env` label does not establish saved-environment use. Physical redundant U-Boot
+fallback and exact release U-Boot acceptance remain pending, and this evidence
+does not authorize a production write at `0xc00000`.
+
+Hash-pinned comparisons and build inputs are recorded in
+`evidence/batch3/uboot-rebuild-original-release-crosscheck.json`; source locations
+and hashes remain in `uboot-backup-source-policy.json` in the same directory.

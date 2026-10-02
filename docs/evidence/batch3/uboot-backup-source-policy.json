@@ -40,8 +40,9 @@
     "Both original and RAM-recovery observations agree that this fourth boot block is erased."
   ],
   "limitations": [
-    "Generated configuration is build evidence; it does not prove the original installed SPL used identical compiled options.",
+    "Current hash comparisons bind both preserved local rebuilt SPL/U-Boot pairs to the original and locked programs; no new rebuild was performed in this check, and redundant U-Boot fallback remains physically untested.",
     "Redundant U-Boot behavior and BROM primary/backup search require controlled physical testing.",
     "The final plan still schedules no operation at 0xc00000."
-  ]
+  ],
+  "current_rebuild_crosscheck": "uboot-rebuild-original-release-crosscheck.json: preserved June/September SPL programs and zero-padded U-Boot each match original/locked program pins exactly; generated configurations and embedded DTBs identical"
 }

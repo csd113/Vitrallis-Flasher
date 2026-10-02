@@ -13,6 +13,6 @@
   "different_byte_count": 376738,
   "first_differing_offset": 1332,
   "last_differing_offset": 688937,
-  "conclusion": "The exact locked release is not byte-identical to the installed U-Boot; original-program boot tests do not validate this release artifact. Differences have not been attributed to specific source/config changes.",
+  "conclusion": "The exact locked release differs from installed U-Boot. Current comparisons in uboot-rebuild-original-release-crosscheck.json match both padded programs exactly to preserved rebuilds, with identical generated config/DTB/common NAND patches and two additional release video patches; physical locked U-Boot acceptance remains pending.",
   "physical_locked_release_write_readback_boot": "pending"
 }

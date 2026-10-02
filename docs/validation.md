@@ -848,3 +848,15 @@ all-target/all-feature check and diff check pass. Logs:
 `work/batch3/locked-release-physical-15-full-validation.log`,
 `locked-release-physical-15-workspace-check.log`, `locked-release-physical-15-fixture.log`
 and `locked-release-physical-15-arm-fixture.log` in the same private directory.
+
+### Batch 3 original/release U-Boot rebuild cross-check
+
+Current SHA256 and byte comparisons verify the saved original corrected U-Boot
+and locked padded artifact against preserved local June/September rebuilds after
+identical zero padding. Corresponding SPL hashes, generated configurations,
+embedded DTBs, shared patch hashes and NAND configuration inputs also match the
+recorded bindings. Two additional release video patches are identified. The
+record parses as JSON and `git diff --check` passes. This is artifact/source
+review using existing rebuilds, not a new build, release NAND write, physical
+redundant U-Boot test or full application reflash. No Rust code changed in this
+review, so the passing physical-fixture suite remains the latest code validation.

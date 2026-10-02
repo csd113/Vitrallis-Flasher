@@ -1,0 +1,70 @@
+{
+  "evidence_class": "Current byte comparisons against preserved local rebuilds and inputs; original target is physically saved kernel-corrected NAND data; no new rebuild or locked U-Boot NAND boot performed",
+  "records": [
+    {
+      "role": "original",
+      "existing_rebuild": "tag-0612-epoch",
+      "rebuild_program_sha256": "608a2b695a369f2f30a7c9a08ea503d4613d57940afc28f9484a32913d3cc8e8",
+      "program_bytes": 688768,
+      "padded_bytes": 4194304,
+      "padded_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+      "exact_padded_bytes_equal": true,
+      "config_sha256": "32ec4a7a3a3428f33273855609c8ec03d69d66d7abfbdef19ea929ec01bdb0b1",
+      "embedded_dtb": {
+        "offset": 662904,
+        "bytes": 25864,
+        "sha256": "6dbd6067868a79d08e6f4e9d5bd2dcffafa1b4cab936410609f0073725736736",
+        "model": "NextThing C.H.I.P."
+      },
+      "patches": {
+        "0001-sunxi-Add-support-for-slc-emulation-on-mlc-NAND.patch": "32a385eb1c638d19911b468c0772c990169bcf5f05704199afe6bfc9286a6316",
+        "0001-sunxi-nand-Undo-removal-of-DMA-specific-code-that-br.patch": "e095caf2c15fca00cef09ee001096d1bae68eef65270a0494d8617e52594b3d0",
+        "0001-cmd-w1-read-add-optional-dest-address.patch": "2d481ba54d489332e838f3c952ea074b6dc60b4ffaf9d50f0aa9e600ca9c15d2"
+      },
+      "nand_cfg_sha256": "688c712f6845de996d6a94de5587f312b4ad71b6d7f5e7dc4fd235bee8a77663",
+      "build_script_sha256": "47e4ecd688692b30b0b5c74714b22fdabd242a884a7c32384f01ed7102ae0b6f",
+      "dockerfile_sha256": "79fe2e2659d59ee0b8260aea28f15fcabb869b47a480681bcd17d97003bd8839",
+      "matching_spl_program_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb"
+    },
+    {
+      "role": "locked",
+      "existing_rebuild": "head-epoch",
+      "rebuild_program_sha256": "f64e582f7d01cb151cb73f8188ab5d48b5fbc351c9cf43a39570dfc1b48c6aa6",
+      "program_bytes": 688944,
+      "padded_bytes": 4194304,
+      "padded_sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8",
+      "exact_padded_bytes_equal": true,
+      "config_sha256": "32ec4a7a3a3428f33273855609c8ec03d69d66d7abfbdef19ea929ec01bdb0b1",
+      "embedded_dtb": {
+        "offset": 663080,
+        "bytes": 25864,
+        "sha256": "6dbd6067868a79d08e6f4e9d5bd2dcffafa1b4cab936410609f0073725736736",
+        "model": "NextThing C.H.I.P."
+      },
+      "patches": {
+        "0001-sunxi-Add-support-for-slc-emulation-on-mlc-NAND.patch": "32a385eb1c638d19911b468c0772c990169bcf5f05704199afe6bfc9286a6316",
+        "0001-sunxi-default-video-mode-composite-ntsc.patch": "f503cca4dc4e1b15930eb2d7b5f0096849c9070985764b071777e0aec943493c",
+        "0001-video-sunxi-draw-the-console-inside-the-overscan-border.patch": "629146986b2f76fc4131d768078a4a70abb65523f3fba56847efc94e0ac21817",
+        "0001-sunxi-nand-Undo-removal-of-DMA-specific-code-that-br.patch": "e095caf2c15fca00cef09ee001096d1bae68eef65270a0494d8617e52594b3d0",
+        "0001-cmd-w1-read-add-optional-dest-address.patch": "2d481ba54d489332e838f3c952ea074b6dc60b4ffaf9d50f0aa9e600ca9c15d2"
+      },
+      "nand_cfg_sha256": "688c712f6845de996d6a94de5587f312b4ad71b6d7f5e7dc4fd235bee8a77663",
+      "build_script_sha256": "b0c1a73ff50a711edf25e80f8ac409c0bec7b37a3559d8227fe3b284b3caa627",
+      "dockerfile_sha256": "79fe2e2659d59ee0b8260aea28f15fcabb869b47a480681bcd17d97003bd8839",
+      "matching_spl_program_sha256": "879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0"
+    }
+  ],
+  "additional_release_patches": [
+    "0001-sunxi-default-video-mode-composite-ntsc.patch",
+    "0001-video-sunxi-draw-the-console-inside-the-overscan-border.patch"
+  ],
+  "conclusions": [
+    "Original corrected U-Boot is exactly reproduced by the preserved June 12 build after zero padding; locked U-Boot is exactly reproduced by the preserved September build after the same padding.",
+    "Generated configuration and embedded DTB are identical; release DTB is shifted 176 bytes later.",
+    "NAND/SLC and w1 patches are identical. The release adds the two reviewed composite-video patches and uses its release timestamp.",
+    "The SPL NAND reader uses consecutive physical page offsets and exposes no boot-block skip algorithm. Physical boot regions therefore require checked good blocks; rootfs/UBI handling requires separate validation."
+  ],
+  "physical_locked_uboot_acceptance": "pending",
+  "physical_redundant_uboot_fallback": "pending",
+  "approved_physical_manifest": false
+}
