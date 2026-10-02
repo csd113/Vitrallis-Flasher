@@ -880,3 +880,14 @@ image/manifest checks. Fresh `cargo check --workspace --all-targets --all-featur
 `artifact-transfer-arm-tests.log`, `artifact-transfer-clippy.log`,
 `artifact-transfer-full-validation.log` and `artifact-transfer-workspace-check.log`
 in the same private directory.
+
+### Batch 3 isolated locked Hynix primary normal boot
+
+Strict SSH returns after the user-requested bridge removal and normal boot.
+A new boot ID, independent all-FF backup readback and four matching native
+release primary copies verify isolated acceptance. The kernel, SID, original
+UBI layout, bad-block counts and zero ECC failures are checked. The evidence is
+`evidence/batch3/normal-locked-release-primary-isolated-boot-15.json`; clean
+poweroff succeeds with no active package processes. Backup restoration still
+requires the requested FEL action. Release U-Boot/full production flash remain
+unverified.

@@ -172,3 +172,25 @@ does not authorize a production write at `0xc00000`.
 Hash-pinned comparisons and build inputs are recorded in
 `evidence/batch3/uboot-rebuild-original-release-crosscheck.json`; source locations
 and hashes remain in `uboot-backup-source-policy.json` in the same directory.
+
+### Exact locked Hynix primary: isolated normal boot measured
+
+After the user removed the FEL bridge and powered on, strict known-host SSH
+returns with new boot ID `055f9c77-8e1c-406e-a11d-e25d6dec63ee` and kernel
+`6.12.107+deb13-chip`. Independent normal-OS raw `nanddump` confirms all
+4,620,288 backup data/OOB bytes remain FF. The primary is also dumped raw; host
+native BCH decoding checks all four copies against the exact locked program
+digest. Their corrected-bit totals are 23, 14, 18 and 22 (maximum four per chunk);
+all MTD ECC failure counts are zero and bad blocks remain `[0,0,0,0,61]`.
+
+UBI attaches with 1,979 good PEBs, 65 unavailable PEBs and zero corrupted PEBs.
+The existing dynamic rootfs volume remains 1,960 LEBs with 2,064,384 usable bytes
+per LEB. This is physical acceptance of the exact locked Hynix SPL while the
+backup block is erased. The particular in-block copy selected by BROM remains
+unobserved. This boot uses the original U-Boot and existing rootfs; it is not
+proof of locked U-Boot acceptance, a newly installed OS or full production flash.
+
+Evidence: `evidence/batch3/normal-locked-release-primary-isolated-boot-15.json`.
+Private raw/data dumps are under `work/batch3/locked-release-trial-session-15/`.
+No package-management process was active before clean SSH poweroff (exit 0).
+Backup restoration is pending the requested return to FEL.
