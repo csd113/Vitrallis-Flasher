@@ -1,9 +1,12 @@
 # LIVE recovery protocol gate
 
 The host should reuse proven x-chip-tools NAND/SPL behavior through an external,
-reviewed recovery boundary. It must not invent host-side ECC or use the broken
-fastboot/SLC path. The current upstream installer is **not** an implementation of
-this proposed protocol. Batch 3 now has a bounded read-only client and daemon; physical endpoint authentication remains unproven.
+reviewed recovery boundary. It must preserve the measured NAND ECC/layout and
+avoid the broken fastboot/SLC path. Native verification decodes the reviewed
+boot0 format; image encoding still uses the unmodified pinned upstream builder.
+The current upstream installer is **not** an implementation of this protocol.
+Batch 3 now has a bounded read-only client and daemon with physically measured
+SID-bound authentication over macOS ECM.
 
 Required sequence before implementing a real backend:
 
@@ -132,8 +135,11 @@ four copies. Reports retain the raw data/OOB hashes and add `spl_copies`, contai
 each corrected program digest, correction counts and validated header/checksum.
 The host rejects missing copies, mismatched interpretations and invalid counts;
 no corrected SPL report can be substituted for ordinary kernel-corrected U-Boot.
-This revision is built and host-tested; physical recovery execution remains to
-be measured. It still exposes no erase/write operation.
+The seventh RAM boot physically measured this revision: all eight live copies
+match the original digest/checksum, maximum correction is seven bits per
+codeword, and each whole block read/decode takes about 2.1 seconds. Corrected
+U-Boot also matches the original digest with zero uncorrectable failures. It
+still exposes no erase/write operation.
 
 `boot0-recover-source` prepares a private restoration source from two preserved
 captures. All eight copies must decode, agree byte-for-byte and match the
@@ -162,3 +168,16 @@ These helpers are not yet connected to a recovery request. The pinned protocol
 v3 daemon continues to expose read-only NAND diagnostics. A reviewed journal,
 device-local preflight integration and physical measurements are still required
 before the fallback trial; `NandPlan` production authorization remains denied.
+
+The host trial journal publishes a new private intent file atomically without
+overwrite and fsyncs it before preparation or dispatch. It records public SID,
+boot session, implementation digest, fixed image/program digests and a closed
+operation enum; it never serializes the session HMAC key. Ordered records move
+through Intent, Prepared and Dispatched. Verified requires the operation's
+checked physical readback. A lost response after dispatch is Indeterminate;
+cancellation/failure before dispatch is terminal and cannot become Verified.
+An I/O failure poisons further journal transitions. The bounded reader rejects
+partial/reordered/modified-schema records and grants no automatic resumption.
+Unix parent-directory fsync is implemented; Windows directory durability remains
+unmeasured. `trial-journal-read` provides read-only inspection. The journal is
+prepared for integration; no destructive request has been dispatched.

@@ -370,9 +370,18 @@ pub(crate) fn regular_components(path: &Path) -> Result<(), Error> {
 /// # Errors
 /// Returns errors resolving or creating the directory. Resolving handles macOS's `/var` alias.
 pub fn temporary_directory() -> Result<tempfile::TempDir, Error> {
-    Ok(tempfile::tempdir_in(fs::canonicalize(
-        std::env::temp_dir(),
-    )?)?)
+    let root = fs::canonicalize(std::env::temp_dir())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        Ok(tempfile::Builder::new()
+            .permissions(fs::Permissions::from_mode(0o700))
+            .tempdir_in(root)?)
+    }
+    #[cfg(not(unix))]
+    {
+        Ok(tempfile::tempdir_in(root)?)
+    }
 }
 
 #[cfg(test)]
@@ -382,6 +391,17 @@ mod tests {
         http::{ScriptedHttpClient, ScriptedResponse},
         simulation,
     };
+    #[cfg(unix)]
+    #[test]
+    fn snapshots_and_journals_receive_private_temporary_directories() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = temporary_directory().unwrap();
+        assert_eq!(
+            fs::metadata(directory.path()).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        regular_components(directory.path()).unwrap();
+    }
     fn spec() -> Result<Asset, Error> {
         Manifest::read(simulation::MANIFEST.as_bytes())?
             .assets()

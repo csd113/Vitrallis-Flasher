@@ -149,3 +149,14 @@ Recovery execution of these tools and destructive fallback testing remain unprov
 `pre-recovery-v3-shutdown.json` records a clear apt/dpkg process check and accepted
 orderly shutdown before requesting the FEL bridge for the v3 live decoder test.
 This records command acceptance, not observation of physical power-off or FEL.
+
+`recovery-boot-7-tool.json`, `recovery-inventory-7.json`,
+`recovery-spl-bch64-readbacks-7.json` and
+`recovery-uboot-corrected-readback-7.json` record protocol v3 on the same SID.
+Authenticated Ping, inventory and live native BCH-64 decoding all pass. Each
+SPL block takes about 2.1 seconds; all eight copies match the original digest
+and eGON checksum, with a maximum seven-bit correction in one codeword.
+Corrected U-Boot matches the original digest, with 6,496 corrected bits and
+zero uncorrectable errors. These actual v3 reports now back the trial guard
+fixtures. No NAND erase/write, generated-image acceptance or BROM fallback
+selection is claimed.

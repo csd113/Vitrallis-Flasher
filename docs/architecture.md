@@ -172,9 +172,18 @@ addresses. Recovery and destructive plan authorization remain blocked.
 
 ### Read-only recovery development boundary
 
-`flasher-recovery` is an ARMv7 daemon with two authenticated diagnostic
-operations. The core `native-fel` feature separates desktop USB code from the
+`flasher-recovery` is an ARMv7 daemon with authenticated Ping, Inventory,
+BootReadback and RAM-only ReturnToFel operations. Protocol v3 includes native
+BCH-64 SPL decoding alongside raw and kernel-corrected U-Boot interpretations.
+Authentication, live SPL/U-Boot readback and return to FEL are measured on the
+sacrificial Hynix device. The core `native-fel` feature separates desktop USB code from the
 recovery build: CLI/GUI enable it, while the device daemon does not link libusb.
 RAM bootstrap uses only fixed, hash-pinned inputs and constructed `ToolRequest`
 arguments. Per-boot credentials live in a private directory and RAM initramfs.
 This work has not changed NAND authorization or enabled a destructive executor.
+
+The restricted original-SPL trial guard and durable host journal are separate
+developer diagnostics in preparation. Journal reads never authorize resumption,
+and Verified cannot be recorded without the operation's checked readback.
+Their mutation helpers remain disconnected from the recovery protocol pending
+reviewed local preflight/journal integration and controlled physical testing.

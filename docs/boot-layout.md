@@ -69,9 +69,17 @@ four eGON boot0 groups per block, with 64-page spacing and a 16 KiB SPL size.
 All eight copies have corrected SHA256
 `a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb`
 and pass the stored eGON checksum. The maximum observed correction is nine bits
-in one protected codeword. This is software decoding of physical captures;
-live authenticated SPL decoding and BROM fallback selection remain unproven.
+in one protected codeword. This is software decoding of physical captures.
 See [the BCH evidence](evidence/batch3/spl-original-bch64-readback.json).
+
+The seventh RAM recovery boot also performed native BCH decoding on live raw
+readbacks of both SPL blocks through authenticated protocol v3. All eight copies
+match the same original program digest and eGON checksum. Maximum correction
+is seven bits in one codeword, and each complete block read/decode takes about
+2.1 seconds. Corrected U-Boot again matches the original digest, with 6,496 bits
+corrected and zero uncorrectable errors. See
+[the live SPL evidence](evidence/batch3/recovery-spl-bch64-readbacks-7.json).
+BROM primary/backup selection and generated-image acceptance remain unproven.
 
 The fourth boot block at `0xC00000` remains completely FF in data and OOB,
 and its raw hashes match the original backup. The Linux `env` label does not
@@ -115,9 +123,9 @@ redundant U-Boot copy. The current review plan still schedules no operation ther
 
 ## Other unresolved layout facts (require hardware)
 
-* Hynix geometry and saved-capture SPL ECC decoding are measured above;
-  executable bad-block handling, live SPL verification and Toshiba geometry
-  remain unresolved.
+* Hynix geometry and authenticated live SPL/U-Boot ECC readback are measured
+  above; executable bad-block handling, release-artifact verification and
+  Toshiba geometry remain unresolved.
 * Whether the BROM/SPL accepts the `sunxi-nand-image-builder` output for both
   the Hynix H27UCG8T2ETR (OOB 1664) and Toshiba TC58TEG5DCLTA00 (OOB 1280)
   parts (`lib-nand.sh:22-34`).

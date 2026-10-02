@@ -1,0 +1,11 @@
+{
+  "daemon_sha256": "54e3a61fa9c6d689bdaf797c0f15d49e8a18ea257bd46aa3a107f8af29f6831d",
+  "exit": 0,
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "stderr": "",
+  "stdout": "",
+  "template_sha256": "5eade486e08f8fedbaa8884a6dd83ba2ea1799899bcc58819c6d673ec9a81e65",
+  "protocol": 3,
+  "evidence_class": "physical RAM boot dispatch; endpoint authentication measured separately",
+  "host_cli_sha256": "4273aad4fb947e7f0cd50f65d0a0f68897f66a7a0c7b6ccc4e2e23fc367ce2ed"
+}

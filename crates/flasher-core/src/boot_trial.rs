@@ -18,6 +18,16 @@ use std::{
     time::Duration,
 };
 
+pub mod journal;
+
+/// The two reviewed original-SPL fallback operations; no addresses or paths.
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub enum Operation {
+    ErasePrimary,
+    RestorePrimary,
+}
+
 pub const SID: [u8; 16] = [
     0x17, 0x42, 0x25, 0x16, 0x58, 0x38, 0x30, 0x50, 0x30, 0x30, 0x33, 0x31, 0xc0, 0x88, 0x02, 0x0e,
 ];
@@ -350,32 +360,21 @@ mod tests {
 
     fn measured() -> (Inventory, BootReadback, BootReadback) {
         let inventory: Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-inventory-4.json"
+            "../../../docs/evidence/batch3/recovery-inventory-7.json"
         ))
         .unwrap();
-        let raw: Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-boot-readbacks-5.json"
-        ))
-        .unwrap();
-        let bch: Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/spl-original-bch64-readback.json"
+        let spl: Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/recovery-spl-bch64-readbacks-7.json"
         ))
         .unwrap();
         let uboot: Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-uboot-corrected-readback-6.json"
+            "../../../docs/evidence/batch3/recovery-uboot-corrected-readback-7.json"
         ))
         .unwrap();
-        // Adapt historical schemas explicitly in this host-only fixture. No
-        // claim is made that the synthesized v3 SPL report was measured live.
-        let mut backup = raw["records"][1]["response"].clone();
-        backup["interpretation"] = json!("Boot0Corrected");
-        backup["spl_copies"] = bch["records"][1]["copies"].clone();
-        let mut uboot = uboot["response"].clone();
-        uboot["spl_copies"] = json!([]);
         (
             serde_json::from_value(inventory["response"]["Inventory"].clone()).unwrap(),
-            serde_json::from_value(backup).unwrap(),
-            serde_json::from_value(uboot).unwrap(),
+            serde_json::from_value(spl["records"][1]["response"].clone()).unwrap(),
+            serde_json::from_value(uboot["response"]["BootReadback"].clone()).unwrap(),
         )
     }
 

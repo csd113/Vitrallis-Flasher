@@ -444,3 +444,33 @@ fixed encoded digest and zero-correction native decode before snapshot creation.
 all-feature workspace check also passed. Device-local integration, journaling and
 physical fallback testing remain open; no diagnostic erase/write RPC is exposed
 and production plan authorization remains denied.
+
+### Batch 3 live BCH-64 readbacks and durable trial journal
+
+The seventh authenticated RAM session physically measured protocol-v3 SPL
+readbacks. All eight original copies match the preserved 16 KiB program digest
+and eGON checksum. Primary decoding took 2.080 seconds (165 corrected bits);
+backup decoding took 2.107 seconds (127 corrected bits). Both had a maximum of
+seven corrections per codeword. Corrected U-Boot matched its preserved digest
+with 6,496 corrected bits and zero uncorrectable failures. Evidence is indexed in
+`docs/evidence/batch3/README.md`. These measurements verify the original install;
+they do not prove fallback, restoration or a new flash.
+
+The trial journal records a private, fsynced intent before dispatch, checked stage
+transitions and operation-specific verified readback. An interrupted dispatch is
+indeterminate and never authorizes automatic retry. Its read-only CLI rejects
+unsafe paths, permissions, truncated records, changed pins and invalid ordering.
+Tests discovered that the shared temporary-directory helper did not request Unix
+0700 permissions; the helper now does so explicitly, with a regression test.
+
+Ten trial/journal tests pass natively and under ARMv7 qemu (2.67 seconds).
+`cargo fmt --all --check`, strict all-target/all-feature workspace Clippy,
+`cargo check --workspace --all-targets --all-features --locked` and
+`python3 scripts/ci.py validate` all pass. The latter includes full workspace
+tests, Python tests, provenance/kernel and stock/Vitrallis plan checks, release
+builds and manifest validation. Logs: `work/batch3/live-bch-journal-milestone-validation.log`,
+`work/batch3/live-bch-journal-workspace-check.log` and
+`work/batch3/live-bch-journal-arm-tests.log`. Journal tests use scripted processes;
+no physical erase/write or write RPC has yet occurred. Device-local trial
+integration, physical fallback and the final approved application reflash remain
+required. Windows journal directory-sync durability remains unmeasured.
