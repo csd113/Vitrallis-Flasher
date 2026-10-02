@@ -21,6 +21,7 @@ thiserror = "2.0"
 url = "2.5"
 ureq = { version = "=3.4.1", default-features = false, features = ["rustls"] }
 tempfile = "3.27"
+rusb = { version = "=0.9.4", features = ["vendored"] }
 eframe = { version = "0.36.2", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
 
 [workspace.lints.rust]

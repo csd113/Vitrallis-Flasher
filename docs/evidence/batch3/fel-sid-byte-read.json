@@ -1,0 +1,13 @@
+{
+  "purpose": "Capture BROM byte-copy MMIO read to compare against aligned word SID query",
+  "argv": [
+    "/Users/connordawkins/Documents/GitHub/Vitrallis-Flasher/work/batch3/fel-diagnostic/sunxi-fel",
+    "dump",
+    "0x01c23800",
+    "16"
+  ],
+  "returncode": 0,
+  "stdout_base64": "FwAAAFgAAAAwAAAAwAAAAA==",
+  "stdout_hex": "170000005800000030000000c0000000",
+  "stderr": "BROM status: ff ff 00 00 00 00 00 00\nBROM status: ff ff 00 00 00 00 00 00\n"
+}

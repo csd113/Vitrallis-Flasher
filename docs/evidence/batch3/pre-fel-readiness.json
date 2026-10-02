@@ -1,0 +1,34 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "dpkg",
+        "--audit"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "pgrep",
+        "-x",
+        "apt"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "pgrep",
+        "-x",
+        "dpkg"
+      ],
+      "returncode": 1,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "sid_base64": "F0IlFlg4MFAwMDMxwIgCDg=="
+}

@@ -1,0 +1,360 @@
+{
+  "records": [
+    {
+      "index": 0,
+      "mtd_info_user": {
+        "type": 8,
+        "flags": 1024,
+        "size": 4194304,
+        "erasesize": 4194304,
+        "writesize": 16384,
+        "oobsize": 1664
+      },
+      "bad_blocks": []
+    },
+    {
+      "index": 1,
+      "mtd_info_user": {
+        "type": 8,
+        "flags": 1024,
+        "size": 4194304,
+        "erasesize": 4194304,
+        "writesize": 16384,
+        "oobsize": 1664
+      },
+      "bad_blocks": []
+    },
+    {
+      "index": 2,
+      "mtd_info_user": {
+        "type": 8,
+        "flags": 1024,
+        "size": 4194304,
+        "erasesize": 4194304,
+        "writesize": 16384,
+        "oobsize": 1664
+      },
+      "bad_blocks": []
+    },
+    {
+      "index": 3,
+      "mtd_info_user": {
+        "type": 8,
+        "flags": 1024,
+        "size": 4194304,
+        "erasesize": 4194304,
+        "writesize": 16384,
+        "oobsize": 1664
+      },
+      "bad_blocks": []
+    },
+    {
+      "index": 4,
+      "mtd_info_user": {
+        "type": 8,
+        "flags": 17408,
+        "size": 4286578688,
+        "erasesize": 2097152,
+        "writesize": 16384,
+        "oobsize": 1664
+      },
+      "bad_blocks": [
+        {
+          "partition_offset": 465567744,
+          "status": 1
+        },
+        {
+          "partition_offset": 524288000,
+          "status": 1
+        },
+        {
+          "partition_offset": 528482304,
+          "status": 1
+        },
+        {
+          "partition_offset": 566231040,
+          "status": 1
+        },
+        {
+          "partition_offset": 794820608,
+          "status": 1
+        },
+        {
+          "partition_offset": 840957952,
+          "status": 1
+        },
+        {
+          "partition_offset": 952107008,
+          "status": 1
+        },
+        {
+          "partition_offset": 1121976320,
+          "status": 1
+        },
+        {
+          "partition_offset": 1140850688,
+          "status": 1
+        },
+        {
+          "partition_offset": 1145044992,
+          "status": 1
+        },
+        {
+          "partition_offset": 1228931072,
+          "status": 1
+        },
+        {
+          "partition_offset": 1241513984,
+          "status": 1
+        },
+        {
+          "partition_offset": 1268776960,
+          "status": 1
+        },
+        {
+          "partition_offset": 1317011456,
+          "status": 1
+        },
+        {
+          "partition_offset": 1566572544,
+          "status": 1
+        },
+        {
+          "partition_offset": 1606418432,
+          "status": 1
+        },
+        {
+          "partition_offset": 1663041536,
+          "status": 1
+        },
+        {
+          "partition_offset": 1725956096,
+          "status": 1
+        },
+        {
+          "partition_offset": 1753219072,
+          "status": 1
+        },
+        {
+          "partition_offset": 1858076672,
+          "status": 1
+        },
+        {
+          "partition_offset": 1879048192,
+          "status": 1
+        },
+        {
+          "partition_offset": 1883242496,
+          "status": 1
+        },
+        {
+          "partition_offset": 1916796928,
+          "status": 1
+        },
+        {
+          "partition_offset": 1923088384,
+          "status": 1
+        },
+        {
+          "partition_offset": 1927282688,
+          "status": 1
+        },
+        {
+          "partition_offset": 2078277632,
+          "status": 1
+        },
+        {
+          "partition_offset": 2147483648,
+          "status": 1
+        },
+        {
+          "partition_offset": 2168455168,
+          "status": 1
+        },
+        {
+          "partition_offset": 2199912448,
+          "status": 1
+        },
+        {
+          "partition_offset": 2206203904,
+          "status": 1
+        },
+        {
+          "partition_offset": 2227175424,
+          "status": 1
+        },
+        {
+          "partition_offset": 2575302656,
+          "status": 1
+        },
+        {
+          "partition_offset": 2610954240,
+          "status": 1
+        },
+        {
+          "partition_offset": 2659188736,
+          "status": 1
+        },
+        {
+          "partition_offset": 2707423232,
+          "status": 1
+        },
+        {
+          "partition_offset": 2743074816,
+          "status": 1
+        },
+        {
+          "partition_offset": 2822766592,
+          "status": 1
+        },
+        {
+          "partition_offset": 2915041280,
+          "status": 1
+        },
+        {
+          "partition_offset": 2917138432,
+          "status": 1
+        },
+        {
+          "partition_offset": 2969567232,
+          "status": 1
+        },
+        {
+          "partition_offset": 2984247296,
+          "status": 1
+        },
+        {
+          "partition_offset": 3191865344,
+          "status": 1
+        },
+        {
+          "partition_offset": 3265265664,
+          "status": 1
+        },
+        {
+          "partition_offset": 3355443200,
+          "status": 1
+        },
+        {
+          "partition_offset": 3405774848,
+          "status": 1
+        },
+        {
+          "partition_offset": 3533701120,
+          "status": 1
+        },
+        {
+          "partition_offset": 3548381184,
+          "status": 1
+        },
+        {
+          "partition_offset": 3554672640,
+          "status": 1
+        },
+        {
+          "partition_offset": 3605004288,
+          "status": 1
+        },
+        {
+          "partition_offset": 3611295744,
+          "status": 1
+        },
+        {
+          "partition_offset": 3787456512,
+          "status": 1
+        },
+        {
+          "partition_offset": 3839885312,
+          "status": 1
+        },
+        {
+          "partition_offset": 3909091328,
+          "status": 1
+        },
+        {
+          "partition_offset": 3919577088,
+          "status": 1
+        },
+        {
+          "partition_offset": 3942645760,
+          "status": 1
+        },
+        {
+          "partition_offset": 4022337536,
+          "status": 1
+        },
+        {
+          "partition_offset": 4047503360,
+          "status": 1
+        },
+        {
+          "partition_offset": 4114612224,
+          "status": 1
+        },
+        {
+          "partition_offset": 4192206848,
+          "status": 1
+        },
+        {
+          "partition_offset": 4219469824,
+          "status": 1
+        },
+        {
+          "partition_offset": 4240441344,
+          "status": 1
+        },
+        {
+          "partition_offset": 4278190080,
+          "status": 1
+        },
+        {
+          "partition_offset": 4280287232,
+          "status": 1
+        },
+        {
+          "partition_offset": 4282384384,
+          "status": 1
+        },
+        {
+          "partition_offset": 4284481536,
+          "status": 1
+        }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "uname",
+        "-a"
+      ],
+      "returncode": 0,
+      "stdout": "Linux chip 6.12.107+deb13-chip #1 SMP Debian 6.12.107-1.31 (2026-08-29) armv7l GNU/Linux\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "dpkg-query",
+        "-W",
+        "-f=${Package}\t${Version}\t${db:Status-Abbrev}\n"
+      ],
+      "returncode": 0,
+      "stdout": "adduser\t3.152\tii \nadwaita-icon-theme\t48.1-1\tii \nalsa-topology-conf\t1.2.5.1-3\tii \nalsa-ucm-conf\t1.2.14-1\tii \nalsa-utils\t1.2.14-1\tii \napparmor\t4.1.0-1\tii \napparmor-profiles-extra\t1.35\tii \napparmor-utils\t4.1.0-1\tii \napt\t3.0.3\tii \napt-utils\t3.0.3\tii \naspell\t0.60.8.1-4\tii \naspell-en\t2020.12.07-0-1\tii \nat-spi2-common\t2.56.2-1+deb13u2\tii \nat-spi2-core\t2.56.2-1+deb13u2\tii \nawesome\t4.3-7+b2\tii \nawesome-extra\t2023010601\tii \nbase-files\t13.8+deb13u7\tii \nbase-passwd\t3.6.7\tii \nbash\t5.2.37-2+b10\tii \nbash-completion\t1:2.16.0-7\tii \nbc\t1.07.1-4\tii \nbinutils\t2.44-3\tii \nbinutils-arm-linux-gnueabihf\t2.44-3\tii \nbinutils-common\t2.44-3\tii \nblt\t2.5.3+dfsg-8\tii \nbluez\t5.82-1.1\tii \nbsdutils\t1:2.41.5-0+deb13u1\tii \nbubblewrap\t0.12.0-1~deb13u1\tii \nbusybox\t1:1.37.0-6+b9\tii \nbzip2\t1.0.8-6\tii \nca-certificates\t20250419\tii \nchip-configs\t1.7\tii \nchip-desktop-configs\t0.3\tii \nchip-dt-overlays\t0.8\tii \nchip-hwtest\t0.9\tii \nchip-power\t0.6\tii \ncontainerd\t1.7.24~ds1-6+deb13u1\tii \ncoreutils\t9.7-3\tii \ncpio\t2.15+dfsg-2\tii \ncpp\t4:14.2.0-1\tii \ncpp-14\t14.2.0-19\tii \ncpp-14-arm-linux-gnueabihf\t14.2.0-19\tii \ncpp-arm-linux-gnueabihf\t4:14.2.0-1\tii \ncron\t3.0pl1-197\tii \ncron-daemon-common\t3.0pl1-197\tii \ncurl\t8.14.1-2+deb13u5\tii \ndash\t0.5.12-12\tii \ndbus\t1.16.2-2\tii \ndbus-bin\t1.16.2-2\tii \ndbus-daemon\t1.16.2-2\tii \ndbus-session-bus-common\t1.16.2-2\tii \ndbus-system-bus-common\t1.16.2-2\tii \ndbus-user-session\t1.16.2-2\tii \ndbus-x11\t1.16.2-2\tii \ndconf-gsettings-backend\t0.40.0-5\tii \ndconf-service\t0.40.0-5\tii \ndebconf\t1.5.91\tii \ndebconf-i18n\t1.5.91\tii \ndebian-archive-keyring\t2025.1\tii \ndebian-kernel-handbook\t1.0.21\tii \ndebianutils\t5.23.2\tii \ndesktop-file-utils\t0.28-1\tii \ndevice-tree-compiler\t1.7.2-2+b1\tii \ndevio\t1.2-3\tii \ndhcpcd-base\t1:10.1.0-11+deb13u4\tii \ndictionaries-common\t1.30.10\tii \ndiffutils\t1:3.10-4\tii \ndirmngr\t2.4.7-21+deb13u1+b5\tii \ndmidecode\t3.6-2\tii \ndmsetup\t2:1.02.205-2\tii \ndns-root-data\t2025080400~deb13u1\tii \ndnsmasq-base\t2.91-1+deb13u2\tii \ndocker-buildx\t0.13.1+ds1-3\tii \ndocker-cli\t26.1.5+dfsg1-9+deb13u1\tii \ndocker-compose\t2.26.1-4\tii \ndocker.io\t26.1.5+dfsg1-9+deb13u1\tii \ndosfstools\t4.2-1.2\tii \ndpkg\t1.22.22\tii \ndracut-install\t106-6\tii \ne2fsprogs\t1.47.2-3+b12\tii \neject\t2.41.5-0+deb13u1\tii \nemacsen-common\t3.0.8\tii \nenchant-2\t2.8.2+dfsg1-3\tii \nexfatprogs\t1.2.9-1+deb13u1\tii \nfake-hwclock\t0.14\tii \nfdisk\t2.41.5-0+deb13u1\tii \nfeh\t3.10.3-1\tii \nffmpeg\t7:7.1.5-0+deb13u1\tii \nfindutils\t4.10.0-3\tii \nfirmware-ath9k-htc\t1.4.0-110-ge888634+dfsg1-0.1\tii \nfirmware-carl9170\t1.9.9-450-gad1c721+dfsg-0.1\tii \nfirmware-linux-free\t20241210-2\tii \nfirmware-realtek\t20250410-2\tii \nflash-kernel\t3.109\tii \nfontconfig\t2.15.0-2.3\tii \nfontconfig-config\t2.15.0-2.3\tii \nfonts-dejavu-core\t2.37-8\tii \nfonts-dejavu-mono\t2.37-8\tii \nfonts-droid-fallback\t1:8.1.0r7-1~1.gbp36536b\tii \nfonts-noto-mono\t20201225-2\tii \nfonts-urw-base35\t20200910-8\tii \nfuse3\t3.17.2-3\tii \ngawk\t1:5.2.1-2+b2\tii \ngcc-14-base\t14.2.0-19\tii \ngcr\t3.41.2-3\tii \ngcr4\t4.4.0.1-3\tii \ngettext-base\t0.23.1-2\tii \nghostscript\t10.05.1~dfsg-1+deb13u2\tii \ngir1.2-atk-1.0\t2.56.2-1+deb13u2\tii \ngir1.2-freedesktop\t1.84.0-1\tii \ngir1.2-gdkpixbuf-2.0\t2.42.12+dfsg-4+deb13u1\tii \ngir1.2-glib-2.0\t2.84.4-3~deb13u5\tii \ngir1.2-gtk-3.0\t3.24.49-3\tii \ngir1.2-harfbuzz-0.0\t10.2.0-1+deb13u1\tii \ngir1.2-pango-1.0\t1.56.3-1\tii \ngit\t1:2.47.3-0+deb13u1\tii \ngit-man\t1:2.47.3-0+deb13u1\tii \nglib-networking\t2.80.1-1\tii \nglib-networking-common\t2.80.1-1\tii \nglib-networking-services\t2.80.1-1\tii \ngnome-keyring\t48.0-1\tii \ngnome-keyring-pkcs11\t48.0-1\tii \ngnupg\t2.4.7-21+deb13u1\tii \ngnupg-l10n\t2.4.7-21+deb13u1\tii \ngnupg-utils\t2.4.7-21+deb13u1+b5\tii \ngoattracker\t2.77+ds-1\tii \ngpg\t2.4.7-21+deb13u1+b5\tii \ngpg-agent\t2.4.7-21+deb13u1+b5\tii \ngpg-wks-client\t2.4.7-21+deb13u1+b5\tii \ngpgconf\t2.4.7-21+deb13u1+b5\tii \ngpgsm\t2.4.7-21+deb13u1+b5\tii \ngpgv\t2.4.7-21+deb13u1+b5\tii \ngreetd\t0.10.3-4\tii \ngrep\t3.11-4\tii \ngsettings-desktop-schemas\t48.0-1\tii \ngstreamer1.0-gl\t1.26.2-1+deb13u2\tii \ngstreamer1.0-libav\t1.26.2-1+deb13u1\tii \ngstreamer1.0-plugins-bad\t1.26.2-3+deb13u3\tii \ngstreamer1.0-plugins-base\t1.26.2-1+deb13u2\tii \ngstreamer1.0-plugins-good\t1.26.2-1+deb13u2\tii \ngstreamer1.0-x\t1.26.2-1+deb13u2\tii \ngtk-update-icon-cache\t4.18.6+ds-2\tii \ngvfs\t1.57.2-2+deb13u1\tii \ngvfs-backends\t1.57.2-2+deb13u1\tii \ngvfs-common\t1.57.2-2+deb13u1\tii \ngvfs-daemons\t1.57.2-2+deb13u1\tii \ngvfs-fuse\t1.57.2-2+deb13u1\tii \ngvfs-libs\t1.57.2-2+deb13u1\tii \ngzip\t1.13-1+deb13u1\tii \nhicolor-icon-theme\t0.18-2\tii \nhostname\t3.25\tii \nhtop\t3.4.1-5\tii \nhunspell-en-us\t1:2020.12.07-4\tii \ni2c-tools\t4.4-2\tii \nifupdown\t0.8.44+deb13u1\tii \nimagemagick-7-common\t8:7.1.1.43+dfsg1-1+deb13u12\tii \ninit\t1.69~deb13u1\tii \ninit-system-helpers\t1.69~deb13u1\tii \ninitramfs-tools\t0.148.4\tii \ninitramfs-tools-bin\t0.148.4\tii \ninitramfs-tools-core\t0.148.4\tii \niproute2\t6.15.0-1\tii \niptables\t1.8.11-2\tii \niputils-ping\t3:20240905-3\tii \niso-codes\t4.18.0-1\tii \niw\t6.9-1\tii \njavascript-common\t12+nmu1\tii \nkeyboard-configuration\t1.242~deb13u1\tii \nklibc-utils\t2.0.14-1\tii \nkmod\t34.2-2\tii \nl3afpad\t0.8.18.1.11-4+b1\tii \nless\t668-1\tii \nlibaa1\t1.4p5-51.1+b1\tii \nlibaacs0\t0.11.1-4+b1\tii \nlibabsl20240722\t20240722.0-4\tii \nlibacl1\t2.3.2-2+b1\tii \nlibaom3\t3.12.1-1+deb13u1\tii \nlibapparmor1\t4.1.0-1\tii \nlibapt-pkg7.0\t3.0.3\tii \nlibarchive13t64\t3.7.4-4+deb13u1\tii \nlibasound2-data\t1.2.14-1+deb13u1\tii \nlibasound2t64\t1.2.14-1+deb13u1\tii \nlibaspell15\t0.60.8.1-4\tii \nlibass9\t1:0.17.3-1+deb13u1\tii \nlibassuan9\t3.0.2-2\tii \nlibasyncns0\t0.8-6+b5\tii \nlibatasmart4\t0.19-5+b2\tii \nlibatk-bridge2.0-0t64\t2.56.2-1+deb13u2\tii \nlibatk1.0-0t64\t2.56.2-1+deb13u2\tii \nlibatomic1\t14.2.0-19\tii \nlibatopology2t64\t1.2.14-1+deb13u1\tii \nlibatspi2.0-0t64\t2.56.2-1+deb13u2\tii \nlibattr1\t1:2.5.2-3\tii \nlibaudit-common\t1:4.0.2-2+deb13u1\tii \nlibaudit1\t1:4.0.2-2+deb13u1\tii \nlibavahi-client3\t0.8-16\tii \nlibavahi-common-data\t0.8-16\tii \nlibavahi-common3\t0.8-16\tii \nlibavahi-glib1\t0.8-16\tii \nlibavc1394-0\t0.5.4-5+b2\tii \nlibavcodec61\t7:7.1.5-0+deb13u1\tii \nlibavdevice61\t7:7.1.5-0+deb13u1\tii \nlibavfilter10\t7:7.1.5-0+deb13u1\tii \nlibavformat61\t7:7.1.5-0+deb13u1\tii \nlibavif16\t1.2.1-1.2\tii \nlibavtp0\t0.2.0-2\tii \nlibavutil59\t7:7.1.5-0+deb13u1\tii \nlibbdplus0\t0.2.0-4+b1\tii \nlibbinutils\t2.44-3\tii \nlibblas3\t3.12.1-6\tii \nlibblkid1\t2.41.5-0+deb13u1\tii \nlibblockdev-crypto3\t3.3.0-2.1\tii \nlibblockdev-fs3\t3.3.0-2.1\tii \nlibblockdev-loop3\t3.3.0-2.1\tii \nlibblockdev-mdraid3\t3.3.0-2.1\tii \nlibblockdev-nvme3\t3.3.0-2.1\tii \nlibblockdev-part3\t3.3.0-2.1\tii \nlibblockdev-swap3\t3.3.0-2.1\tii \nlibblockdev-utils3\t3.3.0-2.1\tii \nlibblockdev3\t3.3.0-2.1\tii \nlibbluetooth3\t5.82-1.1\tii \nlibbluray2\t1:1.3.4-1+b2\tii \nlibbpf1\t1:1.5.0-3\tii \nlibbrotli1\t1.1.0-2+b7\tii \nlibbs2b0\t3.1.0+dfsg-8+b1\tii \nlibbsd0\t0.12.2-2\tii \nlibbytesize-common\t2.11-2\tii \nlibbytesize1\t2.11-2\tii \nlibbz2-1.0\t1.0.8-6\tii \nlibc-bin\t2.41-12+deb13u4\tii \nlibc6\t2.41-12+deb13u4\tii \nlibcaca0\t0.99.beta20-5+deb13u1\tii \nlibcairo-gobject2\t1.18.4-1+b1\tii \nlibcairo-script-interpreter2\t1.18.4-1+b1\tii \nlibcairo2\t1.18.4-1+b1\tii \nlibcap-ng0\t0.8.5-4+b1\tii \nlibcap2\t1:2.75-10+deb13u1+b3\tii \nlibcap2-bin\t1:2.75-10+deb13u1+b3\tii \nlibcbor0.10\t0.10.2-2\tii \nlibcdio-cdda2t64\t10.2+2.0.2-1+b1\tii \nlibcdio-paranoia2t64\t10.2+2.0.2-1+b1\tii \nlibcdio19t64\t2.2.0-4.1~deb13u1\tii \nlibcdparanoia0\t3.10.2+debian-14+b1\tii \nlibchromaprint1\t1.5.1-7\tii \nlibcjson1\t1.7.18-3.1+deb13u1\tii \nlibcloudproviders0\t0.3.6-2\tii \nlibcodec2-1.2\t1.2.0-3\tii \nlibcolord2\t1.4.7-3\tii \nlibcom-err2\t1.47.2-3+b12\tii \nlibconfig11\t1.7.3-2\tii \nlibcpuinfo0\t0.0~git20250327.39ea79a-1\tii \nlibcrypt-dev\t1:4.4.38-1\trc \nlibcrypt1\t1:4.4.38-1\tii \nlibcryptsetup12\t2:2.7.5-2\tii \nlibctf-nobfd0\t2.44-3\tii \nlibctf0\t2.44-3\tii \nlibcups2t64\t2.4.10-3+deb13u2\tii \nlibcurl3t64-gnutls\t8.14.1-2+deb13u5\tii \nlibcurl4t64\t8.14.1-2+deb13u5\tii \nlibdatrie1\t0.2.13-3+b1\tii \nlibdav1d7\t1.5.1-1\tii \nlibdb5.3t64\t5.3.28+dfsg2-9\tii \nlibdbus-1-3\t1.16.2-2\tii \nlibdbus-glib-1-2\t0.114-1\tii \nlibdc1394-25\t2.2.6-5\tii \nlibdca0\t0.0.7-2+b2\tii \nlibdconf1\t0.40.0-5\tii \nlibde265-0\t1.0.15-1+deb13u2\tii \nlibdebconfclient0\t0.280\tii \nlibdecor-0-0\t0.2.2-2\tii \nlibdecor-0-plugin-1-gtk\t0.2.2-2\tii \nlibdeflate0\t1.23-2\tii \nlibdevmapper1.02.1\t2:1.02.205-2\tii \nlibdjvulibre-text\t3.5.28-2.2\tii \nlibdjvulibre21\t3.5.28-2.2\tii \nlibdrm-amdgpu1\t2.4.124-2\tii \nlibdrm-common\t2.4.124-2\tii \nlibdrm-nouveau2\t2.4.124-2\tii \nlibdrm-radeon1\t2.4.124-2\tii \nlibdrm2\t2.4.124-2\tii \nlibduktape207\t2.7.0-2+b2\tii \nlibdv4t64\t1.0.0-17.1+b1\tii \nlibdvdnav4\t6.1.1-3+b1\tii \nlibdvdread8t64\t6.1.3-2\tii \nlibdw1t64\t0.192-4\tii \nlibebur128-1\t1.2.6-1+b2\tii \nlibedit2\t3.1-20250104-1\tii \nlibegl-mesa0\t25.0.7-2+deb13u1\tii \nlibegl1\t1.7.0-1+b2\tii \nlibelf1t64\t0.192-4\tii \nlibenchant-2-2\t2.8.2+dfsg1-3\tii \nlibepoxy0\t1.5.10-2\tii \nliberror-perl\t0.17030-1\tii \nlibev4t64\t1:4.33-2.1+b1\tii \nlibevdev2\t1.13.4+dfsg-1\tii \nlibexif12\t0.6.25-1+deb13u1\tii \nlibexpat1\t2.8.3-1~deb13u1\tii \nlibext2fs2t64\t1.47.2-3+b12\tii \nlibfaad2\t2.11.2-1\tii \nlibfdisk1\t2.41.5-0+deb13u1\tii \nlibfdt1\t1.7.2-2+b1\tii \nlibffi8\t3.4.8-2\tii \nlibfftw3-double3\t3.3.10-2+b1\tii \nlibfftw3-single3\t3.3.10-2+b1\tii \nlibfido2-1\t1.15.0-1+b1\tii \nlibflac14\t1.5.0+ds-2\tii \nlibflite1\t2.2-7\tii \nlibfluidsynth3\t2.4.4+dfsg-1+deb13u3\tii \nlibfm-data\t1.4.0-2\tii \nlibfm-extra4t64\t1.4.0-2\tii \nlibfm-gtk-data\t1.4.0-2\tii \nlibfm-gtk3-4t64\t1.4.0-2\tii \nlibfm-modules\t1.4.0-2\tii \nlibfm4t64\t1.4.0-2\tii \nlibfontconfig1\t2.15.0-2.3\tii \nlibfontenc1\t1:1.1.8-1+b2\tii \nlibfreeaptx0\t0.2.2-1\tii \nlibfreetype6\t2.13.3+dfsg-1+deb13u1\tii \nlibfribidi0\t1.0.16-1\tii \nlibfuse3-4\t3.17.2-3\tii \nlibgav1-1\t0.19.0-3+b1\tii \nlibgbm1\t25.0.7-2+deb13u1\tii \nlibgcc-s1\t14.2.0-19\tii \nlibgck-1-0\t3.41.2-3\tii \nlibgck-2-2\t4.4.0.1-3\tii \nlibgcr-4-4\t4.4.0.1-3\tii \nlibgcr-base-3-1\t3.41.2-3\tii \nlibgcr-ui-3-1\t3.41.2-3\tii \nlibgcrypt20\t1.11.0-7+deb13u1\tii \nlibgd3\t2.3.3-14~deb13u1\tii \nlibgdata-common\t0.18.1-9\tii \nlibgdata22\t0.18.1-9\tii \nlibgdbm-compat4t64\t1.24-2\tii \nlibgdbm6t64\t1.24-2\tii \nlibgdk-pixbuf-2.0-0\t2.42.12+dfsg-4+deb13u1\tii \nlibgdk-pixbuf2.0-bin\t2.42.12+dfsg-4+deb13u1\tii \nlibgdk-pixbuf2.0-common\t2.42.12+dfsg-4+deb13u1\tii \nlibgfortran5\t14.2.0-19\tii \nlibgif7\t5.2.2-1+deb13u1\tii \nlibgirepository-1.0-1\t1.84.0-1\tii \nlibgl1\t1.7.0-1+b2\tii \nlibgl1-mesa-dri\t25.0.7-2+deb13u1\tii \nlibgles2\t1.7.0-1+b2\tii \nlibglib2.0-0t64\t2.84.4-3~deb13u5\tii \nlibglib2.0-data\t2.84.4-3~deb13u5\tii \nlibglvnd0\t1.7.0-1+b2\tii \nlibglx-mesa0\t25.0.7-2+deb13u1\tii \nlibglx0\t1.7.0-1+b2\tii \nlibgme0\t0.6.3-7+b2\tii \nlibgmp10\t2:6.3.0+dfsg-3\tii \nlibgnutls30t64\t3.8.9-3+deb13u4\tii \nlibgoa-1.0-0b\t3.54.5-1~deb13u1\tii \nlibgoa-1.0-common\t3.54.5-1~deb13u1\tii \nlibgomp1\t14.2.0-19\tii \nlibgpg-error-l10n\t1.51-4\tii \nlibgpg-error0\t1.51-4\tii \nlibgpgme11t64\t1.24.2-3\tii \nlibgphoto2-6t64\t2.5.31-4\tii \nlibgphoto2-l10n\t2.5.31-4\tii \nlibgphoto2-port12t64\t2.5.31-4\tii \nlibgpm2\t1.20.7-11+b2\tii \nlibgraphene-1.0-0\t1.10.8-5\tii \nlibgraphite2-3\t1.3.14-2+deb13u1\tii \nlibgs-common\t10.05.1~dfsg-1+deb13u2\tii \nlibgs10\t10.05.1~dfsg-1+deb13u2\tii \nlibgs10-common\t10.05.1~dfsg-1+deb13u2\tii \nlibgsm1\t1.0.22-1+b2\tii \nlibgssapi-krb5-2\t1.21.3-5+deb13u1\tii \nlibgssdp-1.6-0\t1.6.4-1~deb13u1\tii \nlibgstreamer-gl1.0-0\t1.26.2-1+deb13u2\tii \nlibgstreamer-plugins-bad1.0-0\t1.26.2-3+deb13u3\tii \nlibgstreamer-plugins-base1.0-0\t1.26.2-1+deb13u2\tii \nlibgstreamer1.0-0\t1.26.2-2\tii \nlibgtk-3-0t64\t3.24.49-3\tii \nlibgtk-3-bin\t3.24.49-3\tii \nlibgtk-3-common\t3.24.49-3\tii \nlibgtk-4-1\t4.18.6+ds-2\tii \nlibgtk-4-bin\t4.18.6+ds-2\tii \nlibgtk-4-common\t4.18.6+ds-2\tii \nlibgtk-4-media-gstreamer\t4.18.6+ds-2\tii \nlibgudev-1.0-0\t238-6\tii \nlibgupnp-1.6-0\t1.6.8-2\tii \nlibgupnp-igd-1.6-0\t1.6.0-4+b1\tii \nlibharfbuzz-gobject0\t10.2.0-1+deb13u1\tii \nlibharfbuzz-icu0\t10.2.0-1+deb13u1\tii \nlibharfbuzz-subset0\t10.2.0-1+deb13u1\tii \nlibharfbuzz0b\t10.2.0-1+deb13u1\tii \nlibheif-plugin-aomenc\t1.23.4-1~deb13u1\tii \nlibheif-plugin-dav1d\t1.23.4-1~deb13u1\tii \nlibheif-plugin-libde265\t1.23.4-1~deb13u1\tii \nlibheif-plugin-x265\t1.23.4-1~deb13u1\tii \nlibheif1\t1.23.4-1~deb13u1\tii \nlibhidapi-hidraw0\t0.14.0-1+b2\tii \nlibhogweed6t64\t3.10.1-1\tii \nlibhunspell-1.7-0\t1.7.2+really1.7.2-10+b4\tii \nlibhyphen0\t2.8.8-7+b2\tii \nlibi2c0\t4.4-2\tii \nlibice6\t2:1.1.1-1\tii \nlibicu76\t76.1-4\tii \nlibid3tag0\t0.16.3-1\tii \nlibidn12\t1.43-1\tii \nlibidn2-0\t2.3.8-2\tii \nlibiec61883-0\t1.2.0-7\tii \nlibijs-0.35\t0.35-15.2\tii \nlibimagequant0\t2.18.0-1+b2\tii \nlibimath-3-1-29t64\t3.1.12-1+b3\tii \nlibimlib2t64\t1.12.4-2\tii \nlibimobiledevice-1.0-6\t1.3.0+git20250228-2\tii \nlibimobiledevice-glue-1.0-0\t1.3.1-1\tii \nlibiniparser4\t4.2.6-1\tii \nlibinput-bin\t1.28.1-1+deb13u1\tii \nlibinput10\t1.28.1-1+deb13u1\tii \nlibinstpatch-1.0-2\t1.1.6-1+b2\tii \nlibintl-perl\t1.35-1\tii \nlibintl-xs-perl\t1.35-1\tii \nlibip4tc2\t1.8.11-2\tii \nlibip6tc2\t1.8.11-2\tii \nlibisl23\t0.27-1\tii \nlibjack-jackd2-0\t1.9.22~dfsg-4\tii \nlibjansson4\t2.14-2+b3\tii \nlibjavascriptcoregtk-4.1-0\t2.54.0-1~deb13u1\tii \nlibjbig0\t2.1-6.1+b2\tii \nlibjbig2dec0\t0.20-1+deb13u1\tii \nlibjpeg-turbo-progs\t1:2.1.5-4\tii \nlibjpeg62-turbo\t1:2.1.5-4\tii \nlibjs-jquery\t3.6.1+dfsg+~3.5.14-1\tii \nlibjs-sphinxdoc\t8.1.3-5\tii \nlibjs-underscore\t1.13.4~dfsg+~1.11.4-3\tii \nlibjson-c5\t0.18+ds-1\tii \nlibjson-glib-1.0-0\t1.10.6+ds-2\tii \nlibjson-glib-1.0-common\t1.10.6+ds-2\tii \nlibjxl0.11\t0.11.2-0.1~deb13u2\tii \nlibjxr-tools\t1.2~git20170615.f752187-5.3\tii \nlibjxr0t64\t1.2~git20170615.f752187-5.3\tii \nlibk5crypto3\t1.21.3-5+deb13u1\tii \nlibkeyutils1\t1.6.3-6\tii \nlibklibc\t2.0.14-1\tii \nlibkmod2\t34.2-2\tii \nlibkrb5-3\t1.21.3-5+deb13u1\tii \nlibkrb5support0\t1.21.3-5+deb13u1\tii \nlibksba8\t1.6.7-2+b1\tii \nliblapack3\t3.12.1-6\tii \nliblastlog2-2\t2.41.5-0+deb13u1\tii \nliblc3-1\t1.1.3+dfsg-1\tii \nliblcms2-2\t2.16-2+deb13u2\tii \nlibldacbt-enc2\t2.0.2.3+git20200429+ed310a0-5\tii \nlibldap-common\t2.6.10+dfsg-1\tii \nlibldap2\t2.6.10+dfsg-1\tii \nlibldb2\t2:2.11.0+samba4.22.11+dfsg-0+deb13u1\tii \nliblerc4\t4.0.0+ds-5\tii \nliblilv-0-0\t0.24.26-1\tii \nlibllvm19\t1:19.1.7-3+b1\tii \nliblocale-gettext-perl\t1.07-7+b1\tii \nliblqr-1-0\t0.4.2-2.1+b2\tii \nliblrdf0\t0.6.1-4+b2\tii \nliblsof0\t4.99.4+dfsg-2\tii \nlibltc11\t1.3.2-1+b2\tii \nlibltdl7\t2.5.4-4\tii \nliblua5.3-0\t5.3.6-2+b4\tii \nliblz4-1\t1.10.0-4\tii \nliblzma5\t5.8.1-1+deb13u1\tii \nliblzo2-2\t2.10-3+b1\tii \nlibmagickcore-7.q16-10\t8:7.1.1.43+dfsg1-1+deb13u12\tii \nlibmagickcore-7.q16-10-extra\t8:7.1.1.43+dfsg1-1+deb13u12\tii \nlibmagickwand-7.q16-10\t8:7.1.1.43+dfsg1-1+deb13u12\tii \nlibmanette-0.2-0\t0.2.12-1\tii \nlibmbedcrypto16\t3.6.6-0.1~deb13u1\tii \nlibmd0\t1.1.0-2+b1\tii \nlibmenu-cache-bin\t1.1.1-1\tii \nlibmenu-cache3\t1.1.1-1\tii \nlibmjpegutils-2.1-0t64\t1:2.1.0+debian-8.1+b1\tii \nlibmm-glib0\t1.24.0-1+deb13u1\tii \nlibmnl0\t1.0.5-3\tii \nlibmodplug1\t1:0.8.9.0-3+b2\tii \nlibmodule-find-perl\t0.17-1\tii \nlibmount1\t2.41.5-0+deb13u1\tii \nlibmp3lame0\t3.100-6+b3\tii \nlibmpc3\t1.3.1-1+b3\tii \nlibmpcdec6\t2:0.1~r495-3\tii \nlibmpeg2encpp-2.1-0t64\t1:2.1.0+debian-8.1+b1\tii \nlibmpfr6\t4.2.2-1\tii \nlibmpg123-0t64\t1.32.10-1+deb13u1\tii \nlibmplex2-2.1-0t64\t1:2.1.0+debian-8.1+b1\tii \nlibmsgraph-1-1\t0.3.3-3\tii \nlibmtdev1t64\t1.1.7-1\tii \nlibmtp-common\t1.1.22-1\tii \nlibmtp-runtime\t1.1.22-1\tii \nlibmtp9t64\t1.1.22-1\tii \nlibmysofa1\t1.3.3+dfsg-1\tii \nlibncurses6\t6.5+20250216-2\tii \nlibncursesw6\t6.5+20250216-2\tii \nlibndp0\t1.9-1+b1\tii \nlibneon27t64\t0.34.2-1\tii \nlibnetfilter-conntrack3\t1.1.0-1\tii \nlibnettle8t64\t3.10.1-1\tii \nlibnewt0.52\t0.52.25-1\tii \nlibnfnetlink0\t1.0.2-3\tii \nlibnfs14\t5.0.2-1+deb13u1\tii \nlibnftables1\t1.1.3-1\tii \nlibnftnl11\t1.2.9-1\tii \nlibnghttp2-14\t1.64.0-1.1+deb13u1\tii \nlibnghttp3-9\t1.8.0-1\tii \nlibngtcp2-16\t1.11.0-1+deb13u1\tii \nlibngtcp2-crypto-gnutls8\t1.11.0-1+deb13u1\tii \nlibnice10\t0.1.22-1\tii \nlibnl-3-200\t3.7.0-2\tii \nlibnl-genl-3-200\t3.7.0-2\tii \nlibnl-route-3-200\t3.7.0-2\tii \nlibnm0\t1.52.1-1\tii \nlibnorm1t64\t1.5.9+dfsg-3.1+b2\tii \nlibnpth0t64\t1.8-3\tii \nlibnspr4\t2:4.36-1\tii \nlibnss3\t2:3.110-1+deb13u4\tii \nlibntfs-3g89t64\t1:2022.10.3-5+deb13u2\tii \nlibnvme1t64\t1.13-2\tii \nlibogg0\t1.3.5-3+b2\tii \nlibonnx1t64\t1.17.0-3+b1\tii \nlibonnxruntime1.21\t1.21.0+dfsg-1\tii \nlibopenal-data\t1:1.24.2-1\tii \nlibopenal1\t1:1.24.2-1\tii \nlibopencore-amrnb0\t0.1.6-1+b2\tii \nlibopencore-amrwb0\t0.1.6-1+b2\tii \nlibopenexr-3-1-30\t3.1.13-2\tii \nlibopenh264-8\t2.6.0+dfsg-2\tii \nlibopenjp2-7\t2.5.3-2.1~deb13u2\tii \nlibopenmpt0t64\t0.7.13-1+b1\tii \nlibopenni2-0\t2.2.0.33+dfsg-18+b2\tii \nlibopus0\t1.5.2-2\tii \nliborc-0.4-0t64\t1:0.4.41-1\tii \nlibp11-kit0\t0.25.5-3\tii \nlibpam-gnome-keyring\t48.0-1\tii \nlibpam-modules\t1.7.0-5\tii \nlibpam-modules-bin\t1.7.0-5\tii \nlibpam-runtime\t1.7.0-5\tii \nlibpam-systemd\t257.13-1~deb13u1\tii \nlibpam0g\t1.7.0-5\tii \nlibpango-1.0-0\t1.56.3-1\tii \nlibpangocairo-1.0-0\t1.56.3-1\tii \nlibpangoft2-1.0-0\t1.56.3-1\tii \nlibpangoxft-1.0-0\t1.56.3-1\tii \nlibpaper-utils\t2.2.5-0.3+b2\tii \nlibpaper2\t2.2.5-0.3+b2\tii \nlibparted2t64\t3.6-5\tii \nlibpcap0.8t64\t1.10.5-2\tii \nlibpciaccess0\t0.17-3+b3\tii \nlibpcre2-8-0\t10.46-1~deb13u3\tii \nlibpcsclite1\t2.3.3-1\tii \nlibperl5.40\t5.40.1-6+deb13u1\tii \nlibpgm-5.3-0t64\t5.3.128~dfsg-2.1+b1\tii \nlibpipewire-0.3-0t64\t1.4.2-1\tii \nlibpipewire-0.3-common\t1.4.2-1\tii \nlibpixman-1-0\t0.44.0-3\tii \nlibplacebo349\t7.349.0-3\tii \nlibplist-2.0-4\t2.6.0-2+b1\tii \nlibpng16-16t64\t1.6.48-1+deb13u6\tii \nlibpocketsphinx3\t0.8+5prealpha+1-15+b4\tii \nlibpolkit-agent-1-0\t126-2\tii \nlibpolkit-gobject-1-0\t126-2\tii \nlibpopt0\t1.19+dfsg-2\tii \nlibpostproc58\t7:7.1.5-0+deb13u1\tii \nlibproc-processtable-perl\t0.636-1+b3\tii \nlibproc2-0\t2:4.0.4-9\tii \nlibprotobuf32t64\t3.21.12-11+deb13u1\tii \nlibproxy1v5\t0.5.9-1\tii \nlibpsl5t64\t0.21.2-1.1+b1\tii \nlibpthreadpool0\t0.0~git20240616.560c60d-1\tii \nlibpulse0\t17.0+dfsg1-2+b1\tii \nlibpython3-stdlib\t3.13.5-1\tii \nlibpython3.13-minimal\t3.13.5-2+deb13u5\tii \nlibpython3.13-stdlib\t3.13.5-2+deb13u5\tii \nlibqrencode4\t4.1.1-2\tii \nlibrabbitmq4\t0.15.0-1+deb13u2\tii \nlibraptor2-0\t2.0.16-6\tii \nlibraqm0\t0.10.2-1\tii \nlibrav1e0.7\t0.7.1-9+b2\tii \nlibraw1394-11\t2.1.2-2+b2\tii \nlibraw23t64\t0.21.4-2+deb13u1\tii \nlibre2-11\t20240702-3+b1\tii \nlibreadline8t64\t8.2-6\tii \nlibrist4\t0.2.11+dfsg-1\tii \nlibrsvg2-2\t2.60.0+dfsg-1\tii \nlibrsvg2-common\t2.60.0+dfsg-1\tii \nlibrtmp1\t2.4+20151223.gitfa8646d.1-2+b5\tii \nlibrubberband2\t3.3.0+dfsg-2+b3\tii \nlibsamplerate0\t0.2.2-4+b2\tii \nlibsasl2-2\t2.1.28+dfsg1-9\tii \nlibsasl2-modules\t2.1.28+dfsg1-9\tii \nlibsasl2-modules-db\t2.1.28+dfsg1-9\tii \nlibsbc1\t2.1-1\tii \nlibsdl1.2debian\t1.2.68-3\tii \nlibsdl2-2.0-0\t2.32.4+dfsg-1\tii \nlibseccomp2\t2.6.0-2\tii \nlibsecret-1-0\t0.21.7-1\tii \nlibsecret-common\t0.21.7-1\tii \nlibselinux1\t3.8.1-1\tii \nlibsemanage-common\t3.8.1-1\tii \nlibsemanage2\t3.8.1-1\tii \nlibsensors-config\t1:3.6.2-2\tii \nlibsensors5\t1:3.6.2-2\tii \nlibsepol2\t3.8.1-1\tii \nlibserd-0-0\t0.32.4-1\tii \nlibsframe1\t2.44-3\tii \nlibsharpyuv0\t1.5.0-0.1\tii \nlibshine3\t3.1.1-2+b2\tii \nlibshout3\t2.4.6-1+b3\tii \nlibsigsegv2\t2.14-1+b2\tii \nlibslang2\t2.3.3-5+b2\tii \nlibsm6\t2:1.2.6-1\tii \nlibsmartcols1\t2.41.5-0+deb13u1\tii \nlibsmbclient0\t2:4.22.11+dfsg-0+deb13u1\tii \nlibsnappy1v5\t1.2.2-1\tii \nlibsndfile1\t1.2.2-2+deb13u1\tii \nlibsodium23\t1.0.18-1+deb13u1\tii \nlibsord-0-0\t0.16.18-1\tii \nlibsort-naturally-perl\t1.03-4\tii \nlibsoundtouch1\t2.4.0+ds-1\tii \nlibsoup-2.4-1\t2.74.3-10.1\tii \nlibsoup-3.0-0\t3.6.5-3\tii \nlibsoup-3.0-common\t3.6.5-3\tii \nlibsoup2.4-common\t2.74.3-10.1\tii \nlibsoxr0\t0.1.3-4+b2\tii \nlibspa-0.2-modules\t1.4.2-1\tii \nlibspandsp2t64\t0.0.6+dfsg-2.2\tii \nlibspectre1\t0.2.12-1+b2\tii \nlibspeex1\t1.2.1-3\tii \nlibsphinxbase3t64\t0.8+5prealpha+1-21+b1\tii \nlibsqlite3-0\t3.46.1-7+deb13u2\tii \nlibsratom-0-0\t0.6.18-1\tii \nlibsrt1.5-gnutls\t1.5.4-1+deb13u1\tii \nlibsrtp2-1\t2.7.0-3\tii \nlibss2\t1.47.2-3+b12\tii \nlibssh-4\t0.11.5-0+deb13u1\tii \nlibssh2-1t64\t1.11.1-1+deb13u2\tii \nlibssl3t64\t3.5.7-1~deb13u3\tii \nlibstartup-notification0\t0.12-8\tii \nlibstdc++6\t14.2.0-19\tii \nlibsvtav1enc2\t2.3.0+dfsg-1\tii \nlibswresample5\t7:7.1.5-0+deb13u1\tii \nlibswscale8\t7:7.1.5-0+deb13u1\tii \nlibsystemd-shared\t257.13-1~deb13u1\tii \nlibsystemd0\t257.13-1~deb13u1\tii \nlibtag2\t2.0.2-2\tii \nlibtalloc2\t2:2.4.3+samba4.22.11+dfsg-0+deb13u1\tii \nlibtasn1-6\t4.20.0-2+deb13u1\tii \nlibtcl8.6\t8.6.16+dfsg-1\tii \nlibtdb1\t2:1.4.13+samba4.22.11+dfsg-0+deb13u1\tii \nlibteamdctl0\t1.31-1+b2\tii \nlibterm-readkey-perl\t2.38-2+b4\tii \nlibtevent0t64\t2:0.16.2+samba4.22.11+dfsg-0+deb13u1\tii \nlibtext-charwidth-perl\t0.04-11+b4\tii \nlibtext-iconv-perl\t1.7-8+b4\tii \nlibtext-wrapi18n-perl\t0.06-10\tii \nlibthai-data\t0.1.29-2\tii \nlibthai0\t0.1.29-2+b1\tii \nlibtheora0\t1.2.0~alpha1+dfsg-6\tii \nlibtheoradec1\t1.2.0~alpha1+dfsg-6\tii \nlibtheoraenc1\t1.2.0~alpha1+dfsg-6\tii \nlibtiff6\t4.7.0-3+deb13u3\tii \nlibtinfo6\t6.5+20250216-2\tii \nlibtirpc-common\t1.3.6+ds-1\tii \nlibtirpc3t64\t1.3.6+ds-1\tii \nlibtk8.6\t8.6.16-1\tii \nlibturbojpeg0\t1:2.1.5-4\tii \nlibtwolame0\t0.4.0-2+b2\tii \nlibubootenv-tool\t0.3.5-0.1+b2\tii \nlibubootenv0.1\t0.3.5-0.1+b2\tii \nlibudev1\t257.13-1~deb13u1\tii \nlibudfread0\t1.1.2-1+b2\tii \nlibudisks2-0\t2.10.1-12.1+deb13u2\tii \nlibunibreak6\t6.1-3\tii \nlibunistring5\t1.3-2\tii \nliburing2\t2.9-1\tii \nlibusb-1.0-0\t2:1.0.28-1\tii \nlibusbmuxd-2.0-7\t2.1.0-1+b1\tii \nlibuuid1\t2.41.5-0+deb13u1\tii \nlibv4l-0t64\t1.30.1-1\tii \nlibv4lconvert0t64\t1.30.1-1\tii \nlibva-drm2\t2.22.0-3\tii \nlibva-x11-2\t2.22.0-3\tii \nlibva2\t2.22.0-3\tii \nlibvdpau1\t1.5-3+b1\tii \nlibvidstab1.1\t1.1.0-2+b2\tii \nlibvisual-0.4-0\t0.4.2-2+b2\tii \nlibvo-aacenc0\t0.1.3-3\tii \nlibvo-amrwbenc0\t0.1.3-2+b2\tii \nlibvolume-key1\t0.3.12-9\tii \nlibvorbis0a\t1.3.7-3\tii \nlibvorbisenc2\t1.3.7-3\tii \nlibvorbisfile3\t1.3.7-3\tii \nlibvpx9\t1.15.0-2.1+deb13u1\tii \nlibvte-2.91-0\t0.80.1-1\tii \nlibvte-2.91-common\t0.80.1-1\tii \nlibvulkan1\t1.4.309.0-1\tii \nlibwacom-common\t2.14.0-1\tii \nlibwacom9\t2.14.0-1\tii \nlibwavpack1\t5.8.1-1\tii \nlibwayland-client0\t1.23.1-3\tii \nlibwayland-cursor0\t1.23.1-3\tii \nlibwayland-egl1\t1.23.1-3\tii \nlibwayland-server0\t1.23.1-3\tii \nlibwbclient0\t2:4.22.11+dfsg-0+deb13u1\tii \nlibwebkit2gtk-4.1-0\t2.54.0-1~deb13u1\tii \nlibwebp7\t1.5.0-0.1\tii \nlibwebpdemux2\t1.5.0-0.1\tii \nlibwebpmux3\t1.5.0-0.1\tii \nlibwebrtc-audio-processing-1-3\t1.3-3+b1\tii \nlibwildmidi2\t0.4.3-1+b3\tii \nlibwmflite-0.2-7\t0.2.13-1.1+b3\tii \nlibwrap0\t7.6.q-36\tii \nlibwtmpdb0\t0.73.0-3+deb13u1\tii \nlibx11-6\t2:1.8.12-1\tii \nlibx11-data\t2:1.8.12-1\tii \nlibx11-xcb1\t2:1.8.12-1\tii \nlibx264-164\t2:0.164.3108+git31e19f9-2+b1\tii \nlibx265-215\t4.1-2\tii \nlibxau6\t1:1.0.11-1\tii \nlibxaw7\t2:1.0.16-1\tii \nlibxcb-composite0\t1.17.0-2+b1\tii \nlibxcb-cursor0\t0.1.5-1\tii \nlibxcb-damage0\t1.17.0-2+b1\tii \nlibxcb-dri3-0\t1.17.0-2+b1\tii \nlibxcb-glx0\t1.17.0-2+b1\tii \nlibxcb-icccm4\t0.4.2-1\tii \nlibxcb-image0\t0.4.0-2+b2\tii \nlibxcb-keysyms1\t0.4.1-1\tii \nlibxcb-present0\t1.17.0-2+b1\tii \nlibxcb-randr0\t1.17.0-2+b1\tii \nlibxcb-render-util0\t0.3.10-1\tii \nlibxcb-render0\t1.17.0-2+b1\tii \nlibxcb-shape0\t1.17.0-2+b1\tii \nlibxcb-shm0\t1.17.0-2+b1\tii \nlibxcb-sync1\t1.17.0-2+b1\tii \nlibxcb-util1\t0.4.1-1\tii \nlibxcb-xfixes0\t1.17.0-2+b1\tii \nlibxcb-xinerama0\t1.17.0-2+b1\tii \nlibxcb-xkb1\t1.17.0-2+b1\tii \nlibxcb-xrm0\t1.3+git20230724.a17de57-1\tii \nlibxcb-xtest0\t1.17.0-2+b1\tii \nlibxcb1\t1.17.0-2+b1\tii \nlibxcomposite1\t1:0.4.6-1\tii \nlibxcursor1\t1:1.2.3-1\tii \nlibxcvt0\t0.1.3-1\tii \nlibxdamage1\t1:1.1.6-1+b2\tii \nlibxdg-basedir1\t1.2.0-2.1\tii \nlibxdmcp6\t1:1.1.5-1\tii \nlibxext6\t2:1.3.4-1+b3\tii \nlibxfixes3\t1:6.0.0-2+b4\tii \nlibxfont2\t1:2.0.6-1+deb13u1\tii \nlibxft2\t2.3.6-1+b4\tii \nlibxi6\t2:1.8.2-1\tii \nlibxinerama1\t2:1.1.4-3+b4\tii \nlibxkbcommon-x11-0\t1.7.0-2\tii \nlibxkbcommon0\t1.7.0-2\tii \nlibxkbfile1\t1:1.1.0-1+b4\tii \nlibxml2\t2.12.7+dfsg+really2.9.14-2.1+deb13u3\tii \nlibxmu6\t2:1.1.3-3+b4\tii \nlibxmuu1\t2:1.1.3-3+b4\tii \nlibxnnpack0.20241108\t0.0~git20241108.4ea82e5-2\tii \nlibxpm4\t1:3.5.17-1+deb13u1\tii \nlibxrandr2\t2:1.5.4-1+b3\tii \nlibxrender1\t1:0.9.12-1\tii \nlibxshmfence1\t1.3.3-1\tii \nlibxslt1.1\t1.1.35-1.2+deb13u3\tii \nlibxss1\t1:1.2.3-1+b3\tii \nlibxt6t64\t1:1.2.1-1.2+b2\tii \nlibxtables12\t1.8.11-2\tii \nlibxtst6\t2:1.2.5-1\tii \nlibxv1\t2:1.0.11-1.1+b3\tii \nlibxvidcore4\t2:1.3.7-1+b2\tii \nlibxxf86vm1\t1:1.1.4-1+b4\tii \nlibxxhash0\t0.8.3-2\tii \nlibyajl2\t2.1.0-5+b2\tii \nlibyaml-0-2\t0.2.5-2\tii \nlibyuv0\t0.0.1904.20250204-1\tii \nlibz3-4\t4.13.3-1\tii \nlibzbar0t64\t0.23.93-8\tii \nlibzimg2\t3.0.5+ds1-1+b2\tii \nlibzix-0-0\t0.6.2-1\tii \nlibzmq5\t4.3.5-1+b3\tii \nlibzstd1\t1.5.7+dfsg-1\tii \nlibzvbi-common\t0.2.44-1\tii \nlibzvbi0t64\t0.2.44-1\tii \nlibzxing3\t2.3.0-4\tii \nlinux-base\t4.12.1\tii \nlinux-doc-6.12\t6.12.111-1\tii \nlinux-image-6.12.107+deb13-chip\t6.12.107-1.31\tii \nlinux-image-6.12.94+deb13-chip\t6.12.94-1.29\tii \nlinux-image-chip\t6.12.107-1.31\tii \nlinux-sysctl-defaults\t4.12.1\tii \nlogin\t1:4.16.0-2+really2.41.5-0+deb13u1\tii \nlogin.defs\t1:4.17.4-2\tii \nlogrotate\t3.22.0-1\tii \nlogsave\t1.47.2-3+b12\tii \nlshw\t02.19.git.2021.06.19.996aaad9c7-2.1\tii \nlsof\t4.99.4+dfsg-2\tii \nlua-filesystem\t1.8.0-3+b2\tii \nlua-lgi\t0.9.2-4\tii \nlxappearance\t0.6.4-1\tii \nlxde-icon-theme\t0.5.2-1\tii \nlxde-settings-daemon\t0.5.6-2\tii \nlxmenu-data\t0.1.6-3\tii \nlxpolkit\t0.5.6-2\tii \nlxsession-data\t0.5.6-2\tii \nlxterminal\t0.4.1-1\tii \nmawk\t1.3.4.20250131-1\tii \nmedia-types\t13.0.0\tii \nmenu\t2.1.51\tii \nmesa-libgallium\t25.0.7-2+deb13u1\tii \nmesa-utils\t9.0.0-2+b2\tii \nmesa-utils-bin\t9.0.0-2+b2\tii \nmesa-vulkan-drivers\t25.0.7-2+deb13u1\tii \nmount\t2.41.5-0+deb13u1\tii \nmtd-utils\t1:2.3.0-1\tii \nnano\t8.4-1+deb13u1\tii \nncurses-base\t6.5+20250216-2\tii \nncurses-bin\t6.5+20250216-2\tii \nncurses-term\t6.5+20250216-2\tii \nneedrestart\t3.11-1\tii \nnetbase\t6.5\tii \nnetwork-manager\t1.52.1-1\tii \nnetwork-manager-l10n\t1.52.1-1\tii \nnftables\t1.1.3-1\tii \nntfs-3g\t1:2022.10.3-5+deb13u2\tii \nocl-icd-libopencl1\t2.3.3-1\tii \nopenssh-client\t1:10.0p1-7+deb13u4\tii \nopenssh-server\t1:10.0p1-7+deb13u4\tii \nopenssh-sftp-server\t1:10.0p1-7+deb13u4\tii \nopenssl\t3.5.7-1~deb13u3\tii \nopenssl-provider-legacy\t3.5.7-1~deb13u3\tii \np11-kit\t0.25.5-3\tii \np11-kit-modules\t0.25.5-3\tii \nparted\t3.6-5\tii \npasswd\t1:4.17.4-2\tii \npatch\t2.8-2\tii \npci.ids\t0.0~2025.06.09-1\tii \npcmanfm\t1.4.0-1\tii \nperl\t5.40.1-6+deb13u1\tii \nperl-base\t5.40.1-6+deb13u1\tii \nperl-modules-5.40\t5.40.1-6+deb13u1\tii \npicom\t12.5-1\tii \npinentry-curses\t1.3.1-2\tii \npinentry-gnome3\t1.3.1-2\tii \nplocate\t1.1.23-1\tii \npocket-home\t0.0.8.9+compat13.1\tii \npocketchip-batt\t0.4\tii \npocketchip-configs\t1.0\tii \npocketchip-load\t0.5\tii \npocketchip-onboard\t0.9\tii \npolkitd\t126-2\tii \npoppler-data\t0.4.12-1\tii \nppp\t2.5.2-1+1\tii \nprocps\t2:4.0.4-9\tii \npsmisc\t23.7-2\tii \npublicsuffix\t20250328.1952-0.1\tii \npython3\t3.13.5-1\tii \npython3-apparmor\t4.1.0-1\tii \npython3-libapparmor\t4.1.0-1\tii \npython3-minimal\t3.13.5-1\tii \npython3-packaging\t25.0-1\tii \npython3-pil\t11.1.0-5+deb13u4\tii \npython3-pil.imagetk\t11.1.0-5+deb13u4\tii \npython3-pip-whl\t25.1.1+dfsg-1\tii \npython3-setuptools-whl\t78.1.1-0.1\tii \npython3-tk\t3.13.5-1\tii \npython3.13\t3.13.5-2+deb13u5\tii \npython3.13-minimal\t3.13.5-2+deb13u5\tii \npython3.13-tk\t3.13.5-2+deb13u5\tii \npython3.13-venv\t3.13.5-2+deb13u5\tii \nread-edid\t3.0.2-1.1\tii \nreadline-common\t8.2-6\tii \nrlwrap\t0.46.1-1+b1\tii \nrunc\t1.1.15+ds1-2+b4\tii \nrunit-helper\t2.16.4\tii \nsamba-libs\t2:4.22.11+dfsg-0+deb13u1\tii \nsed\t4.9-2+deb13u1\tii \nsensible-utils\t0.0.25\tii \nsgml-base\t1.31+nmu1\tii \nshared-mime-info\t2.4-5+b2\tii \nsqv\t1.3.0-3+b2\tii \nstalonetray\t0.8.3-1\tii \nstress\t1.0.7-1\tii \nsudo\t1.9.16p2-3+deb13u2\tii \nsystemd\t257.13-1~deb13u1\tii \nsystemd-sysv\t257.13-1~deb13u1\tii \nsystemd-timesyncd\t257.13-1~deb13u1\tii \nsysvinit-utils\t3.14-4\tii \ntar\t1.35+dfsg-3.1\tii \ntic80\t1.1.2837-1\tii \ntimgm6mb-soundfont\t1.3-5\tii \ntini\t0.19.0-3+b8\tii \ntk8.6-blt2.5\t2.5.3+dfsg-8\tii \ntuigreet\t0.9.1-5\tii \ntzdata\t2026c-0+deb13u1\tii \nu-boot-tools\t2025.01-3+deb13u1\tii \nucf\t3.0052\tii \nudev\t257.13-1~deb13u1\tii \nudisks2\t2.10.1-12.1+deb13u2\tii \nusb.ids\t2025.07.26-1\tii \nusbmuxd\t1.1.1-6+deb13u1\tii \nutil-linux\t2.41.5-0+deb13u1\tii \nvim-common\t2:9.1.1230-2\tii \nvim-tiny\t2:9.1.1230-2\tii \nvimb\t3.7.0+git20240706-1\tii \nwget\t1.25.0-2\tii \nwhiptail\t0.52.25-1\tii \nwireless-regdb\t2026.05.30-1~deb13u1\tii \nwpasupplicant\t2:2.10-24\tii \nx11-common\t1:7.7+24+deb13u1\tii \nx11-xkb-utils\t7.7+9\tii \nx11-xserver-utils\t7.7+11\tii \nxauth\t1:1.1.2-1.1\tii \nxcvt\t0.1.3-1\tii \nxdg-dbus-proxy\t0.1.6-1+deb13u3\tii \nxdg-desktop-portal\t1.20.3+ds-1\tii \nxdg-desktop-portal-gtk\t1.15.3-1\tii \nxdg-user-dirs\t0.18-2\tii \nxfonts-base\t1:1.0.5+nmu1\tii \nxfonts-encodings\t1:1.0.4-2.2\tii \nxfonts-utils\t1:7.7+7\tii \nxinit\t1.4.2-1\tii \nxinput\t1.6.4-1\tii \nxinput-calibrator\t0.8.0-1\tii \nxkb-data\t2.42-1\tii \nxml-core\t0.19\tii \nxserver-common\t2:21.1.16-1.3+deb13u4\tii \nxserver-xorg\t1:7.7+24+deb13u1\tii \nxserver-xorg-core\t2:21.1.16-1.3+deb13u4\tii \nxserver-xorg-input-libinput\t1.5.0-1\tii \nxserver-xorg-legacy\t2:21.1.16-1.3+deb13u4\tii \nxserver-xorg-video-all\t1:7.7+24+deb13u1\tii \nxserver-xorg-video-amdgpu\t23.0.0-1\tii \nxserver-xorg-video-ati\t1:22.0.0-1\tii \nxserver-xorg-video-fbdev\t1:0.5.0-2\tii \nxserver-xorg-video-nouveau\t1:1.0.18-1\tii \nxserver-xorg-video-radeon\t1:22.0.0-1\tii \nxz-utils\t5.8.1-1+deb13u1\tii \nyudit-common\t3.1.0-1\tii \nzlib1g\t1:1.3.dfsg+really1.3.1-1+b1\tii \nzstd\t1.5.7+dfsg-1\tii \n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "sha256sum",
+        "/boot/boot.scr",
+        "/boot/vmlinuz-6.12.107+deb13-chip",
+        "/boot/initrd.img-6.12.107+deb13-chip"
+      ],
+      "returncode": 0,
+      "stdout": "57a235d64b45dc220931a5e6bd1dff17116d52cb348078d41af3e7037fd48bf8  /boot/boot.scr\nd3c044d80034bb10513c5e987afe208b489c8f36c76a222f223ff63d1f8e1540  /boot/vmlinuz-6.12.107+deb13-chip\n68f0c44b1ccca22c4e79b2c5b9a3c195a3869e38b38069aa349fef6988b43d9d  /boot/initrd.img-6.12.107+deb13-chip\n",
+      "stderr": ""
+    }
+  ],
+  "schema_version": 1,
+  "capture_date_local": "2026-10-01",
+  "method": "MEMGETINFO and MEMGETBADBLOCK on read-only MTD char devices; mutable ioctl buffer to receive integer return status; cross-checked with sysfs; post-upgrade package inventory"
+}

@@ -143,3 +143,28 @@ Both profiles use the same sealed backend and physical-write refusal. The host
 `upgrade_debian13.py` script exposes build plans and delegates simulations using fixed
 CLI arguments. It never runs the optional external Shell installer. Image plans keep
 shared OS/PocketHome gates separate from Shell bundle and startup gates.
+
+## Batch 3 native FEL diagnostics in progress
+
+`fel_native.rs` implements explicit AWUC/AWUS/BROM framing through safe rusb
+APIs. Individual USB calls time out within 500 ms; a handle has a 15-second
+operation deadline. Cancellation is checked around transfers. Short inbound
+transfers accumulate; zero/oversized inbound transfers and short outbound
+transfers abort. Replies are bounded and signatures/status are checked. Each
+operation opens the sole candidate and rereads SoC/protocol/SID on that same
+handle before accessing SRAM. Reconnection may change bus/address, but cannot
+change SID or introduce another candidate. No automatic retry resumes a write.
+
+The current policy permits only 256 bytes at the source-documented A13 scratch
+address 0x1000, with upload readback. Explicit execution requires the exact ARM `bx lr`
+instruction at that address. SID identification uses a fixed aligned-word MMIO
+reader in scratch SRAM, with readback and restoration, after SoC validation. `diagnostic_probe` restores the saved 256 bytes
+after successful execution. Cancellation/failure may leave that harmless
+scratch instruction. These bounds are provisional diagnostic policy, not a
+validated recovery payload address. DRAM capacity, board and NAND cannot be
+inferred from FEL: full `identify` remains blocked and unknown RAM is zero.
+
+CLI `detect` and GUI detection with the optional tool field blank use native
+USB. The explicitly selected external tool remains a diagnostic alternative.
+CLI `fel-probe` exercises the bounded SRAM diagnostic without exposing editable
+addresses. Recovery and destructive plan authorization remain blocked.

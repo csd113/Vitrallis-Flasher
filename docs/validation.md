@@ -318,3 +318,22 @@ failures display the unexpected requests; no lint was suppressed.
 This baseline validates host code only. Hardware work and the remaining
 Batch 3 completion criteria are still in progress. Work on `main` was
 explicitly requested for this batch; no push is authorized.
+
+### Batch 3 native FEL and pre-flash evidence milestone
+
+Live evidence is indexed in [the evidence directory](evidence/batch3/README.md).
+The application identified the actual R8 BROM and SID, matching pinned
+sunxi-tools and Linux nvmem. It physically uploaded/read back 256 scratch SRAM
+bytes, executed only an ARM return instruction, and verified restoration.
+This proves bounded SRAM operations; no recovery image or NAND executor was
+exercised. Actual NAND geometry, ioctl enumeration, boot data/OOB and private
+configuration backups are preserved with exact hashes.
+
+Two physical findings corrected the initial native transport: successful BROM
+status starts with the FFFF marker, and SID MMIO requires aligned word reads.
+Nine FEL tests include the measured reply fixture and fixed word-reader sequence.
+Formatting and all-target/all-feature workspace check passed. The final milestone
+`python3 scripts/ci.py validate` run exited 0, including strict Clippy, workspace
+tests, image/script tests, provenance, stock/Vitrallis planning checks and release
+build. The ignored local log is `work/batch3/fel-milestone-validation.log`.
+No final Batch 3 completion or destructive-flash validation is claimed.

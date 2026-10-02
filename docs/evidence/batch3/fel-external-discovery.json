@@ -1,0 +1,29 @@
+[
+  {
+    "argv": [
+      "/Users/connordawkins/Documents/GitHub/Vitrallis-Flasher/work/upstream/sunxi-tools/sunxi-fel",
+      "--list"
+    ],
+    "returncode": 0,
+    "stdout": "USB device 001:001   Allwinner A13     16254217:50303858:31333030:0e0288c0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/connordawkins/Documents/GitHub/Vitrallis-Flasher/work/upstream/sunxi-tools/sunxi-fel",
+      "version"
+    ],
+    "returncode": 0,
+    "stdout": "AWUSBFEX soc=00001625(A13) 00000001 ver=0001 44 08 scratchpad=00007e00 00000000 00000000\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/Users/connordawkins/Documents/GitHub/Vitrallis-Flasher/work/upstream/sunxi-tools/sunxi-fel",
+      "sid"
+    ],
+    "returncode": 0,
+    "stdout": "16254217:50303858:31333030:0e0288c0\n",
+    "stderr": ""
+  }
+]

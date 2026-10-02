@@ -4,6 +4,8 @@ use flasher_core::{
     Cancellation, Error,
     assets::{Cache, acquire},
     device::{RealFel, select},
+    fel::FelTransport,
+    fel_native::NativeFel,
     manifest::Manifest,
     platform::usb_guidance,
     process::SunxiTool,
@@ -188,8 +190,12 @@ impl Wizard {
             let tool = self.tool.clone();
             self.start(move |tx, cancel| {
                 let result = (|| {
-                    let fel = RealFel::new(SunxiTool::open(Path::new(&tool))?);
-                    let device = select(&fel.discover(&cancel)?)?;
+                    let devices = if tool.is_empty() {
+                        NativeFel.discover(&cancel)?
+                    } else {
+                        RealFel::new(SunxiTool::open(Path::new(&tool))?).discover(&cancel)?
+                    };
+                    let device = select(&devices)?;
                     let _ = tx.try_send(Update::Event(Event {
                         stage: Stage::Preflight,
                         message: format!(
@@ -277,20 +283,14 @@ impl Wizard {
                 } else {
                     ui.label(usb_guidance());
                     ui.add_space(10.0);
-                    ui.label("Reviewed sunxi-fel executable (absolute path)");
+                    ui.label("Optional reviewed sunxi-fel executable (absolute path; blank uses native USB)");
                     ui.add(
                         egui::TextEdit::singleline(&mut self.tool)
                             .char_limit(4096)
                             .desired_width(f32::INFINITY),
                     );
                 }
-                if ui
-                    .add_enabled(
-                        self.simulation || !self.tool.is_empty(),
-                        egui::Button::new("Detect PocketCHIP"),
-                    )
-                    .clicked()
-                {
+                if ui.button("Detect PocketCHIP").clicked() {
                     self.detect();
                 }
             }

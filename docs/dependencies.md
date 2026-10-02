@@ -13,6 +13,16 @@ standard library cannot safely implement alone:
 | tempfile | Secure temporary file creation and atomic no-clobber publication |
 | eframe / egui | Portable native window, input, font and rendering support without a browser |
 | ctrlc | Safe portable CLI cancellation without custom signal-handler unsafe code |
+| rusb 0.9.4 / libusb | Safe USB access for explicit FEL framing, bounded transfers and BROM status checking |
+
+Batch 3 adds rusb because neither the standard library nor an existing crate
+provides USB access. The pinned sunxi-fel utility discards BROM status, so it
+cannot implement the required fail-closed status boundary without modification.
+The native transport uses only safe rusb APIs; workspace unsafe code remains
+forbidden. The vendored feature builds libusb for portable builds; a C compiler
+is required. libusb's LGPL license and corresponding-source/relinking obligations
+must be included in a distributed native package. The previously pinned external
+sunxi-fel remains available as an explicitly selected diagnostic alternative.
 
 ureq is pinned exactly to 3.4.1 because its transport-extension API is explicitly
 unversioned. A small wrapper places a five-second bound on each socket operation

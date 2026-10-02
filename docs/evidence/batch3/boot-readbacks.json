@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "capture_date_local": "2026-10-01",
+  "method": "Read-only MTD char devices; MTDFILEMODE RAW=3, pread pages, MEMREADOOB64; no erase/write ioctls",
+  "initial_attempt": "Mode value 2 selected unsupported OTP user mode and failed with EOPNOTSUPP before any data read; corrected to documented RAW enum value 3",
+  "records": [
+    {
+      "index": 0,
+      "offset": 0,
+      "page": 16384,
+      "oob_size": 1664,
+      "raw": {
+        "path": "work/batch3/pre-flash/mtd0-raw.bin",
+        "length": 4194304,
+        "sha256": "18fb4a3a2840e71d75766a8ef0c65292041317f0d672f9ea4e4d287ae4a89208"
+      },
+      "oob": {
+        "path": "work/batch3/pre-flash/mtd0-oob.bin",
+        "length": 425984,
+        "sha256": "c72d69d8eccdd7d688e25cced18c9aba4a9fa2c8a0014aa8ec029dcd8f09c7d2"
+      }
+    },
+    {
+      "index": 1,
+      "offset": 4194304,
+      "page": 16384,
+      "oob_size": 1664,
+      "raw": {
+        "path": "work/batch3/pre-flash/mtd1-raw.bin",
+        "length": 4194304,
+        "sha256": "d20a9acc30f1592ffff584f71da4ff79123dd53388ece8dae4c160b822606caf"
+      },
+      "oob": {
+        "path": "work/batch3/pre-flash/mtd1-oob.bin",
+        "length": 425984,
+        "sha256": "56f81f2c22c6a40f86721c21ac3a8b949fbd252afcce5a28646af4862ee40f77"
+      }
+    },
+    {
+      "index": 2,
+      "offset": 8388608,
+      "page": 16384,
+      "oob_size": 1664,
+      "raw": {
+        "path": "work/batch3/pre-flash/mtd2-raw.bin",
+        "length": 4194304,
+        "sha256": "f82a29e508dc0f22d2a2c0305521eccce480341b291dda93ec3f3b27b42b4ed1"
+      },
+      "oob": {
+        "path": "work/batch3/pre-flash/mtd2-oob.bin",
+        "length": 425984,
+        "sha256": "46c21a73bea3f560b5a9a4efed0ab12c221e4732e3bc55e0cdafc521ec63afe6"
+      }
+    },
+    {
+      "index": 3,
+      "offset": 12582912,
+      "page": 16384,
+      "oob_size": 1664,
+      "raw": {
+        "path": "work/batch3/pre-flash/mtd3-raw.bin",
+        "length": 4194304,
+        "sha256": "cd3517473707d59c3d915b52a3e16213cadce80d9ffb2b4371958fb7acb51a08"
+      },
+      "oob": {
+        "path": "work/batch3/pre-flash/mtd3-oob.bin",
+        "length": 425984,
+        "sha256": "2c279d9ad10639d2b3a22e4ebf43f84295c00cce30012ccf70966351e9149587"
+      }
+    }
+  ]
+}

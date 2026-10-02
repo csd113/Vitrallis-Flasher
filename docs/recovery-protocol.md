@@ -53,3 +53,13 @@ physical questions attached as hard `PlanGate`s; `authorize_execution` always fa
 `VerifiedAssets` supplies only manifest-verified bytes. Steps 4-10 still require the
 reviewed protocol, device daemon, session authentication and hardware validation;
 nothing in Batch 2 executes a plan or contacts a device.
+
+## Batch 3 current evidence boundary
+
+The native FEL diagnostic transport now exists, but it does not implement an
+authenticated recovery endpoint. FEL SoC/SID proof is separate from board/NAND
+identity, DRAM initialization and recovery authentication. Current Linux SSH
+identity and read-only NAND observations are preserved in
+[evidence](evidence/batch3/README.md). No SSH credential, fixed USB IP or current
+OS label grants recovery authorization. The existing plan gates remain closed
+until the recovery implementation and physical boot have been demonstrated.

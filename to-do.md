@@ -162,3 +162,20 @@ These items must not hold back an independently validated stock-only release.
 Detailed supporting requirements: [image build](docs/image-build.md),
 [physical validation](docs/physical-validation.md), [USB/driver guidance](docs/fel-drivers.md),
 [recovery behavior](docs/recovery.md) and [upstream licensing](docs/upstream-licenses.md).
+
+## Batch 3 progress (2026-10-01)
+
+- [x] Pin Rust 1.99.0 and pass the required Rust baseline without lint suppression.
+- [x] Preserve initial live inventory, full boot data/OOB readbacks, corrected
+  U-Boot, private boot/configuration backup and post-upgrade package inventory.
+- [x] Cross-check MTD geometry and enumerate unavailable rootfs blocks with ioctls.
+- [x] Implement native, bounded FEL framing and restricted SRAM diagnostics,
+  with host regression tests and native GUI/CLI discovery.
+- [x] Physically identify BROM/FEL and validate 256-byte SRAM diagnostics.
+- [ ] Establish recovery load addresses, authenticated endpoint and boot.
+- [ ] Resolve SPL/ECC/fallback and logical/physical bad-block semantics.
+- [ ] Approve exact physical artifacts, enable the gated executor and demonstrate
+  production flashing, readback, rootfs verification and successful boot.
+
+[evidence](docs/evidence/batch3/README.md) separates observations, source-derived
+claims and open gates. Batch 3 is not complete.

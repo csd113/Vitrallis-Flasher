@@ -1,0 +1,17 @@
+{
+  "purpose": "Diagnostic-only instrumented copy of pinned sunxi-tools prints the previously discarded 8-byte BROM status. No protocol or operation changes. Not used as production transport.",
+  "results": [
+    {
+      "command": "version",
+      "returncode": 0,
+      "stdout": "AWUSBFEX soc=00001625(A13) 00000001 ver=0001 44 08 scratchpad=00007e00 00000000 00000000\n",
+      "stderr": "BROM status: ff ff 00 00 00 00 00 00\n"
+    },
+    {
+      "command": "sid",
+      "returncode": 0,
+      "stdout": "16254217:50303858:31333030:0e0288c0\n",
+      "stderr": "BROM status: ff ff 00 00 00 00 00 00\nBROM status: ff ff 00 00 00 00 00 00\nBROM status: ff ff 00 00 00 00 00 00\nBROM status: ff ff 00 00 00 00 00 00\n"
+    }
+  ]
+}

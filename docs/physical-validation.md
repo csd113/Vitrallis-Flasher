@@ -1,6 +1,8 @@
 # Physical validation still required
 
-All current installation evidence is simulated. The downloaded OS was inspected as
+Batch 3 live inventory and boot readbacks are recorded in
+[evidence](evidence/batch3/README.md). No production installation has completed.
+All current installation-flow evidence is simulated. The downloaded OS was inspected as
 an archive, not executed. Hardware testing must be separately authorized and recorded
 with exact application/upstream revisions, asset hashes, board revision, NAND part,
 host/driver versions and sanitized logs. Never promote a failed or incomplete test.

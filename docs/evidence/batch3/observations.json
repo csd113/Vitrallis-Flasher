@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "capture_date_local": "2026-10-01",
+  "evidence_class": "live Linux observations, MTD ioctl/readback and physically validated native FEL diagnostics",
+  "sid_linux_words": "16254217:50303858:31333030:0e0288c0",
+  "board_reported": "NextThing PocketC.H.I.P.",
+  "nand_reported": {
+    "manufacturer_id": "ad",
+    "device_id": "de",
+    "model": "H27UCG8T2ETR-BC",
+    "physical_capacity_bytes": 8589934592,
+    "physical_page_bytes": 16384,
+    "physical_eraseblock_bytes": 4194304,
+    "oob_bytes": 1664,
+    "kernel_ecc_step_bytes": 1024,
+    "kernel_ecc_strength_bits": 56
+  },
+  "boot_partitions": [
+    {
+      "index": 0,
+      "label": "SPL",
+      "offset": 0,
+      "size": 4194304
+    },
+    {
+      "index": 1,
+      "label": "SPL.backup",
+      "offset": 4194304,
+      "size": 4194304
+    },
+    {
+      "index": 2,
+      "label": "U-Boot",
+      "offset": 8388608,
+      "size": 4194304
+    },
+    {
+      "index": 3,
+      "label": "env",
+      "offset": 12582912,
+      "size": 4194304
+    }
+  ],
+  "rootfs_mtd": {
+    "offset": 16777216,
+    "exposed_size": 4286578688,
+    "exposed_eraseblock_bytes": 2097152,
+    "flags": "0x4400",
+    "slc_emulation": true,
+    "kernel_bad_blocks": 61,
+    "kernel_bbt_blocks": 4,
+    "ioctl_unavailable_blocks": 65
+  },
+  "ubi": {
+    "peb_bytes": 2097152,
+    "leb_bytes": 2064384,
+    "vid_header_offset": 16384,
+    "data_offset": 32768,
+    "good_pebs": 1979,
+    "bad_pebs": 65,
+    "volumes": [
+      {
+        "id": 0,
+        "name": "rootfs",
+        "type": "dynamic",
+        "reserved_lebs": 1960,
+        "corrupted": false
+      }
+    ]
+  },
+  "c00000": {
+    "observed": "all data and OOB bytes FF throughout the entire 4 MiB partition",
+    "linux_label": "env",
+    "pinned_uboot_source_policy": "redundant U-Boot at 0xc00000, CONFIG_ENV_IS_NOWHERE",
+    "conclusion": "currently erased; backup role source-derived only; fallback not physically tested"
+  },
+  "unresolved": [
+    "recovery load address/boot",
+    "authenticated SID-bound endpoint",
+    "BROM/SPL fallback",
+    "boot-region ECC interpretation",
+    "raw NAND ID independent of Linux driver",
+    "bad-block marker semantics",
+    "approved manifest",
+    "production NAND execution/readback/boot"
+  ],
+  "fel_measured": {
+    "soc_id": "0x1625",
+    "protocol": 1,
+    "sid": "16254217:50303858:31333030:0e0288c0",
+    "scratchpad": "0x00007e00",
+    "success_status_hex": "ffff000000000000",
+    "scratch_test_address": "0x00001000",
+    "scratch_test_length": 256,
+    "native_upload_readback_execute_restore": true,
+    "recovery_boot": false
+  }
+}

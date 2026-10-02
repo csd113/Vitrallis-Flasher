@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "linux_sid": "16254217:50303858:31333030:0e0288c0",
+  "records": [
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "flasher-cli",
+        "--",
+        "detect"
+      ],
+      "returncode": 0,
+      "stdout": "Native FEL candidate: A13 001:001 SID 16254217:50303858:31333030:0e0288c0\nBROM SoC 0x1625, protocol 1, scratchpad 0x00007e00\nBROM packet: [41, 57, 55, 53, 42, 46, 45, 58, 00, 25, 16, 00, 01, 00, 00, 00, 01, 00, 44, 08, 00, 7e, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]\nBoard, NAND and recovery policy remain unverified; physical flashing is blocked.\n",
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.07s\n     Running `target/debug/flasher-cli detect`\n"
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "flasher-cli",
+        "--",
+        "fel-probe"
+      ],
+      "returncode": 0,
+      "stdout": "Native FEL candidate: A13 001:001 SID 16254217:50303858:31333030:0e0288c0\nBROM SoC 0x1625, protocol 1, scratchpad 0x00007e00\nBROM packet: [41, 57, 55, 53, 42, 46, 45, 58, 00, 25, 16, 00, 01, 00, 00, 00, 01, 00, 44, 08, 00, 7e, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]\nScratch SRAM upload/readback, bx lr execution and restoration verified.\nBoard, NAND and recovery policy remain unverified; physical flashing is blocked.\n",
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s\n     Running `target/debug/flasher-cli fel-probe`\n"
+    },
+    {
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "flasher-cli",
+        "--",
+        "detect"
+      ],
+      "returncode": 0,
+      "stdout": "Native FEL candidate: A13 001:001 SID 16254217:50303858:31333030:0e0288c0\nBROM SoC 0x1625, protocol 1, scratchpad 0x00007e00\nBROM packet: [41, 57, 55, 53, 42, 46, 45, 58, 00, 25, 16, 00, 01, 00, 00, 00, 01, 00, 44, 08, 00, 7e, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]\nBoard, NAND and recovery policy remain unverified; physical flashing is blocked.\n",
+      "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s\n     Running `target/debug/flasher-cli detect`\n"
+    }
+  ],
+  "scope": "Actual Vitrallis native transport, SRAM diagnostic only; no recovery boot or NAND operation"
+}

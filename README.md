@@ -37,15 +37,19 @@ nonbootable fixtures and labels simulated results. The CLI also requires the exa
 printed confirmation. Cancel in the GUI or press Ctrl-C in the CLI. A failed or
 cancelled session requires a fresh preflight and confirmation.
 
-For real read-only diagnostics, choose a reviewed, locally installed `sunxi-fel`
-executable by its absolute, canonical path:
+For real read-only diagnostics, use native USB discovery, or choose a reviewed,
+locally installed `sunxi-fel` executable by its absolute, canonical path:
 
 ```text
+cargo run --locked -p flasher-cli -- detect
 cargo run --locked -p flasher-cli -- detect /absolute/path/to/sunxi-fel
 ```
 
 An A13/R8 FEL response identifies a **candidate**, not proof of a PocketCHIP or NAND
-part. No hardware command was exercised during development.
+part. The bounded `fel-probe` diagnostic uploads and reads back an ARM return
+instruction in documented scratch SRAM, executes it and restores the original
+256 bytes. It does not boot recovery or authorize NAND work. Batch 3 evidence
+and unresolved physical gates are recorded in [the evidence index](docs/evidence/batch3/README.md).
 
 ## FEL wiring references
 
@@ -141,12 +145,13 @@ or manifest-supplied commands are permitted. See [image contract](docs/manifest.
 | GitHub Actions | Five native build targets, strict checks, unsigned ZIP artifacts only |
 
 Batch 2 routes host orchestration through narrow seams: external tools run only via
-`ToolRunner`, future FEL work only via `FelTransport` (production default explicitly
-unavailable), network retrieval only via `HttpClient`, session TTL only via `Clock`,
+`ToolRunner`, FEL work via `FelTransport`, network retrieval via `HttpClient`,
+session TTL via `Clock`,
 and destructive planning only from `VerifiedAssets` into a `NandPlan` that has no
 executor. Scripted doubles with ordered failure injection make all of this
-deterministic in tests. This is host architecture, not hardware validation: no FEL
-transfer, NAND erase/write or approved physical manifest exists.
+deterministic in tests. Batch 3 adds `NativeFel` for bounded USB diagnostics;
+recovery RAM boot and NAND execution remain gated. No NAND erase/write or approved
+physical manifest exists yet.
 
 The reviewed x-chip-tools LIVE method keeps UBIFS geometry work on the device; the
 broken fastboot/SLC path is excluded. Its current script also erases before NAND

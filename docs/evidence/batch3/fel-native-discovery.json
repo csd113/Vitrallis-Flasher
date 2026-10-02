@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "cargo",
+    "run",
+    "--locked",
+    "-p",
+    "flasher-cli",
+    "--",
+    "detect"
+  ],
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s\n     Running `target/debug/flasher-cli detect`\ninvalid FEL protocol response: BROM rejected version query\n"
+}

@@ -1,0 +1,6 @@
+{
+  "action": "orderly shutdown after empty dpkg audit and no apt/dpkg processes",
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

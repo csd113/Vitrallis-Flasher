@@ -1,0 +1,17 @@
+{
+  "argv": [
+    "cargo",
+    "run",
+    "--locked",
+    "-p",
+    "flasher-cli",
+    "--",
+    "fel-probe"
+  ],
+  "returncode": 0,
+  "stdout": "Native FEL candidate: A13 001:001 SID 16254217:50303858:31333030:0e0288c0\nBROM SoC 0x1625, protocol 1, scratchpad 0x00007e00\nBROM packet: [41, 57, 55, 53, 42, 46, 45, 58, 00, 25, 16, 00, 01, 00, 00, 00, 01, 00, 44, 08, 00, 7e, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]\n256-byte scratch SRAM upload/readback, bx lr execution and restoration verified.\nBoard, NAND and recovery policy remain unverified; physical flashing is blocked.\n",
+  "stderr": "    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.23s\n     Running `target/debug/flasher-cli fel-probe`\n",
+  "scratch_address": "0x00001000",
+  "length": 256,
+  "purpose": "Full allowed diagnostic SRAM range upload/readback/execute/restore"
+}

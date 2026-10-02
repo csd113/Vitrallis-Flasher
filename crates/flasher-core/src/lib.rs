@@ -3,6 +3,7 @@ pub mod assets;
 pub mod clock;
 pub mod device;
 pub mod fel;
+pub mod fel_native;
 pub mod http;
 pub mod manifest;
 pub mod nand;
@@ -46,6 +47,10 @@ pub enum Error {
     PhysicalBlocked,
     #[error("no physical FEL transport is available in this build")]
     FelUnavailable,
+    #[error("invalid FEL protocol response: {0}")]
+    FelProtocol(&'static str),
+    #[error("USB transport: {0}")]
+    Usb(#[from] rusb::Error),
     #[error("invalid operation for the current recovery state")]
     State,
     #[error("confirmation does not match the device and image")]

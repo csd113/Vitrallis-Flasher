@@ -3,6 +3,8 @@ use flasher_core::{
     Cancellation, Error,
     assets::{Cache, acquire},
     device::{RealFel, select},
+    fel::FelTransport,
+    fel_native::NativeFel,
     manifest::Manifest,
     platform::usb_guidance,
     process::SunxiTool,
@@ -45,6 +47,31 @@ fn run() -> Result<(), Error> {
             println!(
                 "{}\nPhysical flashing: blocked. Approved release catalog: empty.",
                 usb_guidance()
+            );
+        }
+        [command] if command == "detect" || command == "fel-probe" => {
+            let transport = NativeFel;
+            let device = select(&transport.discover(&cancel)?)?;
+            let version = transport.brom_version(&device, &cancel)?;
+            println!(
+                "Native FEL candidate: {} {:03}:{:03} SID {}\nBROM SoC {:#06x}, protocol {}, scratchpad {:#010x}\nBROM packet: {:02x?}",
+                device.soc,
+                device.bus,
+                device.address,
+                device.sid,
+                version.soc_id,
+                version.protocol,
+                version.scratchpad,
+                version.raw
+            );
+            if command == "fel-probe" {
+                transport.diagnostic_probe(&device, &cancel)?;
+                println!(
+                    "256-byte scratch SRAM upload/readback, bx lr execution and restoration verified."
+                );
+            }
+            println!(
+                "Board, NAND and recovery policy remain unverified; physical flashing is blocked."
             );
         }
         [command, tool] if command == "detect" => {
@@ -94,7 +121,7 @@ fn run() -> Result<(), Error> {
 }
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

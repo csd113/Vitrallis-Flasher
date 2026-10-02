@@ -1,7 +1,8 @@
-//! Mockable FEL transport boundary for future `PocketCHIP` recovery work.
+//! Mockable FEL transport boundary for `PocketCHIP` recovery work.
 //!
-//! Batch 2 ships **no physical FEL implementation**: [`UnavailableFel`] is the
-//! production default and every operation returns `FelUnavailable`. Tests use
+//! Batch 2 supplied [`UnavailableFel`], which returns `FelUnavailable` for every
+//! operation. Batch 3 adds bounded [`crate::fel_native::NativeFel`] diagnostics;
+//! recovery boot and NAND authorization remain gated. Tests use
 //! [`ScriptedFel`], which records exact calls and returns deterministic
 //! responses or injected errors without touching USB.
 use crate::{

@@ -1,0 +1,12 @@
+{
+  "path": "work/batch3/pre-flash/boot-configuration.tar.gz",
+  "length": 63245628,
+  "sha256": "816e1b470114bea51726d723dc7a4f0559f4314f53bb1900bf14916f204ea512",
+  "contents": [
+    "/boot",
+    "/etc",
+    "/var/lib/dpkg/status"
+  ],
+  "private": true,
+  "note": "Private pre-flash configuration backup; may contain credentials; ignored by Git and mode 0600 inside mode 0700 directory. Not extracted or committed."
+}
