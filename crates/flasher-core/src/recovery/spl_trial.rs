@@ -95,9 +95,11 @@ impl Ticket {
 
 pub(super) fn verify(operation: Operation, readback: &BootReadback) -> Result<(), Error> {
     match operation {
-        Operation::ErasePrimary => boot_trial::verify_erased_primary(readback),
-        Operation::RestorePrimary => {
-            boot_trial::verify_spl(readback, super::BootRegion::SplPrimary)
+        Operation::ErasePrimary | Operation::EraseBackup => {
+            boot_trial::verify_erased(readback, operation.target())
+        }
+        Operation::RestorePrimary | Operation::RestoreBackup => {
+            boot_trial::verify_spl(readback, operation.target())
         }
     }
 }

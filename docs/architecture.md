@@ -196,5 +196,7 @@ mutation. Cancellation before dispatch sends no execute request; cancellation or
 response loss after dispatch is indeterminate. Device RAM journals survive socket
 loss, and verified replies require primary readback plus the unchanged backup boot
 chain. This diagnostic does not enable the production `NandPlan`, release catalog
-or GUI flash path. Its primary erasure and normal backup boot are physically verified; clean restoration
-remains pending.
+or GUI flash path. Primary erasure, normal backup boot and clean original-program restoration are
+physically verified. Protocol v5 adds closed backup isolation/restoration while
+protecting the primary. Isolated restored-primary boot and release installation
+remain pending.

@@ -526,3 +526,27 @@ formatting, strict Clippy, workspace tests, release, image/script, provenance,
 stock/Vitrallis plan and manifest checks. Evidence is indexed under
 `docs/evidence/batch3/README.md`. Clean original-SPL restoration, redundant U-Boot
 behavior and the full approved application installation/verification remain required.
+
+### Batch 3 clean primary restoration and backup-isolation preparation
+
+The ninth authenticated v4 session restores the exact original-program encoding
+through the application trial, exits 0 in 19.525 seconds and records a durable
+Verified journal. Native readback of all four copies matches the original program;
+73 bits are corrected in total, maximum five per codeword, with zero uncorrectable
+failures. Raw encoding hash differs from the validated input. Independent backup
+and U-Boot digests and inventory remain intact. BROM acceptance of that restored
+primary is not inferred from a boot that could select the backup.
+
+Protocol v5 adds fixed backup isolation/restoration protected by the verified
+primary. Tests use the actual restored-primary fixture; an incorrect protected
+partition cannot prepare the other target, an erase-only capability cannot
+authorize restoration, and journal verification requires its operation's target.
+Fourteen guard/journal tests pass under ARMv7 qemu (3.31 seconds). The v5 template
+reproduces byte-for-byte; its metadata is indexed in the evidence directory.
+
+`python3 scripts/ci.py validate` and all-target/all-feature workspace check both
+exit 0. Logs: `work/batch3/backup-trial-full-validation.log` and
+`work/batch3/backup-trial-workspace-check.log`. The full suite retains formatting,
+strict Clippy, workspace tests/release, 65 image tests, 32 script tests, provenance,
+kernel, stock/Vitrallis plan and manifest checks. Physical v5 dispatch and
+isolated restored-primary boot remain pending; production execution remains denied.

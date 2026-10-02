@@ -189,3 +189,15 @@ selection is claimed.
   that backup block or validate a new installation.
 - `post-fallback-orderly-shutdown.json`: no active apt/dpkg process and successful
   orderly original-OS shutdown before reentering FEL for clean primary restoration.
+
+- `recovery-boot-9-tool.json`: a fresh SID-bound v4 RAM boot after confirmed
+  backup boot and orderly shutdown.
+- `recovery-primary-restoration-trial-9.json`: application-only clean original-SPL
+  restoration, all four corrected program digests equal the original, 73 corrected
+  bits total (maximum five per codeword), zero uncorrectable failures and durable
+  Verified host journal (19.525 seconds). Raw encoding hash differs after write;
+  corrected program verification is used. BROM primary selection is not claimed.
+- `recovery-boot-chain-after-primary-restoration-9.json`: independent unchanged
+  backup SPL, corrected U-Boot and inventory after restoration.
+- `recovery-template-v5.json`: build metadata for closed primary/backup isolation
+  operations. Physical v5 dispatch and isolated restored-primary boot are pending.

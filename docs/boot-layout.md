@@ -162,3 +162,16 @@ not which of its four identical copies was selected. All MTD ECC failure counter
 are zero and bad-block inventory is unchanged. The result does not prove Toshiba
 behavior, newly generated SPL acceptance or interruption during a write. See
 [the backup-boot evidence](evidence/batch3/normal-backup-spl-boot-8.json).
+
+### Clean original-program primary restoration
+
+The ninth RAM session restores the primary through the authenticated trial in
+19.525 seconds. All four corrected program digests match the original; correction
+counts are 16, 17, 13 and 27 bits, maximum five in one codeword, and zero
+uncorrectable failures. Raw interleaved SHA256 is
+`df701b1ab09d5b84ebe3e8e9277737f0f4ddb3cd4bef9f40bd00e6123d1929b0`,
+which differs from the validated clean input. Backup and corrected U-Boot remain
+intact. This proves write plus ECC-aware readback, not BROM selection of the
+restored primary. A controlled backup-isolation trial is prepared under protocol
+v5 to establish that additional fact. The selected release's SPL program is also
+not assumed identical to the installed original.

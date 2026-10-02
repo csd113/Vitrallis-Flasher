@@ -1,7 +1,7 @@
 # Security
 
 Production writes remain disabled in the real backend. The separate Batch 3
-original-SPL diagnostic accepts only a measured sacrificial SID, fixed mtd0
+original-SPL diagnostic accepts only a measured sacrificial SID, fixed mtd0/mtd1
 operations and an exact original-program restoration image. Device-local
 preflight, single-use connection tickets and fsynced journals precede mutation;
 checked readback precedes success. It does not authorize release installation. No manifest field, environment variable or GUI control can enable production

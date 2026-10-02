@@ -20,12 +20,32 @@ use std::{
 
 pub mod journal;
 
-/// The two reviewed original-SPL fallback operations; no addresses or paths.
+/// The four reviewed original-SPL isolation/restoration operations; no addresses or paths.
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub enum Operation {
     ErasePrimary,
     RestorePrimary,
+    EraseBackup,
+    RestoreBackup,
+}
+impl Operation {
+    /// Closed diagnostic target; no user-supplied addresses.
+    #[must_use]
+    pub const fn target(self) -> BootRegion {
+        match self {
+            Self::ErasePrimary | Self::RestorePrimary => BootRegion::SplPrimary,
+            Self::EraseBackup | Self::RestoreBackup => BootRegion::SplBackup,
+        }
+    }
+    /// The opposite SPL block must retain the original program before mutation.
+    #[must_use]
+    pub const fn protected_region(self) -> BootRegion {
+        match self {
+            Self::ErasePrimary | Self::RestorePrimary => BootRegion::SplBackup,
+            Self::EraseBackup | Self::RestoreBackup => BootRegion::SplPrimary,
+        }
+    }
 }
 
 pub const SID: [u8; 16] = [
@@ -40,11 +60,11 @@ const BLOCK: u64 = 4_194_304;
 const PAGE: usize = 16_384;
 const OOB: usize = 1_664;
 
-/// Fresh local recovery observations; accepting a host-supplied claim is forbidden.
+/// Fresh local recovery observations; the protected SPL is opposite the trial target.
 pub struct Observations<'a> {
     pub sid: &'a [u8],
     pub inventory: &'a Inventory,
-    pub backup: &'a BootReadback,
+    pub protected_spl: &'a BootReadback,
     pub uboot: &'a BootReadback,
     pub mounts: &'a str,
     pub ubi_devices: &'a [String],
@@ -53,20 +73,24 @@ pub struct Observations<'a> {
 /// Proof of this diagnostic's local preconditions, not physical release approval.
 #[derive(Debug)]
 pub struct Preflight {
-    _validated: (),
+    operation: Operation,
 }
 impl Preflight {
-    /// Checks the known sacrificial unit, RAM-only state and intact backup chain.
+    /// Checks the known unit, RAM-only state and the intact opposite SPL/U-Boot chain.
     /// # Errors
     /// Rejects unknown hardware, changed geometry/digests, ECC failures or cancellation.
-    pub fn validate(observed: &Observations<'_>, cancel: &Cancellation) -> Result<Self, Error> {
+    pub fn validate(
+        operation: Operation,
+        observed: &Observations<'_>,
+        cancel: &Cancellation,
+    ) -> Result<Self, Error> {
         cancel.check()?;
         if observed.sid != SID {
             return Err(Error::Device);
         }
         ram_only(observed.mounts, observed.ubi_devices)?;
         hardware(observed.inventory)?;
-        verify_spl(observed.backup, BootRegion::SplBackup)?;
+        verify_spl(observed.protected_spl, operation.protected_region())?;
         let uboot = observed.uboot;
         common_readback(uboot)?;
         if uboot.region != BootRegion::UBoot
@@ -77,10 +101,10 @@ impl Preflight {
             return Err(Error::Device);
         }
         cancel.check()?;
-        Ok(Self { _validated: () })
+        Ok(Self { operation })
     }
 
-    /// Erases the primary block and verifies its entire raw data/OOB readback.
+    /// Erases the validated SPL block and verifies its entire raw data/OOB readback.
     /// The caller must durably record dispatch first. No retry occurs.
     /// # Errors
     /// Returns erase failure, cancellation or non-erased/invalid readback.
@@ -90,24 +114,37 @@ impl Preflight {
         mut readback: impl FnMut() -> Result<BootReadback, Error>,
         cancel: &Cancellation,
     ) -> Result<BootReadback, Error> {
-        self.erase_primary(runner, cancel)?;
+        self.erase(runner, cancel)?;
         let report = readback()?;
-        verify_erased_primary(&report)?;
+        verify_erased(&report, self.target())?;
         cancel.check()?;
         Ok(report)
     }
 
-    /// Erases exactly one primary SPL block; no bad-block skipping or retry.
+    /// Erases exactly one validated SPL block; no bad-block skipping or retry.
     /// The caller must journal intent before calling and verify the raw result.
     /// # Errors
     /// Returns cancellation, timeout, process failure or I/O errors.
-    pub fn erase_primary(
+    pub fn erase(
         &self,
         runner: &impl ToolRunner,
         cancel: &Cancellation,
     ) -> Result<ToolOutput, Error> {
         cancel.check()?;
-        runner.run(&erase_request(), cancel)
+        runner.run(&erase_request(self.target_path()?), cancel)
+    }
+    /// The fixed partition validated for this trial.
+    #[must_use]
+    pub const fn target(&self) -> BootRegion {
+        self.operation.target()
+    }
+
+    const fn target_path(&self) -> Result<&'static str, Error> {
+        match self.operation.target() {
+            BootRegion::SplPrimary => Ok("/dev/mtd0"),
+            BootRegion::SplBackup => Ok("/dev/mtd1"),
+            _ => Err(Error::State),
+        }
     }
 }
 
@@ -243,8 +280,16 @@ pub fn verify_spl(report: &BootReadback, region: BootRegion) -> Result<(), Error
 /// # Errors
 /// Rejects a wrong region, non-erased byte/marker/digest or ECC error.
 pub fn verify_erased_primary(report: &BootReadback) -> Result<(), Error> {
+    verify_erased(report, BootRegion::SplPrimary)
+}
+
+/// Verifies complete raw erasure of one closed SPL block.
+/// # Errors
+/// Rejects non-SPL regions, wrong partition, un-erased data/OOB or ECC failures.
+pub fn verify_erased(report: &BootReadback, region: BootRegion) -> Result<(), Error> {
     common_readback(report)?;
-    if report.region != BootRegion::SplPrimary
+    if !matches!(region, BootRegion::SplPrimary | BootRegion::SplBackup)
+        || report.region != region
         || report.interpretation != ReadInterpretation::Raw
         || !report.spl_copies.is_empty()
         || report.first_data_bytes != [0xff; 32]
@@ -269,10 +314,10 @@ fn erased_digest(mut length: u64) -> String {
     format!("{:x}", hash.finalize())
 }
 
-fn erase_request() -> ToolRequest {
+fn erase_request(target: &str) -> ToolRequest {
     ToolRequest::new(
         "/usr/sbin/flash_erase",
-        ["--noskipbad", "--quiet", "/dev/mtd0", "0", "1"],
+        ["--noskipbad", "--quiet", target, "0", "1"],
     )
     .timeout(Duration::from_secs(10))
 }
@@ -322,16 +367,22 @@ impl OriginalSplFile {
         validate_image(&bytes, cancel)
     }
 
-    /// Rechecks the open snapshot and writes only the fixed primary SPL partition.
+    /// Rechecks the open snapshot and writes only the validated fixed SPL partition.
     /// The caller must journal intent and verify corrected readback before success.
     /// # Errors
     /// Returns hash/cancellation/process/timeout/I/O failure. No automatic retry occurs.
-    pub fn restore_primary(
+    pub fn restore(
         &mut self,
-        _preflight: &Preflight,
+        preflight: &Preflight,
         runner: &impl ToolRunner,
         cancel: &Cancellation,
     ) -> Result<ToolOutput, Error> {
+        if !matches!(
+            preflight.operation,
+            Operation::RestorePrimary | Operation::RestoreBackup
+        ) {
+            return Err(Error::State);
+        }
         self.revalidate(cancel)?;
         let path = self.file.path().to_str().ok_or(Error::UnsafePath)?;
         runner.run(
@@ -342,7 +393,7 @@ impl OriginalSplFile {
                     "--oob",
                     "--noskipbad",
                     "--quiet",
-                    "/dev/mtd0",
+                    preflight.target_path()?,
                     path,
                 ],
             )
@@ -408,10 +459,11 @@ mod tests {
         uboot: &BootReadback,
     ) -> Result<Preflight, Error> {
         Preflight::validate(
+            Operation::ErasePrimary,
             &Observations {
                 sid: &SID,
                 inventory,
-                backup,
+                protected_spl: backup,
                 uboot,
                 mounts: MOUNTS,
                 ubi_devices: &[],
@@ -421,11 +473,80 @@ mod tests {
     }
 
     #[test]
+    fn erase_only_preflight_cannot_authorize_a_restoration_write() {
+        let (inventory, backup, uboot) = measured();
+        let checked = prepare(&inventory, &backup, &uboot).unwrap();
+        let directory = crate::assets::temporary_directory().unwrap();
+        let file = tempfile::NamedTempFile::new_in(directory.path()).unwrap();
+        let mut restoration = OriginalSplFile {
+            file,
+            _directory: directory,
+        };
+        let runner = ScriptedToolRunner::new();
+        assert!(matches!(
+            restoration.restore(&checked, &runner, &Cancellation::default()),
+            Err(Error::State)
+        ));
+        assert_eq!(runner.calls().len(), 0);
+    }
+
+    #[test]
+    fn backup_trial_requires_actual_restored_primary_and_scopes_only_mtd1() {
+        let (inventory, backup, uboot) = measured();
+        let evidence: Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/recovery-primary-restoration-trial-9.json"
+        ))
+        .unwrap();
+        let primary: BootReadback =
+            serde_json::from_value(evidence["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        for operation in [Operation::EraseBackup, Operation::RestoreBackup] {
+            let observed = Observations {
+                sid: &SID,
+                inventory: &inventory,
+                protected_spl: &primary,
+                uboot: &uboot,
+                mounts: MOUNTS,
+                ubi_devices: &[],
+            };
+            let checked =
+                Preflight::validate(operation, &observed, &Cancellation::default()).unwrap();
+            assert_eq!(checked.target(), BootRegion::SplBackup);
+            let runner = ScriptedToolRunner::new();
+            runner.expect_error(erase_request("/dev/mtd1"), Error::Process(Some(1)));
+            assert!(matches!(
+                checked.erase(&runner, &Cancellation::default()),
+                Err(Error::Process(Some(1)))
+            ));
+            assert_eq!(
+                runner.calls()[0].args,
+                ["--noskipbad", "--quiet", "/dev/mtd1", "0", "1"]
+            );
+            let wrong = Observations {
+                protected_spl: &backup,
+                ..observed
+            };
+            assert!(Preflight::validate(operation, &wrong, &Cancellation::default()).is_err());
+        }
+        for operation in [Operation::ErasePrimary, Operation::RestorePrimary] {
+            let wrong = Observations {
+                sid: &SID,
+                inventory: &inventory,
+                protected_spl: &primary,
+                uboot: &uboot,
+                mounts: MOUNTS,
+                ubi_devices: &[],
+            };
+            assert!(Preflight::validate(operation, &wrong, &Cancellation::default()).is_err());
+        }
+    }
+
+    #[test]
     fn erase_failure_never_reads_or_retries_and_invalid_readback_never_succeeds() {
         let (inventory, backup, uboot) = measured();
         let checked = prepare(&inventory, &backup, &uboot).unwrap();
         let runner = ScriptedToolRunner::new();
-        runner.expect_error(erase_request(), Error::Process(Some(1)));
+        runner.expect_error(erase_request("/dev/mtd0"), Error::Process(Some(1)));
         let mut reads = 0;
         let result = checked.erase_and_verify(
             &runner,
@@ -440,7 +561,7 @@ mod tests {
         assert_eq!(runner.calls().len(), 1);
         let runner = ScriptedToolRunner::new();
         runner.expect_ok(
-            erase_request(),
+            erase_request("/dev/mtd0"),
             ToolOutput {
                 exit: Some(0),
                 stdout: String::new(),
@@ -465,9 +586,9 @@ mod tests {
         let (inventory, backup, uboot) = measured();
         let ready = prepare(&inventory, &backup, &uboot).unwrap();
         let runner = ScriptedToolRunner::new();
-        runner.expect_error(erase_request(), Error::Process(Some(1)));
+        runner.expect_error(erase_request("/dev/mtd0"), Error::Process(Some(1)));
         assert!(matches!(
-            ready.erase_primary(&runner, &Cancellation::default()),
+            ready.erase(&runner, &Cancellation::default()),
             Err(Error::Process(Some(1)))
         ));
         assert_eq!(runner.calls().len(), 1);
@@ -477,7 +598,7 @@ mod tests {
         let cancel = Cancellation::default();
         cancel.cancel();
         assert!(matches!(
-            ready.erase_primary(&runner, &cancel),
+            ready.erase(&runner, &cancel),
             Err(Error::Cancelled)
         ));
         assert_eq!(runner.calls().len(), 1);
@@ -489,10 +610,11 @@ mod tests {
         let other_sid = [1; 16];
         assert!(
             Preflight::validate(
+                Operation::ErasePrimary,
                 &Observations {
                     sid: &other_sid,
                     inventory: &inventory,
-                    backup: &backup,
+                    protected_spl: &backup,
                     uboot: &uboot,
                     mounts: MOUNTS,
                     ubi_devices: &[],

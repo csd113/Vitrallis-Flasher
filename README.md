@@ -14,7 +14,8 @@ authenticated pinned RAM recovery, a verified asset pipeline and a simulated ins
 flow. Batch 3 also has a restricted developer SPL primary erase/restoration trial
 for one measured sacrificial device and its exact original program. This trial
 requires device-local preflight and durable intent; it does not approve a release
-or enable GUI installation. Primary trial erasure and backup boot are verified; clean restoration remains pending.
+or enable GUI installation. Primary erasure, backup boot and ECC-aware clean restoration are verified.
+Isolated restored-primary boot and the approved full installation remain pending.
 No approved physical image is shipped. No telemetry, automatic driver changes or release publishing.
 Remaining work is tracked in [to-do.md](to-do.md).
 

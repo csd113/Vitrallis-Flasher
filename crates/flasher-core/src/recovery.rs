@@ -17,7 +17,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 4;
+const VERSION: u32 = 5;
 const LIMIT: usize = 64 * 1024;
 // Bounded device-local preflight, erase/write and checked readback may take longer
 // than read-only diagnostics. Polling and cancellation remain at 500 ms.
@@ -26,7 +26,7 @@ const TIMEOUT: Duration = Duration::from_secs(60);
 pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC04";
+const MAGIC: &[u8; 8] = b"VTRREC05";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {

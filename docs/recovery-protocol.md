@@ -210,3 +210,20 @@ restoration candidate. It rejects changed bytes before output creation and puts
 the image at one fixed private RAM path. Original executable firmware stays out
 of Git. The candidate is independently decoded again inside recovery before any
 trial. The template/daemon pins in `recovery_boot.rs` bind this complete payload.
+
+Protocol v5 extends the original-program diagnostic to two fixed SPL targets:
+ErasePrimary/RestorePrimary protect the backup, while EraseBackup/RestoreBackup
+protect the primary. Each preflight retains its exact operation and target; an
+erase-only preflight cannot authorize restoration. No address or path is supplied
+by the host. The journal validates the operation's matching partition. Preparing
+erasure additionally verifies the current target before removing it; restoration
+can repair an erased target only while the opposite SPL and U-Boot remain valid.
+The two-dispatch-per-RAM-boot bound and commit/cancellation rules are unchanged.
+
+The ninth v4 session physically restores primary from the exact clean encoding.
+All four corrected programs match the original; 73 bits are corrected, maximum
+five per codeword, with zero uncorrectable failures. The raw hash differs from
+the clean input, so raw byte equality is not used as success criteria. Backup
+and U-Boot are intact. A normal boot with both blocks present would not directly
+identify the selected SPL; v5 backup isolation will test the restored primary.
+Physical v5 execution and that isolated boot remain pending.

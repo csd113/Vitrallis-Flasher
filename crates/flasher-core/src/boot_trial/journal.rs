@@ -128,9 +128,11 @@ impl Journal {
     pub fn verify(&mut self, report: &BootReadback, cancel: &Cancellation) -> Result<(), Error> {
         cancel.check()?;
         match self.report.header.context.operation {
-            Operation::ErasePrimary => super::verify_erased_primary(report)?,
-            Operation::RestorePrimary => {
-                super::verify_spl(report, crate::recovery::BootRegion::SplPrimary)?;
+            Operation::ErasePrimary | Operation::EraseBackup => {
+                super::verify_erased(report, self.report.header.context.operation.target())?;
+            }
+            Operation::RestorePrimary | Operation::RestoreBackup => {
+                super::verify_spl(report, self.report.header.context.operation.target())?;
             }
         }
         cancel.check()?;
@@ -288,6 +290,38 @@ mod tests {
         ))
         .unwrap();
         serde_json::from_value(evidence["records"][0]["response"].clone()).unwrap()
+    }
+
+    #[test]
+    fn backup_verification_is_bound_to_its_operation_and_partition() {
+        let directory = crate::assets::temporary_directory().unwrap();
+        let path = directory.path().join("backup.jsonl");
+        let cancel = Cancellation::default();
+        let context = Context {
+            sid: SID,
+            session: [1; 16],
+            daemon_sha256: [2; 32],
+            operation: Operation::RestoreBackup,
+        };
+        let mut journal = Journal::create(&path, context, &cancel).unwrap();
+        journal.advance(Stage::Prepared, &cancel).unwrap();
+        journal.advance(Stage::Dispatched, &cancel).unwrap();
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-primary-restoration-trial-9.json"
+        ))
+        .unwrap();
+        let mut report: BootReadback =
+            serde_json::from_value(evidence["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        assert!(journal.verify(&report, &cancel).is_err());
+        // Explicit host fixture for the same clean program in the backup slot;
+        // no physical backup restoration is claimed by this test.
+        report.region = crate::recovery::BootRegion::SplBackup;
+        journal.verify(&report, &cancel).unwrap();
+        assert_eq!(
+            read(&path, &cancel).unwrap().entries.last().unwrap().stage,
+            Stage::Verified
+        );
     }
 
     #[test]

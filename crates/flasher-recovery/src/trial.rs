@@ -1,4 +1,4 @@
-//! Fixed mtd0 diagnostic. All preconditions originate on this RAM device.
+//! Closed mtd0/mtd1 diagnostic. All preconditions originate on this RAM device.
 use flasher_core::{
     Cancellation, Error,
     boot_trial::{
@@ -54,13 +54,13 @@ fn validate_tool_help(help: &str, required: &[&str]) -> Result<(), Error> {
     Ok(())
 }
 
-fn preflight(cancel: &Cancellation) -> Result<Preflight, Error> {
+fn preflight(operation: Operation, cancel: &Cancellation) -> Result<Preflight, Error> {
     tool_capabilities(cancel)?;
     let mut sid = [0; 16];
     File::open("/sys/bus/nvmem/devices/sunxi-sid0/nvmem")?.read_exact(&mut sid)?;
     let inventory = super::inventory(cancel)?;
-    let backup = super::readback::read(
-        BootRegion::SplBackup,
+    let protected_spl = super::readback::read(
+        operation.protected_region(),
         ReadInterpretation::Boot0Corrected,
         cancel,
     )?;
@@ -78,10 +78,11 @@ fn preflight(cancel: &Cancellation) -> Result<Preflight, Error> {
         Err(error) => return Err(Error::Io(error)),
     };
     Preflight::validate(
+        operation,
         &Observations {
             sid: &sid,
             inventory: &inventory,
-            backup: &backup,
+            protected_spl: &protected_spl,
             uboot: &uboot,
             mounts: &mounts,
             ubi_devices: &ubi_devices,
@@ -91,17 +92,17 @@ fn preflight(cancel: &Cancellation) -> Result<Preflight, Error> {
 }
 
 fn prepare(operation: Operation, cancel: &Cancellation) -> Result<(Prepared, Response), Error> {
-    let _preflight = preflight(cancel)?;
+    let _preflight = preflight(operation, cancel)?;
     // Restoration is mandatory even for erase: recovery must already have the
-    // exact clean original program available before removing the primary copy.
+    // exact clean original program available before removing either SPL block.
     let restoration = OriginalSplFile::open(Path::new(RESTORATION), cancel)?;
-    if operation == Operation::ErasePrimary {
-        let primary = super::readback::read(
-            BootRegion::SplPrimary,
+    if matches!(operation, Operation::ErasePrimary | Operation::EraseBackup) {
+        let existing_target = super::readback::read(
+            operation.target(),
             ReadInterpretation::Boot0Corrected,
             cancel,
         )?;
-        boot_trial::verify_spl(&primary, BootRegion::SplPrimary)?;
+        boot_trial::verify_spl(&existing_target, operation.target())?;
     }
     let (ticket, response) = Ticket::issue(operation)?;
     Ok((
@@ -175,8 +176,8 @@ impl Service {
         if self.journals.len() >= MAX_DISPATCHES {
             return Err(Error::State);
         }
-        // Fresh SID, geometry, mounts and backup chain immediately before intent.
-        let checked = preflight(cancel)?;
+        // Fresh SID, geometry, mounts and the protected boot chain immediately before intent.
+        let checked = preflight(operation, cancel)?;
         restoration.revalidate(cancel)?;
         let directory = flasher_core::assets::temporary_directory()?;
         let path = directory.path().join("trial.jsonl");
@@ -198,27 +199,24 @@ impl Service {
         let result = (|| {
             let erased = checked.erase_and_verify(
                 &SystemToolRunner,
-                || {
-                    super::readback::read(
-                        BootRegion::SplPrimary,
-                        ReadInterpretation::Raw,
-                        &committed,
-                    )
-                },
+                || super::readback::read(checked.target(), ReadInterpretation::Raw, &committed),
                 &committed,
             )?;
-            let readback = if operation == Operation::RestorePrimary {
-                restoration.restore_primary(&checked, &SystemToolRunner, &committed)?;
+            let readback = if matches!(
+                operation,
+                Operation::RestorePrimary | Operation::RestoreBackup
+            ) {
+                restoration.restore(&checked, &SystemToolRunner, &committed)?;
                 super::readback::read(
-                    BootRegion::SplPrimary,
+                    checked.target(),
                     ReadInterpretation::Boot0Corrected,
                     &committed,
                 )?
             } else {
                 erased
             };
-            // Also prove the untouched backup and U-Boot still pass after mutation.
-            let _after = preflight(&committed)?;
+            // Also prove the untouched opposite SPL block and U-Boot still pass after mutation.
+            let _after = preflight(operation, &committed)?;
             journal.verify(&readback, &committed)?;
             Ok(Response::SplTrialVerified {
                 operation,

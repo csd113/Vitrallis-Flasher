@@ -1,0 +1,20 @@
+{
+  "protocol": 5,
+  "sid": null,
+  "session_id": null,
+  "daemon_sha256": "be5df467fcc5748f7db3282dec2ecd4ba5f2e99ab7ffd34075b6d9037cb0b2d9",
+  "image_sha256": "23388d02afb53dbcab412e02edd3aabb634636179b32fca47cfbae03c10afbb9",
+  "image_bytes": 36587669,
+  "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+  "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+  "operations": [
+    "ping",
+    "inventory",
+    "boot-readback",
+    "return-to-fel",
+    "prepare-spl-trial",
+    "execute-spl-trial"
+  ],
+  "nand_writes": "restricted-original-spl-block-trial",
+  "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03"
+}
