@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "utility_source": {
+    "url": "https://raw.githubusercontent.com/sigma-star/mtd-utils/v2.3.0/ubi-utils/mtdinfo.c",
+    "sha256": "1b6ec804ec00436f3d39089ac66c5ecb88927075aaa0a52eb06f4813313cc886",
+    "bytes": 11356
+  },
+  "pinned_template": "docs/evidence/batch3/recovery-template-v5.json",
+  "template_utility": {
+    "path": "usr/sbin/mtdinfo",
+    "bytes": 67168,
+    "sha256": "0a0535ecde62606a99c29188569708e3601d3fd2d3ef2a85ea73305bb4f2a8ed",
+    "version_string": "2.3.0",
+    "map_help_string_present": true
+  },
+  "reviewed_read_only_arguments": [
+    "--map",
+    "/dev/mtd4"
+  ],
+  "source_findings": [
+    "Device descriptor opened O_RDONLY | O_CLOEXEC",
+    "One mtd_is_bad query per region eraseblock until first -1",
+    "EOPNOTSUPP diagnostics suppressed; process status alone cannot prove enumeration",
+    "Later entries lack BAD after query failure",
+    "Final block 2043 is unavailable in measured ioctl baseline; requiring its BAD result prevents accepting early termination"
+  ],
+  "implementation_scope": "Strict bounded parser and ToolRunner capture foundation; not exposed by live protocol v5 and not yet physically executed",
+  "remaining": [
+    "Connect typed map to authenticated protocol",
+    "Physically execute --map with pinned RAM utility",
+    "Cross-check fresh map with ioctl baseline and boot log",
+    "Validate write skip behavior before execution approval"
+  ]
+}

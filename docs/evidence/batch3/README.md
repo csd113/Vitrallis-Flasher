@@ -222,3 +222,9 @@ selection is claimed.
   remaining addresses are the final four physical blocks, consistent with the
   BBT count. Source hashes and exact input hashes are recorded. This does not
   establish page mapping, live recovery ioctl enumeration or write skip behavior.
+
+- `rootfs-map-parser-preparation.json`: reviewed mtdinfo 2.3.0 source metadata and
+  matching utility version/help strings extracted from the pinned v5 template.
+  Records the existing read-only map operation and its suppressed unsupported
+  ioctl behavior. The strict parser/capture foundation is scripted-tested; live
+  v5 has no map request, and physical utility execution remains pending.

@@ -23,6 +23,7 @@ const LIMIT: usize = 64 * 1024;
 // than read-only diagnostics. Polling and cancellation remain at 500 ms.
 const TIMEOUT: Duration = Duration::from_secs(60);
 
+pub mod bad_blocks;
 pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;

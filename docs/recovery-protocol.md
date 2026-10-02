@@ -233,3 +233,20 @@ a fresh authenticated read-only connection proves the full backup data/OOB is FF
 Independent primary and U-Boot checks still pass. This later observation does not
 rewrite the original host journal or authorize automatic resumption. Isolated
 restored-primary boot remains pending.
+
+### Rootfs map capture preparation
+
+`recovery::bad_blocks` supplies a bounded read-only ToolRunner operation using
+fixed `/usr/sbin/mtdinfo --map /dev/mtd4`. The validated map stores logical
+partition eraseblock indices, including BBT-unavailable blocks. It cannot choose
+paths, skip blocks, mutate NAND or authorize execution. Live protocol v5 does
+not expose this new capture yet; integration and physical measurement remain
+pending.
+
+The parser requires the measured Hynix SLC geometry, a complete ordered map,
+matching offsets and unavailable count, no diagnostics or unexpected flags, and
+the final measured BBT block's BAD result. The reviewed utility stops querying
+after an ioctl failure and suppresses EOPNOTSUPP diagnostics, so a zero exit and
+printed map alone are insufficient. A relocated/missing final reservation is
+rejected for review rather than silently accepted. Scripted tests use measured
+indices and source-derived formatting; they are not a physical --map capture.

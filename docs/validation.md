@@ -579,3 +579,23 @@ reject flat logical-to-physical byte translation. This does not validate write
 skip behavior or page pairing. `python3 -m unittest discover -s scripts -p
 'test_*.py'` passes all 35 tests; `git diff --check` passes. The script log is
 `work/batch3/bad-block-correlation-script-tests.log`. No Rust or payload changed.
+
+### Batch 3 read-only rootfs map parser preparation
+
+Seven core tests exercise the existing fixed `mtdinfo --map /dev/mtd4` operation
+with measured unavailable indices and scripted source-derived formatting.
+Coverage includes full enumeration, geometry rejection before tool dispatch,
+incorrect/reordered offsets, truncation, unexpected flags, duplicate headers,
+oversized output, unavailable-count drift/overflow, tool diagnostics, timeout and
+cancellation. A same-count map lacking the final BBT result is rejected, covering
+the utility's suppressed unsupported-query behavior. No physical --map run or
+protocol integration is claimed by these tests.
+
+`python3 scripts/ci.py validate` and
+`cargo check --workspace --all-targets --all-features --locked` pass (exit 0).
+The full CI sequence includes formatting, strict Clippy, workspace tests,
+release build, image/script suites, provenance and established image/plan checks.
+Targeted host tests pass all seven; ARMv7 cross-built tests under qemu-arm also
+pass all seven. Logs: `work/batch3/rootfs-map-parser-final-validation.log`,
+`work/batch3/rootfs-map-parser-workspace-check.log` and
+`work/batch3/rootfs-map-parser-arm-tests.log`. `git diff --check` passes.
