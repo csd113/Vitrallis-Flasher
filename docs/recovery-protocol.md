@@ -140,3 +140,25 @@ captures. All eight copies must decode, agree byte-for-byte and match the
 explicit recorded SHA256 before any output file is created. Publication is
 atomic without overwrite, into an existing private directory. Cancellation or
 validation failure publishes nothing. This diagnostic grants no write approval.
+
+The `boot_trial` core module prepares the restricted original-SPL fallback test
+for the exact sacrificial SID. Its preflight requires local RAM-only mounts,
+no attached UBI, the pinned recovery kernel/board/NAND identity and measured
+geometry, zero boot bad blocks, unchanged rootfs bad-block inventory, all four
+backup SPL digests and the original kernel-corrected U-Boot digest. The recovery
+caller must collect these observations locally and immediately before mutation;
+host-provided claims cannot stand in for that collection.
+
+The only diagnostic tool operations defined there are one-block primary SPL
+erasure and raw data/OOB restoration to `/dev/mtd0`, without bad-block skipping
+or automatic retry. Restoration takes a private snapshot only after exact
+clean-image hash, all BBM bytes and native BCH decoding pass, then rechecks the
+open snapshot before writing. Separate verification helpers require full raw
+erasure or all four corrected original SPL copies. Tool acceptance alone is
+not verification or success. The snapshot check is available as the read-only
+`boot0-check-restoration` CLI command.
+
+These helpers are not yet connected to a recovery request. The pinned protocol
+v3 daemon continues to expose read-only NAND diagnostics. A reviewed journal,
+device-local preflight integration and physical measurements are still required
+before the fallback trial; `NandPlan` production authorization remains denied.

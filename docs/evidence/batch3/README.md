@@ -145,3 +145,7 @@ approved release artifact or evidence of a NAND write.
 the installed OS's `nandwrite`/`flash_erase` help. It confirms the raw OOB and
 no-bad-block-skipping options needed for a fixed boot-region restoration path.
 Recovery execution of these tools and destructive fallback testing remain unproven.
+
+`pre-recovery-v3-shutdown.json` records a clear apt/dpkg process check and accepted
+orderly shutdown before requesting the FEL bridge for the v3 live decoder test.
+This records command acceptance, not observation of physical power-off or FEL.

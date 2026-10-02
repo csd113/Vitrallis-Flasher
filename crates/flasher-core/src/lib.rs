@@ -1,6 +1,7 @@
 //! Host-independent, fail-closed `PocketCHIP` recovery services.
 pub mod assets;
 pub mod boot0;
+pub mod boot_trial;
 pub mod clock;
 pub mod device;
 pub mod fel;

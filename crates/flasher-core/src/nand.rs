@@ -4,7 +4,9 @@
 //! install would attempt, including byte lengths and digests taken from
 //! [`VerifiedAssets`]. Physical facts that Batch 1/2 have not established stay
 //! unresolved as explicit [`PlanGate`]s, and [`NandPlan::authorize_execution`]
-//! always fails: no destructive code path exists in this build.
+//! always fails: no destructive production plan can execute in this build.
+//! Restricted original-SPL trial helpers are separate developer diagnostics;
+//! they neither approve a release nor satisfy these production gates.
 use crate::{
     Error,
     assets::VerifiedAssets,

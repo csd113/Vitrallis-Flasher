@@ -426,3 +426,21 @@ RAM template also reproduced byte-for-byte in two builder runs.
 `work/batch3/boot0-live-milestone-validation.log`. The separate all-target,
 all-feature workspace check also passed. Physical live decoding, restoration,
 fallback and final application reflash remain outstanding.
+
+### Batch 3 original-SPL fallback guard preparation
+
+Five guard tests pass on the host and on ARMv7 under qemu (2.76 seconds).
+They combine historical raw/BCH evidence explicitly as host fixtures, not live
+protocol-v3 claims. Coverage includes wrong SID, changed geometry/NAND identity,
+new bad blocks, corrupted backup chain, mounted NAND/attached UBI, process failure,
+pre-execution cancellation, exact erased-data/OOB verification and corrupted
+restoration input. Destructive tool calls are scripted; no test invokes a real
+erase or write utility.
+
+`boot0-check-restoration` passes on the actual private candidate, validating the
+fixed encoded digest and zero-correction native decode before snapshot creation.
+`python3 scripts/ci.py validate` exited 0; log:
+`work/batch3/boot-trial-milestone-validation.log`. The separate all-target,
+all-feature workspace check also passed. Device-local integration, journaling and
+physical fallback testing remain open; no diagnostic erase/write RPC is exposed
+and production plan authorization remains denied.

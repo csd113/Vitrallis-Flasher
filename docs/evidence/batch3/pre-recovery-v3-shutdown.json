@@ -1,0 +1,16 @@
+{
+  "captured_at_utc": "2026-10-02T04:33:57.966139+00:00",
+  "operation": "Orderly shutdown of original NAND installation before protocol-v3 RAM diagnostic",
+  "upgrade_process_check": {
+    "exit_status": 1,
+    "running_upgrade_processes": false
+  },
+  "command_status": 0,
+  "stdout": "",
+  "stderr": "",
+  "nand_erase_or_write_performed": false,
+  "limitations": [
+    "Command acceptance does not establish physical power-off.",
+    "User must reconnect FEL bridge while powered off before recovery boot."
+  ]
+}
