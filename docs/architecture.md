@@ -287,3 +287,18 @@ trust nor filesystem/NAND authority; authenticated receiving, installation,
 readback and production plan integration remain required. Decoder EOF behavior
 is reviewed against the pinned implementation and its
 [primary documentation](https://docs.rs/flate2/1.1.10/flate2/bufread/struct.GzDecoder.html).
+
+### Rootfs inspection from verified snapshots
+
+`VerifiedAsset::inspect_rootfs` requires the rootfs role and rechecks the exact
+retained snapshot's compressed length/hash before decoding and again before
+returning the semantic inventory. It never reopens the cache pathname. A cache
+path replacement therefore cannot redirect inspection; a changed snapshot is
+rejected even if its altered gzip stream remains valid. Successful inspection
+rewinds and revalidates the snapshot for later bounded delivery.
+
+The CLI `rootfs-audit-verified manifest.json existing-private-cache` exercises
+this path without downloads or extraction. It parses the manifest, validates
+the cache entry into a private snapshot and inspects only the rootfs role. This
+is integrity/semantic inspection, not publisher trust, physical manifest
+approval, an installation capability or a complete production asset set.

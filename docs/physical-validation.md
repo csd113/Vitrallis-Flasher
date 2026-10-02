@@ -365,3 +365,14 @@ audit. This is host-only evidence; it is not installed-content readback or a
 production reflash. The current physical v9 payload remains the frozen template;
 the new decoder has not been uploaded to the device. Evidence:
 `evidence/batch3/rootfs-native-gzip-stream-check.json`.
+
+### Retained rootfs snapshot host cross-check
+
+The complete locked stock archive also passes the verified-cache CLI path:
+compressed length/hash are checked by cache lookup, before decoding and after
+decoding; the resulting semantic inventory matches the prior independent audit.
+The private host-only diagnostic manifest binds the real rootfs and retains
+synthetic fixture assets for other roles. It explicitly preserves unresolved
+aggregate licensing and is not a physical release manifest or approval. No
+other-role acquisition, extraction, NAND access or payload upload occurs.
+Evidence: `evidence/batch3/rootfs-verified-snapshot-stream-check.json`.

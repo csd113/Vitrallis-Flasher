@@ -352,3 +352,10 @@ selection is claimed.
   parser. Compressed hash, member/data counts and semantic digest independently
   match prior evidence. No extraction, external decoder or NAND write occurs;
   production installation and runtime readback remain unimplemented.
+
+- `rootfs-verified-snapshot-stream-check.json`: complete real stock rootfs
+  inspection through cache lookup and the retained `VerifiedAsset` guard, with
+  compressed hash checks before/after decoding and matching semantic inventory.
+  The mixed diagnostic manifest's other roles are explicitly synthetic; this
+  approves no physical manifest or complete asset set and performs no extraction
+  or device mutation.

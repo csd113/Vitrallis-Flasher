@@ -1035,3 +1035,27 @@ Private logs: `work/batch3/rootfs-gzip-full-validation.log`,
 `rootfs-gzip-release-build.log`. This adds a direct reference to an already
 locked codec with no package/version addition; it does not approve artifacts,
 install a filesystem, upload a new payload or enable production execution.
+
+### Verified rootfs snapshot inspection checkpoint
+
+`cargo test -p flasher-core assets::transfer::tests --locked` passes all seven
+snapshot delivery/inspection tests. New tests prove retained inspection after
+cache path replacement, rejection of a snapshot change that still forms valid
+gzip, and rejection of wrong roles, malformed archives and cancellation.
+All seven tests also pass on ARMv7 under qemu-arm (0.18 seconds).
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+204 core tests (six intentional ignored subprocess fixtures), five integration
+tests, 11 recovery tests, 73 image tests, 35 script tests, locked release builds
+and established provenance/kernel/image/manifest checks. Fresh workspace
+all-target/all-feature check and diff check pass. The final release CLI's
+complete locked-archive verified-cache check is preserved separately in
+`evidence/batch3/rootfs-verified-snapshot-stream-check.json`; its mixed diagnostic
+manifest is not an approved physical release or acquisition of other roles.
+No archive extraction, device mutation or recovery payload upload occurs.
+
+Private logs: `work/batch3/rootfs-verified-inspection-final-validation.log`,
+`rootfs-verified-inspection-final-workspace-check.log`,
+`rootfs-verified-inspection-arm-tests.log` and
+`rootfs-verified-inspection-clippy.log`. The CLI explicitly reports the temporary
+host snapshot creation separately from rootfs extraction and production flash.

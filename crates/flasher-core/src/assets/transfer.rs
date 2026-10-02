@@ -1,4 +1,5 @@
-//! Bounded delivery of private verified snapshots. This grants no NAND authority.
+//! Bounded delivery and rootfs inspection of private verified snapshots.
+//! Neither operation grants NAND authority.
 use super::VerifiedAsset;
 use crate::{Cancellation, Error};
 use sha2::{Digest, Sha256};
@@ -8,6 +9,29 @@ use std::io::{Read, Seek};
 pub const TRANSFER_CHUNK_BYTES: usize = 8192;
 
 impl VerifiedAsset {
+    /// Inspect the compressed rootfs from this retained private snapshot.
+    ///
+    /// The exact asset length/hash is rechecked before decoding and again before
+    /// returning the semantic inventory. No cache path is reopened, filesystem
+    /// content is extracted, or installation authorization is granted.
+    /// # Errors
+    /// Rejects other roles, snapshot changes, malformed gzip/tar and cancellation.
+    pub fn inspect_rootfs(
+        &mut self,
+        cancel: &Cancellation,
+    ) -> Result<crate::rootfs::Inspection, Error> {
+        if self.role() != crate::manifest::Role::Rootfs {
+            return Err(Error::Manifest(
+                "rootfs inspection requires the rootfs role",
+            ));
+        }
+        self.recheck(cancel)?;
+        let inspection = crate::rootfs::inspect_gzip(self.snapshot.as_file_mut(), cancel)?;
+        self.recheck(cancel)?;
+        cancel.check()?;
+        Ok(inspection)
+    }
+
     /// Revalidate before delivery, then deliver ordered bounded chunks from the
     /// same open snapshot. Offsets describe artifact bytes, never NAND addresses.
     /// A successful callback acknowledges delivery only; the caller must retain
@@ -210,5 +234,82 @@ mod tests {
             });
             assert!(!complete);
         }
+    }
+    fn rootfs_gzip() -> Vec<u8> {
+        let mut header = [0_u8; 512];
+        header[..2].copy_from_slice(b"./");
+        header[100..108].copy_from_slice(b"0000755\0");
+        header[156] = b'5';
+        header[257..265].copy_from_slice(b"ustar  \0");
+        header[148..156].fill(b' ');
+        let checksum: u64 = header.iter().map(|byte| u64::from(*byte)).sum();
+        header[148..156].copy_from_slice(format!("{checksum:06o}\0 ").as_bytes());
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        encoder.write_all(&header).unwrap();
+        encoder.write_all(&[0; 1024]).unwrap();
+        encoder.finish().unwrap()
+    }
+
+    #[test]
+    fn rootfs_inspection_uses_the_retained_snapshot_after_cache_path_replacement() {
+        let bytes = rootfs_gzip();
+        let (mut asset, directory) = snapshot(&bytes);
+        std::fs::write(
+            directory.path().join(asset.sha256()),
+            b"replaced cache entry",
+        )
+        .unwrap();
+        let inventory = asset.inspect_rootfs(&Cancellation::default()).unwrap();
+        assert_eq!(inventory.entries().len(), 1);
+        assert_eq!(inventory.entries()[0].path, ".");
+        assert_eq!(inventory.entries()[0].kind, crate::rootfs::Kind::Directory);
+        assert_eq!(inventory.file_bytes, 0);
+        assert_eq!(asset.snapshot.as_file_mut().stream_position().unwrap(), 0);
+        asset.recheck(&Cancellation::default()).unwrap();
+    }
+
+    #[test]
+    fn rootfs_inspection_rejects_changed_snapshot_even_when_gzip_remains_valid() {
+        let bytes = rootfs_gzip();
+        let (mut asset, _directory) = snapshot(&bytes);
+        // Gzip mtime is outside the content CRC; decoding alone would accept it.
+        asset
+            .snapshot
+            .as_file_mut()
+            .seek(SeekFrom::Start(4))
+            .unwrap();
+        asset.snapshot.as_file_mut().write_all(&[1]).unwrap();
+        let mut changed = bytes;
+        changed[4] = 1;
+        assert!(crate::rootfs::inspect_gzip(changed.as_slice(), &Cancellation::default()).is_ok());
+        assert!(matches!(
+            asset.inspect_rootfs(&Cancellation::default()),
+            Err(Error::Hash)
+        ));
+    }
+
+    #[test]
+    fn rootfs_inspection_rejects_wrong_role_invalid_archive_and_cancellation() {
+        let (mut asset, _directory) = snapshot(&rootfs_gzip());
+        asset.spec = Manifest::read(simulation::MANIFEST.as_bytes())
+            .unwrap()
+            .assets()
+            .iter()
+            .find(|spec| spec.role() == Role::UbootNand)
+            .unwrap()
+            .clone();
+        assert!(matches!(
+            asset.inspect_rootfs(&Cancellation::default()),
+            Err(Error::Manifest(_))
+        ));
+        let (mut invalid, _invalid_directory) = snapshot(b"hash-verified but not an archive");
+        assert!(invalid.inspect_rootfs(&Cancellation::default()).is_err());
+        let cancel = Cancellation::default();
+        cancel.cancel();
+        let (mut valid, _valid_directory) = snapshot(&rootfs_gzip());
+        assert!(matches!(
+            valid.inspect_rootfs(&cancel),
+            Err(Error::Cancelled)
+        ));
     }
 }
