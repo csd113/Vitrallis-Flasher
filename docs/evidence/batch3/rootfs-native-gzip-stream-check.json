@@ -1,0 +1,19 @@
+{
+  "evidence_kind": "host-only complete locked compressed archive inspection",
+  "production_reflash": false,
+  "filesystem_mutated": false,
+  "external_decoder": false,
+  "compressed_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+  "compressed_bytes": 516563033,
+  "compressed_source_rechecked": true,
+  "decoder": "flate2 1.1.10 Rust backend",
+  "parser_source_sha256": "8b45453b3a6b9ef12a8141435db408a85c1fb7a085e2cb7b4aa0f9ba4dad8f15",
+  "release_cli_sha256": "6578367db40d763fcb50f46b659fec49b096e91aa307e4450d0d5ed691f7d105",
+  "elapsed_seconds": 6.797,
+  "exit": 0,
+  "stderr": "",
+  "members": 50950,
+  "regular_file_bytes": 1264012666,
+  "semantic_sha256": "50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35",
+  "matches_independent_python_audit": true
+}

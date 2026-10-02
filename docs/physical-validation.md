@@ -355,3 +355,13 @@ to be measured. The existing rootfs is unchanged; full production reflash and
 its completion gates remain unresolved. Evidence:
 `evidence/batch3/normal-release-uboot-backup-isolated-boot-17.json`. Private
 readbacks are under `work/batch3/uboot-trial-session-17/`.
+
+### Native gzip rootfs host cross-check
+
+The complete locked compressed stock archive is inspected by the native Rust
+gzip decoder and tar parser without extraction, expanded temporary files or
+external gzip. Counts and ordered semantic digest match the independent Python
+audit. This is host-only evidence; it is not installed-content readback or a
+production reflash. The current physical v9 payload remains the frozen template;
+the new decoder has not been uploaded to the device. Evidence:
+`evidence/batch3/rootfs-native-gzip-stream-check.json`.

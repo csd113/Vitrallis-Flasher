@@ -266,3 +266,24 @@ The Hynix ambiguity gate is removed; remaining approval, recovery, geometry,
 bad-block and boot-profile gates still deny execution. Toshiba retains its
 previous layout and unresolved backup gate. This describes planning only; the
 final executor still needs ECC-aware completion and rootfs installation.
+
+### Native bounded rootfs gzip decoding
+
+`rootfs::inspect_gzip` decodes directly into the bounded tar inspector using
+`flate2` 1.1.10's Rust backend. This crate already exists in the lockfile; making
+it an explicit core dependency introduces no additional package or version
+change. No external process or expanded temporary archive is used. The fixed
+ten-byte gzip header without optional fields matches the measured image
+pipeline. Optional fields are rejected before decoder construction, preventing
+unbounded filename/comment/extra allocations. Compressed input uses an 8 KiB
+buffer and the manifest's 2 GiB asset limit; tar expansion and metadata bounds
+remain independently enforced. Blocking-read deadlines belong to the provider.
+
+Completion requires tar EOF, the gzip CRC/size trailer and compressed EOF.
+Concatenated gzip members and any trailing bytes fail closed. Cancellation is
+checked around compressed reads and all tar fragments. The read-only CLI
+`rootfs-audit-gzip` accepts compressed stdin. Its result grants neither asset
+trust nor filesystem/NAND authority; authenticated receiving, installation,
+readback and production plan integration remain required. Decoder EOF behavior
+is reviewed against the pinned implementation and its
+[primary documentation](https://docs.rs/flate2/1.1.10/flate2/bufread/struct.GzDecoder.html).

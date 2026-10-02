@@ -1,7 +1,10 @@
 //! Bounded rootfs tar inspection. No extraction, installation or NAND authority.
 use crate::{Cancellation, Error};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeMap, io::Read};
+use std::{
+    collections::BTreeMap,
+    io::{BufReader, Read},
+};
 
 const BLOCK: usize = 512;
 const MAX_ENTRIES: usize = 200_000;
@@ -78,7 +81,10 @@ impl<R: Read> Input<R> {
             let count = match self.reader.read(bytes) {
                 Ok(count) => count,
                 Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
-                Err(error) => return Err(error.into()),
+                Err(error) => {
+                    cancel.check()?;
+                    return Err(error.into());
+                }
             };
             cancel.check()?;
             if count > bytes.len() {
@@ -136,6 +142,74 @@ impl<R: Read> Input<R> {
                 return Err(reject("trailing archive payload or padding bound"));
             }
         }
+    }
+}
+
+/// Inspect one gzip-compressed rootfs without buffering the archive or starting
+/// a process.
+///
+/// Only the fixed ten-byte, no-optional-fields gzip header emitted by
+/// the locked image pipeline is supported. The compressed source is bounded to
+/// the manifest asset limit (2 GiB); expanded data/metadata bounds are enforced
+/// by the tar inspector.
+/// Providers must separately bound blocking reads. This grants no asset trust
+/// or installation authority.
+/// # Errors
+/// Rejects unsupported headers, invalid CRC/size trailers, truncation, trailing
+/// bytes/concatenated members, malformed tar, source bounds and cancellation.
+pub fn inspect_gzip(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, Error> {
+    cancel.check()?;
+    let mut input = Input { reader, bytes: 0 };
+    let mut header = [0; 10];
+    input.exact(&mut header, cancel)?;
+    if header[..4] != [0x1f, 0x8b, 8, 0] {
+        return Err(reject("unsupported gzip header"));
+    }
+    // Check flags before constructing the decoder: optional name/comment/extra
+    // fields otherwise permit allocations unrelated to the tar metadata bound.
+    let source = Compressed {
+        reader: input.reader,
+        bytes: 10,
+        cancel,
+    };
+    let source = header.as_slice().chain(source);
+    let mut decoder = flate2::bufread::GzDecoder::new(BufReader::with_capacity(8192, source));
+    let inspected = inspect(&mut decoder, cancel);
+    cancel.check()?;
+    let inspected = inspected?;
+    let mut source = decoder.into_inner();
+    let mut trailing = Input {
+        reader: &mut source,
+        bytes: 0,
+    };
+    if trailing.read_chunk(&mut [0; 1], cancel)? != 0 {
+        return Err(reject("trailing compressed payload"));
+    }
+    cancel.check()?;
+    Ok(inspected)
+}
+
+struct Compressed<'a, R> {
+    reader: R,
+    bytes: u64,
+    cancel: &'a Cancellation,
+}
+impl<R: Read> Read for Compressed<'_, R> {
+    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+        self.cancel.check().map_err(std::io::Error::other)?;
+        let count = self.reader.read(buffer)?;
+        self.cancel.check().map_err(std::io::Error::other)?;
+        if count > buffer.len() {
+            return Err(std::io::Error::other("invalid compressed reader count"));
+        }
+        self.bytes = self
+            .bytes
+            .checked_add(count as u64)
+            .ok_or_else(|| std::io::Error::other("compressed source overflow"))?;
+        if self.bytes > crate::manifest::MAX_ASSET_BYTES {
+            return Err(std::io::Error::other("compressed source bound"));
+        }
+        Ok(count)
     }
 }
 
@@ -757,5 +831,106 @@ mod tests {
             calls: 0,
         };
         assert!(matches!(inspect(source, &cancel), Err(Error::Cancelled)));
+    }
+    fn compressed(bytes: &[u8]) -> Vec<u8> {
+        use std::io::Write;
+        let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+        encoder.write_all(bytes).unwrap();
+        encoder.finish().unwrap()
+    }
+
+    #[test]
+    fn gzip_checks_tar_trailer_and_rejects_concatenated_or_trailing_data() {
+        let tar = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', b"data", ""),
+        ]);
+        let gzip = compressed(&tar);
+        let inspection = inspect_gzip(gzip.as_slice(), &Cancellation::default()).unwrap();
+        assert_eq!(
+            inspection.semantic_sha256,
+            scan(&tar).unwrap().semantic_sha256
+        );
+        assert_eq!(inspection.file_bytes, 4);
+        for trailer_index in [gzip.len() - 8, gzip.len() - 4] {
+            let mut changed = gzip.clone();
+            changed[trailer_index] ^= 1;
+            assert!(inspect_gzip(changed.as_slice(), &Cancellation::default()).is_err());
+        }
+        for length in [0, 9, gzip.len() - 1, gzip.len() - 8] {
+            assert!(inspect_gzip(&gzip[..length], &Cancellation::default()).is_err());
+        }
+        for tail in [vec![0], vec![37], gzip.clone()] {
+            let mut appended = gzip.clone();
+            appended.extend_from_slice(&tail);
+            assert!(inspect_gzip(appended.as_slice(), &Cancellation::default()).is_err());
+        }
+        let bad_tar = compressed(b"not a complete tar");
+        assert!(inspect_gzip(bad_tar.as_slice(), &Cancellation::default()).is_err());
+    }
+
+    #[test]
+    fn gzip_header_rejects_optional_allocations_and_unknown_flags_before_decode() {
+        let gzip = compressed(&archive(&[member("./", b'5', b"", "")]));
+        for flags in [1, 2, 4, 8, 16, 32, 64, 128, 255] {
+            let mut changed = gzip.clone();
+            changed[3] = flags;
+            assert!(matches!(
+                inspect_gzip(changed.as_slice(), &Cancellation::default()),
+                Err(Error::RootfsArchive("unsupported gzip header"))
+            ));
+        }
+        for index in 0..3 {
+            let mut changed = gzip.clone();
+            changed[index] ^= 1;
+            assert!(inspect_gzip(changed.as_slice(), &Cancellation::default()).is_err());
+        }
+    }
+
+    #[test]
+    fn compressed_reader_bounds_counts_and_checks_cancellation_after_each_fragment() {
+        struct Fragment<'a> {
+            bytes: &'a [u8],
+            cancel: &'a Cancellation,
+            remaining: usize,
+        }
+        impl Read for Fragment<'_> {
+            fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+                if self.remaining == 0 {
+                    self.cancel.cancel();
+                }
+                self.remaining = self.remaining.saturating_sub(1);
+                let count = buffer.len().min(self.bytes.len()).min(1);
+                buffer[..count].copy_from_slice(&self.bytes[..count]);
+                self.bytes = &self.bytes[count..];
+                Ok(count)
+            }
+        }
+        let gzip = compressed(&archive(&[member("./", b'5', b"", "")]));
+        for remaining in [0, 9, 10, 15, gzip.len() - 1] {
+            let cancel = Cancellation::default();
+            let reader = Fragment {
+                bytes: &gzip,
+                cancel: &cancel,
+                remaining,
+            };
+            assert!(matches!(
+                inspect_gzip(reader, &cancel),
+                Err(Error::Cancelled)
+            ));
+        }
+        let cancel = Cancellation::default();
+        let reader = Fragment {
+            bytes: &gzip,
+            cancel: &cancel,
+            remaining: usize::MAX,
+        };
+        assert!(inspect_gzip(reader, &cancel).is_ok());
+        let mut source = Compressed {
+            reader: &[1][..],
+            bytes: crate::manifest::MAX_ASSET_BYTES,
+            cancel: &cancel,
+        };
+        assert!(source.read(&mut [0; 1]).is_err());
     }
 }

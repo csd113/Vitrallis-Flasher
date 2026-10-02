@@ -1011,3 +1011,27 @@ All nine planning tests also pass on ARMv7 under qemu-arm. Private logs:
 `hynix-backup-plan-workspace-check.log` and `hynix-backup-plan-arm-tests.log`.
 This planning change neither uploads a revised daemon nor authorizes production
 installation. The next hardware test uses the previously frozen v9 payload.
+
+### Native rootfs gzip decoder checkpoint
+
+`cargo test -p flasher-core rootfs::tests --locked` passes all 11 parser/decoder
+tests. New regressions cover gzip CRC/size corruption, truncated headers/body/
+trailers, trailing and concatenated data, unsupported allocating header fields,
+fragmented compressed reads, cancellation and the compressed input limit.
+All 11 tests also pass cross-built for ARMv7 under qemu-arm (0.12 seconds).
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+201 core tests (six intentional ignored subprocess fixtures), five integration
+tests, 11 recovery tests, 73 image tests, 35 script tests, locked release builds
+and established provenance/kernel/image/manifest checks. Workspace all-target/
+all-feature check and diff check pass. The final release CLI independently
+inspects the complete compressed stock archive, matching the earlier Python
+semantic inventory without extraction or an external decoder. Exact binary/
+source hashes and elapsed time are in
+`evidence/batch3/rootfs-native-gzip-stream-check.json`.
+
+Private logs: `work/batch3/rootfs-gzip-full-validation.log`,
+`rootfs-gzip-workspace-check.log`, `rootfs-gzip-arm-tests.log` and
+`rootfs-gzip-release-build.log`. This adds a direct reference to an already
+locked codec with no package/version addition; it does not approve artifacts,
+install a filesystem, upload a new payload or enable production execution.

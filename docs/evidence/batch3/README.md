@@ -346,3 +346,9 @@ selection is claimed.
   counters and boot logs corroborate physical fallback to `0x00C00000`. Both
   SPLs remain populated, so their BROM selection is not inferred. The existing
   rootfs is unchanged; this is not production reflash completion.
+
+- `rootfs-native-gzip-stream-check.json`: complete stock compressed archive
+  inspection using the release CLI's native bounded decoder and shared tar
+  parser. Compressed hash, member/data counts and semantic digest independently
+  match prior evidence. No extraction, external decoder or NAND write occurs;
+  production installation and runtime readback remain unimplemented.
