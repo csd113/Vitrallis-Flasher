@@ -5,7 +5,7 @@ reviewed recovery boundary. It must preserve the measured NAND ECC/layout and
 avoid the broken fastboot/SLC path. Native verification decodes the reviewed
 boot0 format; image encoding still uses the unmodified pinned upstream builder.
 The current upstream installer is **not** an implementation of this protocol.
-Batch 3 now has a bounded read-only client and daemon with physically measured
+Batch 3 has a bounded diagnostic client and daemon with physically measured
 SID-bound authentication over macOS ECM.
 
 Required sequence before implementing a real backend:
@@ -164,10 +164,27 @@ erasure or all four corrected original SPL copies. Tool acceptance alone is
 not verification or success. The snapshot check is available as the read-only
 `boot0-check-restoration` CLI command.
 
-These helpers are not yet connected to a recovery request. The pinned protocol
-v3 daemon continues to expose read-only NAND diagnostics. A reviewed journal,
-device-local preflight integration and physical measurements are still required
-before the fallback trial; `NandPlan` production authorization remains denied.
+Protocol v4 connects these helpers through two closed requests. PrepareSplTrial
+collects local preconditions, validates the exact restoration file and retains a
+private snapshot, and issues a fresh 30-second ticket. For erasure it additionally
+requires an intact primary. ExecuteSplTrial consumes that ticket on the same
+connection before checking it; wrong tokens/operations, expiry or disconnect
+cannot reuse it. The daemon freshly measures SID, geometry, mounts and the backup
+boot chain and revalidates the open snapshot before recording dispatch. No host
+report substitutes for device-local measurements.
+
+Execute reception is the commit boundary. The device finishes its bounded operation
+and readback even if the host disconnects. It erases exactly mtd0, verifies every raw
+data/OOB byte is erased, optionally restores the fixed original encoding, and
+rechecks backup SPL and U-Boot before issuing SplTrialVerified. A RAM boot permits
+at most two dispatched attempts, including failed/indeterminate attempts; a
+reconnect does not resume or retry them. Device journals are private and fsynced
+but RAM-only, retained across connections and lost at reboot/power loss. Host
+journals provide persistent diagnosis. Protocol v4 allows 60 seconds per transport
+component with 500 ms cancellation polling, replacing the former 15-second bound.
+Neither the ticket nor this diagnostic constitutes release-manifest approval.
+`NandPlan` production authorization remains denied. Physical trial measurements
+are still required; no v4 erase/write has been dispatched yet.
 
 The host trial journal publishes a new private intent file atomically without
 overwrite and fsyncs it before preparation or dispatch. It records public SID,
@@ -180,4 +197,13 @@ An I/O failure poisons further journal transitions. The bounded reader rejects
 partial/reordered/modified-schema records and grants no automatic resumption.
 Unix parent-directory fsync is implemented; Windows directory durability remains
 unmeasured. `trial-journal-read` provides read-only inspection. The journal is
-prepared for integration; no destructive request has been dispatched.
+connected to `recovery-spl-trial`: intent precedes preparation, fsynced dispatch
+precedes the Execute frame, and exact verified readback precedes Verified.
+`recovery-spl-preflight` prepares then disconnects without dispatch, dropping the
+device ticket. No destructive request has been dispatched yet.
+
+The v4 builder requires `--original-spl` pointing to the private, pinned clean
+restoration candidate. It rejects changed bytes before output creation and puts
+the image at one fixed private RAM path. Original executable firmware stays out
+of Git. The candidate is independently decoded again inside recovery before any
+trial. The template/daemon pins in `recovery_boot.rs` bind this complete payload.

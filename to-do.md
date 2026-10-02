@@ -87,7 +87,8 @@ image work is:
   exact hashes/sizes, distinctness, DTB/overlay, boot script, kernel/rootfs,
   SPL variant, layout, immutability, approval binding) with positive and
   negative tests. `approved_physical_manifest_sha256` stays empty: no manifest
-  is approved and no write path exists.
+  is approved and no production write path exists. The restricted Batch 3
+  original-SPL diagnostic grants no release approval.
 - [ ] Validate the fresh `stock` image's PocketHome menu/startup, compatible stock
   apps and hardware configuration. It must contain no Vitrallis startup hooks/binaries.
 - [ ] Complete release selection and offline installation for approved physical

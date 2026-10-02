@@ -160,3 +160,8 @@ Corrected U-Boot matches the original digest, with 6,496 corrected bits and
 zero uncorrectable errors. These actual v3 reports now back the trial guard
 fixtures. No NAND erase/write, generated-image acceptance or BROM fallback
 selection is claimed.
+
+- `recovery-template-v4.json`: reproducible protocol-v4 payload metadata. Includes
+  the exact private original-SPL restoration encoding for the restricted trial;
+  no original executable bytes or session secrets are tracked. Physical v4
+  preflight/mutation measurements are not claimed by this build record.

@@ -50,3 +50,10 @@ Before enabling any physical operation, complete every gate in
 [physical validation](docs/physical-validation.md), close the reviewed license/image
 blockers, and review the resulting changes. Do not substitute physical flashing for
 mock tests, silently bypass identity checks, or label simulation as hardware evidence.
+
+The Batch 3 `recovery-spl-preflight` diagnostic checks the known unit and then
+disconnects without writes. `recovery-spl-trial` is destructive and restricted to
+that sacrificial unit and its exact original SPL encoding. It requires a new
+absolute journal path in an existing private directory. Never replay a journal
+or automatically retry an indeterminate dispatch. See `docs/recovery-protocol.md`
+for the commit boundary and retained host/device evidence.

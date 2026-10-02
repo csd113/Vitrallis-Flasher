@@ -9,9 +9,12 @@
 
 A native PocketCHIP recovery workspace for Windows, macOS and Linux, built in Rust.
 
-**Physical flashing is blocked.** This implementation provides read-only FEL diagnostics,
-a verified HTTPS/offline asset pipeline, and a complete simulated LIVE recovery flow.
-It cannot erase NAND, boot an unreviewed recovery image, or reboot attached hardware.
+**Production flashing is blocked.** The workspace provides native FEL diagnostics,
+authenticated pinned RAM recovery, a verified asset pipeline and a simulated install
+flow. Batch 3 also has a restricted developer SPL primary erase/restoration trial
+for one measured sacrificial device and its exact original program. This trial
+requires device-local preflight and durable intent; it does not approve a release
+or enable GUI installation. Physical trial results remain pending.
 No approved physical image is shipped. No telemetry, automatic driver changes or release publishing.
 Remaining work is tracked in [to-do.md](to-do.md).
 

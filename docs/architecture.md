@@ -170,7 +170,7 @@ CLI `fel-probe` exercises the bounded SRAM diagnostic without exposing editable
 addresses. Recovery and destructive plan authorization remain blocked.
 
 
-### Read-only recovery development boundary
+### Recovery development boundary
 
 `flasher-recovery` is an ARMv7 daemon with authenticated Ping, Inventory,
 BootReadback and RAM-only ReturnToFel operations. Protocol v3 includes native
@@ -182,8 +182,18 @@ RAM bootstrap uses only fixed, hash-pinned inputs and constructed `ToolRequest`
 arguments. Per-boot credentials live in a private directory and RAM initramfs.
 This work has not changed NAND authorization or enabled a destructive executor.
 
-The restricted original-SPL trial guard and durable host journal are separate
-developer diagnostics in preparation. Journal reads never authorize resumption,
+Protocol v4 connects the restricted original-SPL trial guard and durable host
+journal as developer diagnostics. Journal reads never authorize resumption,
 and Verified cannot be recorded without the operation's checked readback.
-Their mutation helpers remain disconnected from the recovery protocol pending
-reviewed local preflight/journal integration and controlled physical testing.
+Controlled physical testing remains required, as described below.
+
+### Restricted Batch 3 original-SPL diagnostic
+
+Protocol v4 exposes a two-phase original-SPL primary trial for the measured
+sacrificial SID only. Device-local preflight, an exact clean restoration snapshot,
+a single-use connection ticket and durable host intent gate the fixed mtd0
+mutation. Cancellation before dispatch sends no execute request; cancellation or
+response loss after dispatch is indeterminate. Device RAM journals survive socket
+loss, and verified replies require primary readback plus the unchanged backup boot
+chain. This diagnostic does not enable the production `NandPlan`, release catalog
+or GUI flash path. Its physical mutation and fallback results remain unmeasured.

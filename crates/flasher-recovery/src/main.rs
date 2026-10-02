@@ -1,5 +1,6 @@
-//! RAM-only, read-only recovery daemon. No NAND write operation is exposed.
+//! SID-bound RAM recovery with a restricted original-SPL fallback trial.
 mod readback;
+mod trial;
 
 use flasher_core::{
     Cancellation, Error,
@@ -205,18 +206,17 @@ fn run() -> Result<(), Error> {
     let binary = bytes(Path::new("/usr/sbin/flasher-recovery"), 32 * 1024 * 1024)?;
     let implementation: [u8; 32] = Sha256::digest(binary).into();
     let listener = TcpListener::bind(("192.168.81.1", 3333))?;
-    eprintln!("Authenticated read-only recovery ready; NAND writes unavailable");
+    let mut trials = trial::Service::default();
+    eprintln!("Authenticated recovery ready; only fixed original-SPL trial mutations available");
     for incoming in listener.incoming() {
         let stream = incoming?;
         match Channel::accept(stream, &credentials, &implementation, &cancel) {
-            Ok(mut channel) => match channel.serve(
-                || inventory(&cancel),
-                |region, interpretation| readback::read(region, interpretation, &cancel),
-                &cancel,
-            ) {
-                Ok(()) => reboot_to_fel()?,
-                Err(error) => eprintln!("Recovery connection closed: {error}"),
-            },
+            Ok(mut channel) => {
+                match trials.serve(&mut channel, &credentials, implementation, &cancel) {
+                    Ok(()) => reboot_to_fel()?,
+                    Err(error) => eprintln!("Recovery connection closed: {error}"),
+                }
+            }
             Err(error) => eprintln!("Recovery peer rejected: {error}"),
         }
     }

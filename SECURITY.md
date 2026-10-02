@@ -1,8 +1,12 @@
 # Security
 
-Physical writes are unconditionally disabled in the real backend. No manifest field,
-CLI flag, environment variable or GUI control can enable them. The only external FEL
-command available is `--list`, using an explicit locally reviewed executable path.
+Production writes remain disabled in the real backend. The separate Batch 3
+original-SPL diagnostic accepts only a measured sacrificial SID, fixed mtd0
+operations and an exact original-program restoration image. Device-local
+preflight, single-use connection tickets and fsynced journals precede mutation;
+checked readback precedes success. It does not authorize release installation. No manifest field, environment variable or GUI control can enable production
+installation. Native FEL uses fixed reviewed diagnostic ranges; RAM bootstrap
+invokes the exact pinned utility with structured, code-controlled arguments.
 The application never invokes upstream flashing shell scripts.
 
 ## Trust boundaries
@@ -33,7 +37,8 @@ recognized as verified hits. Corrupt hash-named cache entries fail closed.
 Batch 2 planning consumes only `VerifiedAssets` plus a validated
 `IdentifiedTarget`; filesystem paths and unverified bytes cannot produce a
 `NandPlan`. The plan has no executor, `authorize_execution` always fails, and the
-production FEL transport returns an explicit unavailable error. Scripted
+Batch 2 unavailable FEL implementation remains a fail-closed seam; Batch 3
+native FEL diagnostics and pinned recovery bootstrap are separate reviewed paths. Scripted
 tool/FEL/HTTP/clock doubles exist for tests and record exact calls; they cannot be
 enabled by a manifest, flag or environment variable. External tools run only
 through the bounded `ToolRunner`, and session TTLs read only the injected monotonic

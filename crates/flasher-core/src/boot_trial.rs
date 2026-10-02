@@ -80,6 +80,23 @@ impl Preflight {
         Ok(Self { _validated: () })
     }
 
+    /// Erases the primary block and verifies its entire raw data/OOB readback.
+    /// The caller must durably record dispatch first. No retry occurs.
+    /// # Errors
+    /// Returns erase failure, cancellation or non-erased/invalid readback.
+    pub fn erase_and_verify(
+        &self,
+        runner: &impl ToolRunner,
+        mut readback: impl FnMut() -> Result<BootReadback, Error>,
+        cancel: &Cancellation,
+    ) -> Result<BootReadback, Error> {
+        self.erase_primary(runner, cancel)?;
+        let report = readback()?;
+        verify_erased_primary(&report)?;
+        cancel.check()?;
+        Ok(report)
+    }
+
     /// Erases exactly one primary SPL block; no bad-block skipping or retry.
     /// The caller must journal intent before calling and verify the raw result.
     /// # Errors
@@ -291,6 +308,20 @@ impl OriginalSplFile {
         })
     }
 
+    /// Revalidates the retained open snapshot before a destructive operation.
+    /// # Errors
+    /// Returns cancellation, changed bytes or I/O failure.
+    pub fn revalidate(&mut self, cancel: &Cancellation) -> Result<(), Error> {
+        cancel.check()?;
+        self.file.as_file_mut().rewind()?;
+        let mut bytes = Vec::new();
+        self.file
+            .as_file_mut()
+            .take(IMAGE_BYTES as u64 + 1)
+            .read_to_end(&mut bytes)?;
+        validate_image(&bytes, cancel)
+    }
+
     /// Rechecks the open snapshot and writes only the fixed primary SPL partition.
     /// The caller must journal intent and verify corrected readback before success.
     /// # Errors
@@ -301,14 +332,7 @@ impl OriginalSplFile {
         runner: &impl ToolRunner,
         cancel: &Cancellation,
     ) -> Result<ToolOutput, Error> {
-        cancel.check()?;
-        self.file.as_file_mut().rewind()?;
-        let mut bytes = Vec::new();
-        self.file
-            .as_file_mut()
-            .take(IMAGE_BYTES as u64 + 1)
-            .read_to_end(&mut bytes)?;
-        validate_image(&bytes, cancel)?;
+        self.revalidate(cancel)?;
         let path = self.file.path().to_str().ok_or(Error::UnsafePath)?;
         runner.run(
             &ToolRequest::new(
@@ -394,6 +418,46 @@ mod tests {
             },
             &Cancellation::default(),
         )
+    }
+
+    #[test]
+    fn erase_failure_never_reads_or_retries_and_invalid_readback_never_succeeds() {
+        let (inventory, backup, uboot) = measured();
+        let checked = prepare(&inventory, &backup, &uboot).unwrap();
+        let runner = ScriptedToolRunner::new();
+        runner.expect_error(erase_request(), Error::Process(Some(1)));
+        let mut reads = 0;
+        let result = checked.erase_and_verify(
+            &runner,
+            || {
+                reads += 1;
+                Err(Error::State)
+            },
+            &Cancellation::default(),
+        );
+        assert!(matches!(result, Err(Error::Process(Some(1)))));
+        assert_eq!(reads, 0);
+        assert_eq!(runner.calls().len(), 1);
+        let runner = ScriptedToolRunner::new();
+        runner.expect_ok(
+            erase_request(),
+            ToolOutput {
+                exit: Some(0),
+                stdout: String::new(),
+                stderr: String::new(),
+            },
+        );
+        let result = checked.erase_and_verify(
+            &runner,
+            || {
+                reads += 1;
+                Err(Error::Device)
+            },
+            &Cancellation::default(),
+        );
+        assert!(matches!(result, Err(Error::Device)));
+        assert_eq!(reads, 1);
+        assert_eq!(runner.calls().len(), 1);
     }
 
     #[test]

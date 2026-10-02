@@ -17,6 +17,8 @@ import uimage
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BASE_SHA256 = '5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25'
 ROOTFS_SHA256 = '1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef'
+RESTORATION_SHA256 = 'd6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03'
+RESTORATION_BYTES = 4620288
 MAX_ARCHIVE = 160 * 1024 * 1024
 MAX_FILE = 32 * 1024 * 1024
 MAX_ENTRIES = 20000
@@ -177,7 +179,15 @@ def rootfs_files(path):
     return selected
 
 
-def build(base, rootfs, daemon, output):
+def restoration_bytes(path):
+    """Only the reviewed original-program encoding may reach the fixed RAM path."""
+    data = regular(path, RESTORATION_BYTES)
+    if len(data) != RESTORATION_BYTES or hashlib.sha256(data).hexdigest() != RESTORATION_SHA256:
+        raise ValueError('unreviewed original SPL restoration image')
+    return data
+
+
+def build(base, rootfs, daemon, original_spl, output):
     """Validate all inputs before publishing into a new private directory."""
     base_bytes = regular(base, 40 * 1024 * 1024)
     if hashlib.sha256(base_bytes).hexdigest() != BASE_SHA256:
@@ -195,6 +205,7 @@ def build(base, rootfs, daemon, output):
     replacements['usr/sbin/insmod'] = replacements['usr/bin/kmod']
     replacements['init'] = (stat.S_IFREG | 0o755, regular(ROOT / 'recovery/init', 8192))
     replacements['usr/sbin/flasher-recovery'] = (stat.S_IFREG | 0o755, binary)
+    replacements['run/vitrallis-original-spl.nand'] = (stat.S_IFREG | 0o600, restoration_bytes(original_spl))
     output = pathlib.Path(output).absolute()
     if output.exists() or output.is_symlink() or any(p.is_symlink() for p in output.parents):
         raise ValueError('output must be a new directory without symlink parents')
@@ -217,10 +228,10 @@ def build(base, rootfs, daemon, output):
     cpio = b''.join(parts)
     cpio += bytes(-len(cpio) % 512)
     cpio_entries(cpio)  # final archive validates before output mutation
-    image = uimage.build({'type': 3, 'compression': 1, 'name': 'Vitrallis recovery v3'}, gzip.compress(cpio, compresslevel=9, mtime=0))
+    image = uimage.build({'type': 3, 'compression': 1, 'name': 'Vitrallis recovery v4'}, gzip.compress(cpio, compresslevel=9, mtime=0))
     if len(image) > 40 * 1024 * 1024:
         raise ValueError('recovery RAM image bound')
-    metadata = {'protocol': 3, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'boot-readback', 'return-to-fel'], 'nand_writes': False}
+    metadata = {'protocol': 4, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'boot-readback', 'return-to-fel', 'prepare-spl-trial', 'execute-spl-trial'], 'nand_writes': 'restricted-original-spl-primary-trial', 'restoration_sha256': RESTORATION_SHA256}
     output.mkdir(mode=0o700)
     files = [('initrd.uimage', image), ('metadata.json', (json.dumps(metadata, indent=2) + '\n').encode())]
     for name, data in files:
@@ -237,9 +248,10 @@ def main():
     parser.add_argument('--base', required=True, type=pathlib.Path)
     parser.add_argument('--rootfs', required=True, type=pathlib.Path)
     parser.add_argument('--daemon', required=True, type=pathlib.Path)
+    parser.add_argument('--original-spl', required=True, type=pathlib.Path)
     parser.add_argument('--output', required=True, type=pathlib.Path)
     args = parser.parse_args()
-    build(args.base, args.rootfs, args.daemon, args.output)
+    build(args.base, args.rootfs, args.daemon, args.original_spl, args.output)
 
 
 if __name__ == '__main__':

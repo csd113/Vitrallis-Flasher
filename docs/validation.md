@@ -474,3 +474,28 @@ builds and manifest validation. Logs: `work/batch3/live-bch-journal-milestone-va
 no physical erase/write or write RPC has yet occurred. Device-local trial
 integration, physical fallback and the final approved application reflash remain
 required. Windows journal directory-sync durability remains unmeasured.
+
+### Batch 3 two-phase original-SPL diagnostic integration
+
+Protocol v4 now connects device-local preflight, the fixed clean restoration
+snapshot and private host/device journals to a single-use, expiring connection
+ticket. Four transaction/ticket tests cover pre-dispatch cancellation (no Execute),
+response loss, invalid readback, post-dispatch cancellation, wrong operation and
+verified completion. Eleven guard/journal tests and four transaction/ticket tests
+pass under ARMv7 qemu, taking 2.92 and 2.04 seconds respectively. Nine ARMv7 daemon
+tests pass (3.19 seconds), including missing erase/write option rejection. These
+are emulated/scripted results, not physical mutation evidence.
+
+`python3 scripts/ci.py validate` exits 0 on the final code: formatting, strict
+Clippy, all workspace tests, 65 Python image tests, 32 script tests, provenance,
+kernel configuration, stock/Vitrallis plan checks, release and manifest checks.
+Core unit tests report 141 passed and six intentionally ignored child-process
+fixtures; integration tests report five passed. The separate all-target/all-feature
+workspace check also passes. Logs: `work/batch3/trial-rpc-final-validation.log` and
+`work/batch3/trial-rpc-final-workspace-check.log`.
+
+The final v4 template reproduces byte-for-byte in two builds; metadata is saved
+as `docs/evidence/batch3/recovery-template-v4.json`. Rebuilding the daemon after
+updating bootstrap pins preserves its exact digest. Physical v4 preflight,
+primary mutation, BROM fallback and clean restoration remain pending. Production
+manifest approval, `NandPlan` execution and the complete OS reflash remain blocked.

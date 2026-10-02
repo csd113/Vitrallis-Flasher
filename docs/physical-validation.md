@@ -81,3 +81,12 @@ writeback, unbounded temporary growth, broken UBI health persistence, and any im
 fallback to disk swap. Compare no-swap and small RAM-only zram workloads, verify log
 retention behavior and update compatibility, and preserve crash recovery. Package
 presence and configuration files alone are not runtime proof.
+
+### Original-SPL trial preparation
+
+Protocol v4 integrates the reviewed fixed mtd0 trial. Host/ARMv7 tests cover
+tickets, pre-dispatch cancellation, lost responses and exact verified completion.
+The recovery template contains the pinned private original-SPL restoration image;
+local tool capabilities and backup boot-chain health are checked before dispatch.
+Physical v4 trial and BROM fallback measurements are still pending. The production
+manifest/plan and full reflash remain blocked until their required evidence exists.

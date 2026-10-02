@@ -41,5 +41,5 @@ start_recovery() {
     wait "$daemon_pid"
 }
 start_recovery
-echo 'Vitrallis recovery stopped; NAND writes remain unavailable.'
+echo 'Vitrallis recovery stopped; no further operations accepted.'
 while :; do sleep 60; done

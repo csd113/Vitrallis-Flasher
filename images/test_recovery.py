@@ -1,10 +1,24 @@
 import stat
+import pathlib
+import tempfile
 import unittest
 
 import recovery
 
 
 class RecoveryArchiveTests(unittest.TestCase):
+    def test_restoration_rejects_unpinned_short_oversized_and_symlink_inputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'candidate'
+            for data in [b'', b'bad image', bytes(recovery.RESTORATION_BYTES), bytes(recovery.RESTORATION_BYTES + 1)]:
+                path.write_bytes(data)
+                with self.assertRaises(ValueError):
+                    recovery.restoration_bytes(path)
+            link = pathlib.Path(directory) / 'link'
+            link.symlink_to(path)
+            with self.assertRaises(ValueError):
+                recovery.restoration_bytes(link)
+
     def archive(self, *entries):
         return b''.join(entries) + recovery.record('TRAILER!!!', b'', 0, 0)
 

@@ -1,4 +1,4 @@
-//! Authenticated, bounded recovery transport. This revision exposes no writes.
+//! Authenticated, bounded recovery transport with a restricted original-SPL trial.
 //!
 //! A fresh secret is injected into a reviewed RAM-only image over FEL. Both
 //! peers prove possession using role-separated HMAC-SHA256. The transcript
@@ -17,12 +17,16 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 3;
+const VERSION: u32 = 4;
 const LIMIT: usize = 64 * 1024;
-const TIMEOUT: Duration = Duration::from_secs(15);
+// Bounded device-local preflight, erase/write and checked readback may take longer
+// than read-only diagnostics. Polling and cancellation remain at 500 ms.
+const TIMEOUT: Duration = Duration::from_secs(60);
+
+pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC03";
+const MAGIC: &[u8; 8] = b"VTRREC04";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -68,6 +72,20 @@ impl Credentials {
             session,
         })
     }
+    /// Public trial-journal binding, excluding the session HMAC key.
+    #[must_use]
+    pub const fn trial_context(
+        &self,
+        implementation: [u8; 32],
+        operation: crate::boot_trial::Operation,
+    ) -> crate::boot_trial::journal::Context {
+        crate::boot_trial::journal::Context {
+            sid: self.sid,
+            session: self.session,
+            daemon_sha256: implementation,
+            operation,
+        }
+    }
     /// Requires an independently read Linux nvmem SID before listening.
     /// # Errors
     /// Rejects another device, including byte-order differences.
@@ -91,6 +109,13 @@ pub enum Request {
         interpretation: ReadInterpretation,
     },
     ReturnToFel,
+    PrepareSplTrial {
+        operation: crate::boot_trial::Operation,
+    },
+    ExecuteSplTrial {
+        operation: crate::boot_trial::Operation,
+        token: [u8; 32],
+    },
 }
 
 /// Closed boot partitions. Their physical offsets are measured policy, not input.
@@ -198,6 +223,11 @@ pub enum Response {
     Inventory(Box<Inventory>),
     BootReadback(Box<BootReadback>),
     RestartAccepted,
+    SplTrialPrepared(spl_trial::Prepared),
+    SplTrialVerified {
+        operation: crate::boot_trial::Operation,
+        readback: Box<BootReadback>,
+    },
 }
 
 fn random(bytes: &mut [u8]) -> Result<(), Error> {
@@ -449,7 +479,7 @@ impl Channel {
         self.sequence = self.sequence.checked_add(1).ok_or(Error::Recovery)?;
         Ok(())
     }
-    /// Runs a reviewed operation that cannot write NAND. Any failure consumes the channel.
+    /// Runs one reviewed operation. Any failure consumes the channel; no retry occurs.
     /// # Errors
     /// Rejects cancellation, framing, authentication and response-type mismatch.
     pub fn request(&mut self, request: &Request, cancel: &Cancellation) -> Result<Response, Error> {
@@ -470,6 +500,18 @@ impl Channel {
                 (Request::Ping, Response::Pong)
                 | (Request::Inventory, Response::Inventory(_))
                 | (Request::ReturnToFel, Response::RestartAccepted) => {}
+                (Request::PrepareSplTrial { operation }, Response::SplTrialPrepared(prepared)) => {
+                    prepared.validate(*operation)?;
+                }
+                (
+                    Request::ExecuteSplTrial { operation, .. },
+                    Response::SplTrialVerified {
+                        operation: reported,
+                        readback,
+                    },
+                ) if operation == reported => {
+                    spl_trial::verify(*operation, readback)?;
+                }
                 (
                     Request::BootReadback {
                         region,
@@ -511,19 +553,44 @@ impl Channel {
         mut readback: impl FnMut(BootRegion, ReadInterpretation) -> Result<BootReadback, Error>,
         cancel: &Cancellation,
     ) -> Result<(), Error> {
+        self.serve_reviewed(
+            |request| match request {
+                Request::Ping => Ok(Response::Pong),
+                Request::Inventory => Ok(Response::Inventory(Box::new(inventory()?))),
+                Request::ReturnToFel => Ok(Response::RestartAccepted),
+                Request::BootReadback {
+                    region,
+                    interpretation,
+                } => {
+                    interpretation.validate(region)?;
+                    Ok(Response::BootReadback(Box::new(readback(
+                        region,
+                        interpretation,
+                    )?)))
+                }
+                Request::PrepareSplTrial { .. } | Request::ExecuteSplTrial { .. } => {
+                    Err(Error::State)
+                }
+            },
+            cancel,
+        )
+    }
+
+    /// Dispatches only authenticated closed requests to reviewed device policy.
+    /// A verified response must follow device-local readback, never tool acceptance.
+    /// # Errors
+    /// Rejects client-side use, cancellation, framing and policy failures.
+    pub fn serve_reviewed(
+        &mut self,
+        mut handler: impl FnMut(Request) -> Result<Response, Error>,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
         if self.client {
             return Err(Error::State);
         }
         loop {
-            let response = match self.read::<Request>(cancel)? {
-                Request::Ping => Response::Pong,
-                Request::Inventory => Response::Inventory(Box::new(inventory()?)),
-                Request::ReturnToFel => Response::RestartAccepted,
-                Request::BootReadback {
-                    region,
-                    interpretation,
-                } => Response::BootReadback(Box::new(readback(region, interpretation)?)),
-            };
+            let request = self.read::<Request>(cancel)?;
+            let response = handler(request)?;
             self.write(&response, cancel)?;
             self.advance()?;
             if response == Response::RestartAccepted {
@@ -595,6 +662,16 @@ fn diagnostic_request(
     request: &Request,
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
+    let (credentials, implementation) = diagnostic_identity(config, binary)?;
+    let address = SocketAddr::from(([192, 168, 81, 1], 3333));
+    let mut channel = Channel::connect(address, &credentials, &implementation, cancel)?;
+    channel.request(request, cancel)
+}
+
+fn diagnostic_identity(
+    config: &std::path::Path,
+    binary: &std::path::Path,
+) -> Result<(Credentials, [u8; 32]), Error> {
     use sha2::{Digest, Sha256};
     for path in [config, binary] {
         if !path.is_absolute() {
@@ -629,9 +706,7 @@ fn diagnostic_request(
         return Err(Error::Length);
     }
     let implementation: [u8; 32] = Sha256::digest(binary_bytes).into();
-    let address = SocketAddr::from(([192, 168, 81, 1], 3333));
-    let mut channel = Channel::connect(address, &credentials, &implementation, cancel)?;
-    channel.request(request, cancel)
+    Ok((credentials, implementation))
 }
 
 #[cfg(test)]
