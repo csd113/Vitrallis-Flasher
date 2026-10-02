@@ -59,6 +59,9 @@ fn run() -> Result<(), Error> {
                 serde_json::to_string_pretty(&report).map_err(|_| Error::Recovery)?
             );
         }
+        [command, primary, backup, digest, output] if command == "boot0-recover-source" => {
+            recover_boot0_source(primary, backup, digest, output, &cancel)?;
+        }
         [command, assets, template, daemon, tool] if command == "recovery-boot" => {
             boot_recovery_diagnostic(assets, template, daemon, tool, &cancel)?;
         }
@@ -125,6 +128,24 @@ fn run() -> Result<(), Error> {
     }
     Ok(())
 }
+fn recover_boot0_source(
+    primary: &str,
+    backup: &str,
+    digest: &str,
+    output: &str,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    flasher_core::boot0::recover_saved_source(
+        Path::new(primary),
+        Path::new(backup),
+        digest,
+        Path::new(output),
+        cancel,
+    )?;
+    println!("Verified all eight SPL copies; published private 16 KiB source: {output}");
+    Ok(())
+}
+
 fn boot_recovery_diagnostic(
     assets: &str,
     template: &str,
@@ -178,14 +199,14 @@ fn boot_readback_diagnostic(
     cancel: &Cancellation,
 ) -> Result<(), Error> {
     use flasher_core::recovery::{BootRegion, ReadInterpretation};
-    let interpretation = if region == "uboot-corrected" {
-        ReadInterpretation::KernelCorrected
-    } else {
-        ReadInterpretation::Raw
+    let interpretation = match region {
+        "uboot-corrected" => ReadInterpretation::KernelCorrected,
+        "spl-primary-corrected" | "spl-backup-corrected" => ReadInterpretation::Boot0Corrected,
+        _ => ReadInterpretation::Raw,
     };
     let region = match region {
-        "spl-primary" => BootRegion::SplPrimary,
-        "spl-backup" => BootRegion::SplBackup,
+        "spl-primary" | "spl-primary-corrected" => BootRegion::SplPrimary,
+        "spl-backup" | "spl-backup-corrected" => BootRegion::SplBackup,
         "uboot" | "uboot-corrected" => BootRegion::UBoot,
         "fourth-boot-block" => BootRegion::FourthBootBlock,
         _ => return Err(Error::Device),
@@ -206,7 +227,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

@@ -406,3 +406,23 @@ All eight original SPL copies from hash-verified raw captures decode to the same
 captures, not BROM fallback proof. After removing the FEL bridge, the user observed
 the Vitrallis shell and SSH inventory confirmed the unchanged root UUID and
 healthy original boot. No NAND erase/write or new installation is claimed.
+
+### Batch 3 live SPL decoder preparation and restoration candidate
+
+Protocol v3 and the ARMv7 recovery daemon are built. Four decoder/export tests
+pass natively and under ARMv7 qemu; export rejects unverified/cancelled data and
+preserves existing files. Eight daemon tests pass, including raw input for the
+boot0 decoder and rejection on non-SPL regions. The host rejects a corrected SPL
+reply with missing copies. No live v3 recovery measurement is claimed yet.
+
+The CLI recovered the original source from all eight preserved copies against
+the recorded digest. Two pinned-source encoder runs generated identical clean
+NAND bytes. Structural checks and independent native decoding of all four copies
+pass with zero corrections. The source and encoded images remain private;
+`original-spl-restoration-candidate.json` records metadata only. The protocol v3
+RAM template also reproduced byte-for-byte in two builder runs.
+
+`python3 scripts/ci.py validate` exited 0; log:
+`work/batch3/boot0-live-milestone-validation.log`. The separate all-target,
+all-feature workspace check also passed. Physical live decoding, restoration,
+fallback and final application reflash remain outstanding.

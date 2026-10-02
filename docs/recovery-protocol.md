@@ -125,3 +125,18 @@ mutation. The padding-only pinned known-answer test covers up to 64 bit errors
 across data and parity, including metadata errors. All eight original captured
 copies decode to the same program digest, but this host diagnostic does not
 establish live protocol verification or physical fallback behavior.
+
+Protocol version 3 adds `Boot0Corrected` for SPL primary/backup only. The daemon
+reads raw data/OOB with kernel ECC disabled and runs the native decoder on all
+four copies. Reports retain the raw data/OOB hashes and add `spl_copies`, containing
+each corrected program digest, correction counts and validated header/checksum.
+The host rejects missing copies, mismatched interpretations and invalid counts;
+no corrected SPL report can be substituted for ordinary kernel-corrected U-Boot.
+This revision is built and host-tested; physical recovery execution remains to
+be measured. It still exposes no erase/write operation.
+
+`boot0-recover-source` prepares a private restoration source from two preserved
+captures. All eight copies must decode, agree byte-for-byte and match the
+explicit recorded SHA256 before any output file is created. Publication is
+atomic without overwrite, into an existing private directory. Cancellation or
+validation failure publishes nothing. This diagnostic grants no write approval.

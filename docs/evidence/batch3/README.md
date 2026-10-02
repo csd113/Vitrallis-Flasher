@@ -132,3 +132,16 @@ already-pinned image builder and contains no executable SPL program. Live
 authenticated decoding, regenerated-image BROM acceptance and physical fallback
 tests remain outstanding. A decoder result must still match a trusted artifact
 digest; BCH bounded-distance correction alone cannot authenticate intended data.
+
+`original-spl-restoration-candidate.json` records a clean encoding of the verified
+original 16 KiB SPL. Two unmodified pinned-encoder runs match byte-for-byte;
+page/BBM validation passes, and native decoding of all four generated copies
+matches the original digest with zero corrections. The program and generated
+NAND bytes stay private in ignored `work/batch3/`; only evidence metadata is
+tracked. This is a restoration candidate, not physical BROM acceptance, an
+approved release artifact or evidence of a NAND write.
+
+`pre-fallback-tool-capabilities.json` rechecks the exact SID over SSH and captures
+the installed OS's `nandwrite`/`flash_erase` help. It confirms the raw OOB and
+no-bad-block-skipping options needed for a fixed boot-region restoration path.
+Recovery execution of these tools and destructive fallback testing remain unproven.

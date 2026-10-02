@@ -17,12 +17,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 2;
+const VERSION: u32 = 3;
 const LIMIT: usize = 64 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(15);
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC02";
+const MAGIC: &[u8; 8] = b"VTRREC03";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -120,6 +120,20 @@ impl BootRegion {
 pub enum ReadInterpretation {
     Raw,
     KernelCorrected,
+    Boot0Corrected,
+}
+impl ReadInterpretation {
+    /// Validates the fixed reviewed ECC interpretation for this partition.
+    /// # Errors
+    /// Rejects ordinary kernel ECC on SPL or boot0 ECC on other partitions.
+    pub const fn validate(self, region: BootRegion) -> Result<(), Error> {
+        match (self, region) {
+            (Self::Raw, _)
+            | (Self::KernelCorrected, BootRegion::UBoot)
+            | (Self::Boot0Corrected, BootRegion::SplPrimary | BootRegion::SplBackup) => Ok(()),
+            _ => Err(Error::Device),
+        }
+    }
 }
 /// Fixed-size raw data/OOB readback evidence. It grants no write capability.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -141,6 +155,7 @@ pub struct BootReadback {
     pub ecc_failures_before: u64,
     pub ecc_failures_after: u64,
     pub tool_stderr: String,
+    pub spl_copies: Vec<crate::boot0::SplCopyReport>,
 }
 
 /// NAND facts reported by the running recovery kernel; not a write capability.
@@ -441,6 +456,13 @@ impl Channel {
         if !self.client {
             return Err(Error::State);
         }
+        if let Request::BootReadback {
+            region,
+            interpretation,
+        } = request
+        {
+            interpretation.validate(*region)?;
+        }
         let result = (|| {
             self.write(request, cancel)?;
             let response = self.read(cancel)?;
@@ -454,7 +476,21 @@ impl Channel {
                         interpretation,
                     },
                     Response::BootReadback(report),
-                ) if *region == report.region && *interpretation == report.interpretation => {}
+                ) if *region == report.region && *interpretation == report.interpretation => {
+                    if *interpretation == ReadInterpretation::Boot0Corrected {
+                        if report.spl_copies.len() != 4
+                            || report.spl_copies.iter().enumerate().any(|(index, copy)| {
+                                usize::from(copy.copy) != index
+                                    || copy.header_bytes.len() != 32
+                                    || copy.corrected_bits.iter().any(|bits| *bits > 64)
+                            })
+                        {
+                            return Err(Error::Recovery);
+                        }
+                    } else if !report.spl_copies.is_empty() {
+                        return Err(Error::Recovery);
+                    }
+                }
                 _ => return Err(Error::Recovery),
             }
             self.advance()?;
@@ -519,9 +555,7 @@ pub fn diagnostic_boot_readback(
     interpretation: ReadInterpretation,
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
-    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
-        return Err(Error::Device);
-    }
+    interpretation.validate(region)?;
     diagnostic_request(
         config,
         binary,
@@ -672,10 +706,27 @@ mod tests {
     }
     #[test]
     fn boot_readback_cannot_substitute_a_different_partition() {
-        for (reported, interpretation) in [
-            (BootRegion::SplPrimary, ReadInterpretation::Raw),
-            (BootRegion::UBoot, ReadInterpretation::Raw),
-            (BootRegion::SplPrimary, ReadInterpretation::KernelCorrected),
+        for (reported, interpretation, requested) in [
+            (
+                BootRegion::SplPrimary,
+                ReadInterpretation::Raw,
+                ReadInterpretation::Raw,
+            ),
+            (
+                BootRegion::UBoot,
+                ReadInterpretation::Raw,
+                ReadInterpretation::Raw,
+            ),
+            (
+                BootRegion::SplPrimary,
+                ReadInterpretation::KernelCorrected,
+                ReadInterpretation::Raw,
+            ),
+            (
+                BootRegion::SplPrimary,
+                ReadInterpretation::Boot0Corrected,
+                ReadInterpretation::Boot0Corrected,
+            ),
         ] {
             let (mut client, mut server) = pair();
             let task = thread::spawn(move || {
@@ -683,7 +734,7 @@ mod tests {
                     server.read::<Request>(&Cancellation::default()).unwrap(),
                     Request::BootReadback {
                         region: BootRegion::SplPrimary,
-                        interpretation: ReadInterpretation::Raw
+                        interpretation: requested
                     }
                 );
                 let report = BootReadback {
@@ -703,6 +754,7 @@ mod tests {
                     ecc_failures_before: 0,
                     ecc_failures_after: 0,
                     tool_stderr: String::new(),
+                    spl_copies: Vec::new(),
                 };
                 server
                     .write(
@@ -714,13 +766,15 @@ mod tests {
             let response = client.request(
                 &Request::BootReadback {
                     region: BootRegion::SplPrimary,
-                    interpretation: ReadInterpretation::Raw,
+                    interpretation: requested,
                 },
                 &Cancellation::default(),
             );
             assert_eq!(
                 response.is_ok(),
-                reported == BootRegion::SplPrimary && interpretation == ReadInterpretation::Raw
+                reported == BootRegion::SplPrimary
+                    && interpretation == ReadInterpretation::Raw
+                    && requested == ReadInterpretation::Raw
             );
             task.join().unwrap();
         }

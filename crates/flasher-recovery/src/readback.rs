@@ -18,9 +18,7 @@ fn request(
     output: &Path,
 ) -> Result<ToolRequest, Error> {
     let output = output.to_str().ok_or(Error::UnsafePath)?;
-    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
-        return Err(Error::Device);
-    }
+    interpretation.validate(region)?;
     let mut args = vec![
         "--oob".to_owned(),
         "--bb=dumpbad".to_owned(),
@@ -29,7 +27,7 @@ fn request(
         format!("--file={output}"),
         format!("/dev/mtd{}", region.index()),
     ];
-    if interpretation == ReadInterpretation::Raw {
+    if interpretation != ReadInterpretation::KernelCorrected {
         args.insert(0, "--noecc".to_owned());
     }
     Ok(ToolRequest::new("/usr/sbin/nanddump", args).timeout(Duration::from_secs(10)))
@@ -97,6 +95,7 @@ fn summarize(
         ecc_failures_before: 0,
         ecc_failures_after: 0,
         tool_stderr: String::new(),
+        spl_copies: Vec::new(),
     })
 }
 
@@ -109,9 +108,7 @@ pub fn read(
     let path = format!("/sys/class/mtd/mtd{}", region.index());
     let base = Path::new(&path);
     geometry(base, region)?;
-    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
-        return Err(Error::Device);
-    }
+    interpretation.validate(region)?;
     let corrected = crate::number(&base.join("corrected_bits"))?;
     let failures = crate::number(&base.join("ecc_failures"))?;
     let directory = flasher_core::assets::temporary_directory()?;
@@ -120,6 +117,13 @@ pub fn read(
     let bytes = crate::bytes(&path, (PAGES * (PAGE + OOB)) as u64)?;
     cancel.check()?;
     let mut report = summarize(region, interpretation, &bytes)?;
+    if interpretation == ReadInterpretation::Boot0Corrected {
+        let mut data = Vec::with_capacity(PAGES * PAGE);
+        for page in bytes.as_chunks::<{ PAGE + OOB }>().0 {
+            data.extend_from_slice(&page[..PAGE]);
+        }
+        report.spl_copies = flasher_core::boot0::Boot0Decoder::new()?.reports(&data, cancel)?;
+    }
     report.corrected_bits_before = corrected;
     report.ecc_failures_before = failures;
     report.corrected_bits_after = crate::number(&base.join("corrected_bits"))?;
@@ -176,6 +180,20 @@ mod tests {
             BootRegion::FourthBootBlock,
         ] {
             assert!(request(region, ReadInterpretation::KernelCorrected, output).is_err());
+        }
+    }
+
+    #[test]
+    fn boot0_decoder_requires_raw_input_and_only_accepts_spl_regions() {
+        let output = Path::new("/run/private/boot0.bin");
+        for region in [BootRegion::SplPrimary, BootRegion::SplBackup] {
+            let request = request(region, ReadInterpretation::Boot0Corrected, output).unwrap();
+            assert!(request.args.contains(&"--noecc".to_owned()));
+            assert!(request.args.contains(&"--oob".to_owned()));
+            assert!(request.args.contains(&"--bb=dumpbad".to_owned()));
+        }
+        for region in [BootRegion::UBoot, BootRegion::FourthBootBlock] {
+            assert!(request(region, ReadInterpretation::Boot0Corrected, output).is_err());
         }
     }
     #[test]

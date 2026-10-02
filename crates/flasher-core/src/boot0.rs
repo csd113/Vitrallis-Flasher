@@ -27,7 +27,8 @@ pub struct DecodedSpl {
 }
 
 /// Public evidence from a saved raw region; no decoded executable bytes are serialized.
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct SplCopyReport {
     pub copy: u8,
     pub data_sha256: String,
@@ -43,7 +44,11 @@ pub fn read_saved_region(
     path: &std::path::Path,
     cancel: &Cancellation,
 ) -> Result<Vec<SplCopyReport>, Error> {
-    use sha2::{Digest, Sha256};
+    let raw = saved_region(path, cancel)?;
+    Boot0Decoder::new()?.reports(&raw, cancel)
+}
+
+fn saved_region(path: &std::path::Path, cancel: &Cancellation) -> Result<Vec<u8>, Error> {
     use std::io::Read;
     cancel.check()?;
     crate::assets::regular_components(path)?;
@@ -54,21 +59,81 @@ pub fn read_saved_region(
     }
     let mut raw = Vec::new();
     file.take(4_194_305).read_to_end(&mut raw)?;
+    if raw.len() != 4_194_304 {
+        return Err(Error::Length);
+    }
+    Ok(raw)
+}
+
+/// Publishes a private original SPL source only after all eight copies agree
+/// with the independently recorded expected SHA256. Never overwrites a file.
+/// # Errors
+/// Rejects unsafe paths, non-private output directories, malformed captures,
+/// digest disagreement, cancellation, publication races and I/O failures.
+pub fn recover_saved_source(
+    primary: &std::path::Path,
+    backup: &std::path::Path,
+    expected_sha256: &str,
+    output: &std::path::Path,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    use sha2::{Digest, Sha256};
+    use std::io::Write;
+    cancel.check()?;
+    if expected_sha256.len() != 64
+        || !expected_sha256
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err(Error::Hash);
+    }
+    let parent = output.parent().ok_or(Error::UnsafePath)?;
+    if !output.is_absolute() || output.file_name().is_none() {
+        return Err(Error::UnsafePath);
+    }
+    crate::assets::regular_components(parent)?;
+    let metadata = std::fs::metadata(parent)?;
+    if !metadata.is_dir() {
+        return Err(Error::UnsafePath);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if metadata.permissions().mode() & 0o077 != 0 {
+            return Err(Error::UnsafePath);
+        }
+    }
+    match std::fs::symlink_metadata(output) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        _ => return Err(Error::UnsafePath),
+    }
     let decoder = Boot0Decoder::new()?;
-    (0..4)
-        .map(|copy| {
+    let mut source = None;
+    for path in [primary, backup] {
+        let raw = saved_region(path, cancel)?;
+        for copy in 0..4 {
             let result = decoder.decode_spl(&raw, copy, cancel)?;
-            Ok(SplCopyReport {
-                copy,
-                data_sha256: format!("{:x}", Sha256::digest(result.data)),
-                corrected_bits: result.corrected_bits,
-                header_bytes: result.data[..32].to_vec(),
-                checksum: u32::from_le_bytes(
-                    result.data[12..16].try_into().map_err(|_| Error::Length)?,
-                ),
-            })
-        })
-        .collect()
+            if format!("{:x}", Sha256::digest(result.data)) != expected_sha256 {
+                return Err(Error::Hash);
+            }
+            if let Some(original) = &source {
+                if original != &result.data {
+                    return Err(Error::Hash);
+                }
+            } else {
+                source = Some(result.data);
+            }
+        }
+    }
+    cancel.check()?;
+    let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
+    temporary.write_all(&source.ok_or(Error::State)?)?;
+    temporary.as_file().sync_all()?;
+    cancel.check()?;
+    temporary
+        .persist_noclobber(output)
+        .map_err(|e| Error::Io(e.error))?;
+    Ok(())
 }
 
 /// Reusable bounded field tables; one decoder can process all boot0 pages.
@@ -77,6 +142,27 @@ pub struct Boot0Decoder {
     logs: Vec<u16>,
 }
 impl Boot0Decoder {
+    /// Returns four bounded evidence records from a separated raw-data region.
+    /// # Errors
+    /// Rejects malformed SPL, ECC failure, wrong region size or cancellation.
+    pub fn reports(&self, raw: &[u8], cancel: &Cancellation) -> Result<Vec<SplCopyReport>, Error> {
+        use sha2::{Digest, Sha256};
+        (0..4)
+            .map(|copy| {
+                let result = self.decode_spl(raw, copy, cancel)?;
+                Ok(SplCopyReport {
+                    copy,
+                    data_sha256: format!("{:x}", Sha256::digest(result.data)),
+                    corrected_bits: result.corrected_bits,
+                    header_bytes: result.data[..32].to_vec(),
+                    checksum: u32::from_le_bytes(
+                        result.data[12..16].try_into().map_err(|_| Error::Length)?,
+                    ),
+                })
+            })
+            .collect()
+    }
+
     /// Builds the reviewed primitive-field tables.
     /// # Errors
     /// Rejects an internal field construction error.
@@ -382,5 +468,43 @@ mod tests {
             decoder.decode_spl(&[], 0, &Cancellation::default()),
             Err(Error::Length)
         ));
+    }
+
+    #[test]
+    fn source_export_never_publishes_unverified_or_cancelled_data_or_overwrites() {
+        let directory = crate::assets::temporary_directory().unwrap();
+        let input = directory.path().join("erased.bin");
+        std::fs::write(&input, vec![0xff; 4_194_304]).unwrap();
+        let output = directory.path().join("original-spl.bin");
+        let digest = "a".repeat(64);
+        assert!(
+            recover_saved_source(&input, &input, &digest, &output, &Cancellation::default())
+                .is_err()
+        );
+        assert!(!output.exists());
+        assert!(
+            recover_saved_source(
+                &input,
+                &input,
+                "not-a-digest",
+                &output,
+                &Cancellation::default()
+            )
+            .is_err()
+        );
+        assert!(!output.exists());
+        let cancel = Cancellation::default();
+        cancel.cancel();
+        assert!(matches!(
+            recover_saved_source(&input, &input, &digest, &output, &cancel),
+            Err(Error::Cancelled)
+        ));
+        assert!(!output.exists());
+        std::fs::write(&output, b"preserve existing data").unwrap();
+        assert!(
+            recover_saved_source(&input, &input, &digest, &output, &Cancellation::default())
+                .is_err()
+        );
+        assert_eq!(std::fs::read(output).unwrap(), b"preserve existing data");
     }
 }

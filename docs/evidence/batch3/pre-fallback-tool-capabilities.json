@@ -1,0 +1,25 @@
+{
+  "evidence_class": "read-only SSH pre-fallback tool capability check",
+  "identity": {
+    "sid_hex": "174225165838305030303331c088020e",
+    "boot_id": "7d112ac9-b245-494c-8f7c-53e1594d8fd7"
+  },
+  "tool_help": "6.12.107+deb13-chip\n7d112ac9-b245-494c-8f7c-53e1594d8fd7\nUsage: nandwrite [OPTION] MTD_DEVICE [INPUTFILE|-]\nWrites to the specified MTD device.\n\n  -a, --autoplace         Use auto OOB layout\n  -k, --skip-all-ffs      Skip pages that contain only 0xff bytes\n  -m, --markbad           Mark blocks bad if write fails\n  -n, --noecc             Write without ecc\n  -N, --noskipbad         Write without bad block skipping\n  -o, --oob               Input contains oob data\n  -O, --onlyoob           Input contains oob data and only write the oob part\n  -s addr, --start=addr   Set output start address (default is 0)\n  --skip-bad-blocks-to-start                          Skip bad blocks when seeking to the start address\n  -p, --pad               Pad writes to page size\n  -b, --blockalign=1|2|4  Set multiple of eraseblocks to align to\n      --input-skip=length Skip |length| bytes of the input file\n      --input-size=length Only read |length| bytes of the input file\n  -q, --quiet             Don't display progress messages\n  -h, --help              Display this help and exit\n  -V, --version           Output version information and exit\nUsage: \n  MTD_DEVICE  MTD device node or 'mtd:<name>'\nflash_erase [options] MTD_DEVICE <start offset> <block count>\nErase blocks of the specified MTD device.\nSpecify a count of 0 to erase to end of device.\n\n  -j, --jffs2             format the device for jffs2\n  -c, --cleanmarker=SIZE  size of jffs2 cleanmarker (default 12)\n  -N, --noskipbad         don't skip bad blocks\n  -u, --unlock            unlock sectors before erasing\n  -q, --quiet             do not display progress messages\n      --silent            same as --quiet\n      --help              display this help and exit\n      --version           output version information and exit\n",
+  "tool_help_sha256": "9c17e38eeac60f0fbf9816d657f94b62cc31263e0660c2eaa44ddf009ad7b20f",
+  "observed_options": {
+    "nandwrite": [
+      "--noecc",
+      "--noskipbad",
+      "--oob"
+    ],
+    "flash_erase": [
+      "--noskipbad",
+      "--quiet"
+    ]
+  },
+  "nand_mutation_performed": false,
+  "limitations": [
+    "This is installed-OS tool help, not measured recovery tool execution.",
+    "No controlled fallback test has occurred."
+  ]
+}
