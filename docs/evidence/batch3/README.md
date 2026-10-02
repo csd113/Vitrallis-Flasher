@@ -324,8 +324,8 @@ selection is claimed.
   authenticated in session 17. The boot-tool, inventory, before/after chain,
   preflight, backup-program and primary-erase records ending in `17.json`
   preserve actual pinned U-Boot programming and complete primary erasure with
-  both SPLs and the protected release backup healthy. The cold backup boot test
-  remains pending; program/readback success is not normal boot evidence.
+  both SPLs and the protected release backup healthy. The separate normal boot
+  evidence below establishes acceptance and fallback.
 
 - `rootfs-installation-stream-audit.json`: host-only full 8 KiB streaming audit
   of the exact stock archive, including canonical semantic digest, ownership,
@@ -339,3 +339,10 @@ selection is claimed.
   and the canonical semantic digest. The decoder and parser must both exit
   successfully; no extraction or NAND access occurs. This does not approve
   assets, implement streaming installation or prove runtime filesystem contents.
+
+- `normal-release-uboot-backup-isolated-boot-17.json`: actual bridge-free cold
+  boot with a new SSH boot ID, same SID, fully erased primary U-Boot and exact
+  kernel-corrected release U-Boot in the fourth block. Healthy ECC/bad-block
+  counters and boot logs corroborate physical fallback to `0x00C00000`. Both
+  SPLs remain populated, so their BROM selection is not inferred. The existing
+  rootfs is unchanged; this is not production reflash completion.

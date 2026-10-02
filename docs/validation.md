@@ -981,3 +981,13 @@ Private logs: `work/batch3/rootfs-parser-final-validation.log`,
 `rootfs-parser-final-workspace-check.log`, `rootfs-parser-arm-tests-final.log`
 and `rootfs-parser-targeted-tests.log` in the same directory. Evidence:
 `evidence/batch3/rootfs-rust-parser-stream-check.json`.
+
+### Session 17 isolated release U-Boot backup cold boot
+
+The user performs a bridge-free cold boot. Strict SSH returns with new boot ID
+`396a80c4-a76d-4c78-992e-ec98bbc2b60f`. Fresh raw primary readback is entirely
+erased and fresh corrected backup readback matches the exact release image.
+Same SID, zero ECC failures, unchanged bad/BBT counts and healthy kernel logs
+confirm the measured backup fallback. Evidence is the separate normal-boot
+record indexed above. `git diff --check` passes for this evidence/documentation
+checkpoint. No source changes occur after the full parser validation.

@@ -267,8 +267,8 @@ FF in every data/OOB byte, hash `71c22040…fdab`, while both SPL programs and t
 corrected release backup remain intact. All MTD ECC failures are zero; the four
 boot blocks remain good and rootfs bad/BBT counts remain 61/4. Both journals are
 version 3 with Intent → Prepared → Dispatched → Verified. Rootfs is untouched.
-Cold normal boot with the bridge removed is requested; actual SPL fallback and
-release U-Boot boot are still pending. No production reflash is claimed.
+The following bridge-free cold boot succeeds; its isolated-backup evidence is
+recorded below. No production reflash is claimed.
 
 Evidence under `evidence/batch3/`: `recovery-boot-17-v9-tool.json`,
 `recovery-inventory-17-v9.json`, `recovery-boot-chain-before-uboot-17.json`,
@@ -281,7 +281,7 @@ journals are under `work/batch3/uboot-trial-session-17/`.
 
 ### Host-only rootfs installation stream audit
 
-While the isolated U-Boot cold boot remains pending, a complete bounded scan of
+Before the isolated U-Boot cold boot, a complete bounded scan of
 the exact stock rootfs archive establishes installation requirements without
 extraction or NAND access. The compressed archive is 516,563,033 bytes, larger
 than the recovery RAM capacity. It contains 50,950 members and 1,264,012,666
@@ -334,3 +334,24 @@ escaping hardlinks, unsupported/changed device nodes, malformed extensions,
 checksum changes, truncation, nonzero/partial padding, appended payloads and
 cancellation. Evidence:
 `evidence/batch3/rootfs-rust-parser-stream-check.json`.
+
+### Session 17 bridge-free isolated release U-Boot backup boot
+
+After the user removes the FEL bridge and powers on normally, strict SSH returns
+with new boot ID `396a80c4-a76d-4c78-992e-ec98bbc2b60f`, kernel
+`6.12.107+deb13-chip` and the same independently measured SID. Fresh raw primary
+U-Boot readback remains entirely FF across all 4,620,288 data/OOB bytes
+(`71c220404abcfabfbeb7480a98fcbc9e44e64290ee9c0c9b8a65d6aabefefdab`).
+Fresh kernel-corrected fourth-block data matches exact release U-Boot digest
+`2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8`.
+All five MTD ECC failure counters remain zero; boot-block bad counts remain zero
+and rootfs bad/BBT counts remain 61/4. No critical NAND/UBI log error is observed.
+
+This physically proves acceptance of the locked release U-Boot and SPL fallback
+to the sole populated U-Boot slot at `0x00C00000`, corroborating the reviewed
+source configuration. Both SPL slots are valid, so this evidence does not
+identify which SPL the BROM selected. Release U-Boot primary-only boot remains
+to be measured. The existing rootfs is unchanged; full production reflash and
+its completion gates remain unresolved. Evidence:
+`evidence/batch3/normal-release-uboot-backup-isolated-boot-17.json`. Private
+readbacks are under `work/batch3/uboot-trial-session-17/`.
