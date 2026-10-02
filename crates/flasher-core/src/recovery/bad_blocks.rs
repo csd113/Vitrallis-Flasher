@@ -235,6 +235,22 @@ mod tests {
     }
 
     #[test]
+    fn actual_authenticated_v6_map_matches_original_ioctl_enumeration() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-rootfs-map-11.json"
+        ))
+        .unwrap();
+        let report: RootfsMapReadback =
+            serde_json::from_value(evidence["response"]["RootfsMap"].clone()).unwrap();
+        let (_, original_blocks) = measured();
+        assert_eq!(
+            report.validate().unwrap().unavailable_blocks(),
+            original_blocks
+        );
+        assert_eq!(report.tool_stdout.len(), 47_987);
+    }
+
+    #[test]
     fn measured_logical_map_includes_all_65_unavailable_blocks() {
         let (info, blocks) = measured();
         let map = RootfsBadBlockMap::parse(&render(&blocks), "", &info).unwrap();

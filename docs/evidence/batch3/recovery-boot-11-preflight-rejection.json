@@ -1,0 +1,14 @@
+{
+  "protocol": 6,
+  "stage": "bootstrap template verification before upload",
+  "cli_exit": 1,
+  "stderr": "asset length differs from the manifest",
+  "expected_template_bytes_before_fix": 36587669,
+  "actual_template_bytes": 36594582,
+  "actual_template_sha256": "3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7",
+  "preceding_ram_restart": "Authenticated v5 RestartAccepted followed by native FEL identification of the same SID",
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "upload_started": false,
+  "nand_operation_performed": false,
+  "correction": "Expected byte length is now named TEMPLATE_BYTES and compared with the recorded v6 metadata in a regression test."
+}

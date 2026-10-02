@@ -241,3 +241,20 @@ selection is claimed.
 - `original-vs-locked-release-uboot.json`: full corrected original and locked
   padded U-Boot digests differ at 376,738 bytes. Specific source/config causes
   remain unreviewed; exact new-release write/readback/boot acceptance is pending.
+
+- `recovery-boot-11-preflight-rejection.json`: the first v6 boot attempt rejects
+  the stale v5 byte-length expectation before upload. The correction binds named
+  template bytes/hash and daemon hash to tracked metadata in a regression test.
+- `recovery-boot-11-tool.json`: corrected pinned v6 RAM bootstrap after authenticated
+  v5 return-to-FEL and independent same-SID native discovery.
+- `recovery-rootfs-map-11.json`: actual authenticated v6 rootfs map, all 2,044
+  logical blocks, 65 unavailable indices identical to the original ioctl
+  enumeration and final BBT block unavailable. Geometry/counters remained stable;
+  zero ECC failures. Read-only enumeration, not write/skip validation.
+- `recovery-boot-chain-after-rootfs-map-11.json`: subsequent primary original-program,
+  completely erased backup, corrected original U-Boot and recovery inventory
+  checks. The isolated normal boot still requires bridge removal and power cycle.
+- `locked-release-hynix-spl-native-review.json`: software decoding of the hash-verified
+  locked generated Hynix image: all four programs match the locked input digest
+  and checksum with zero corrections. No physical write or BROM boot is claimed.
+  A guard test rejects treating this program as the original restoration image.

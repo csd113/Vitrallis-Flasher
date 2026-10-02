@@ -190,8 +190,11 @@ not distinguish reserved from factory-bad blocks. See
 
 This is an eraseblock-start rule, not a page/byte translation: SLC reads and
 writes additionally use the NAND pairing scheme. Exact installed-kernel source,
-fresh recovery ioctl enumeration, marker/reservation classification, utility
-skip behavior and physical rootfs installation remain to be validated. No
+marker/reservation classification, utility write skip behavior and physical
+rootfs installation remain to be validated. The eleventh RAM session subsequently
+captures all 2,044 entries through authenticated mtdinfo enumeration, with the
+same 65 unavailable indices as the preserved direct ioctl capture; see
+[the fresh recovery map](evidence/batch3/recovery-rootfs-map-11.json). No
 production gate is enabled by this correlation. Deterministic fixture tests also
 reject treating the logical partition offsets as flat physical byte offsets.
 

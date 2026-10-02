@@ -473,6 +473,24 @@ mod tests {
     }
 
     #[test]
+    fn decoded_locked_release_does_not_verify_as_original_restoration() {
+        let evidence: Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/locked-release-hynix-spl-native-review.json"
+        ))
+        .unwrap();
+        let (_, mut report, _) = measured();
+        report.region = BootRegion::SplPrimary;
+        report.spl_copies = serde_json::from_value(evidence["copies"].clone()).unwrap();
+        assert!(
+            report
+                .spl_copies
+                .iter()
+                .all(|copy| copy.corrected_bits.iter().all(|bits| *bits == 0))
+        );
+        assert!(verify_spl(&report, BootRegion::SplPrimary).is_err());
+    }
+
+    #[test]
     fn measured_backup_erasure_after_host_loss_is_not_primary_verification() {
         let evidence: Value = serde_json::from_str(include_str!(
             "../../../docs/evidence/batch3/recovery-backup-after-host-interruption-10.json"

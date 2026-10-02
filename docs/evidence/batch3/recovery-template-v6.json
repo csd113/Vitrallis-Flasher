@@ -20,6 +20,6 @@
   "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
   "image_header_name": "Vitrallis recovery v6",
   "byte_identical_repeat": true,
-  "physical_boot": "pending",
-  "physical_rootfs_map": "pending"
+  "physical_boot": "Authenticated v6 Pong in session 11",
+  "physical_rootfs_map": "Complete validated map in recovery-rootfs-map-11.json; indices match original ioctl enumeration"
 }

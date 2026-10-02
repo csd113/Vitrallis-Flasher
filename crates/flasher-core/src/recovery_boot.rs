@@ -21,6 +21,7 @@ use std::{
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
 const TEMPLATE_HASH: &str = "3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7";
+const TEMPLATE_BYTES: usize = 36_594_582;
 const DAEMON_HASH: &str = "a1f1049019bbb762af3a0bcdac55ec02465f9fc3599458ed1c293b23bb8bce7a";
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
 const INPUTS: [(&str, &str, &str, usize); 4] = [
@@ -147,7 +148,7 @@ pub fn boot(
 ) -> Result<PathBuf, Error> {
     cancel.check()?;
     let selected = select(&NativeFel.discover(cancel)?)?;
-    let template = verified(template, TEMPLATE_HASH, 40 * 1024 * 1024, 36_587_669)?;
+    let template = verified(template, TEMPLATE_HASH, 40 * 1024 * 1024, TEMPLATE_BYTES)?;
     let daemon = verified(daemon, DAEMON_HASH, 32 * 1024 * 1024, 0)?;
     let _tool_bytes = verified(tool, TOOL_HASH, 4 * 1024 * 1024, 0)?;
     let staging = temporary_directory()?;
@@ -227,6 +228,20 @@ pub fn boot(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn bootstrap_pins_match_the_recorded_template_bytes_and_implementation() {
+        let metadata: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/recovery-template-v6.json"
+        ))
+        .unwrap();
+        assert_eq!(
+            metadata["image_bytes"].as_u64().unwrap(),
+            TEMPLATE_BYTES as u64
+        );
+        assert_eq!(metadata["image_sha256"].as_str().unwrap(), TEMPLATE_HASH);
+        assert_eq!(metadata["daemon_sha256"].as_str().unwrap(), DAEMON_HASH);
+    }
+
     #[test]
     fn legacy_crc_known_answer_and_session_archive_has_fixed_permissions() {
         assert_eq!(crc32(b"123456789"), 0xcbf4_3926);

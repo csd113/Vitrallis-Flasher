@@ -635,3 +635,30 @@ the reviewed uImage header label/CRC changes. Final template SHA256 is
 Full CI and workspace check pass again after updating the pin: logs are
 `work/batch3/rootfs-map-v6-final-label-validation.log` and
 `work/batch3/rootfs-map-v6-final-label-workspace-check.log`.
+
+### Batch 3 physical v6 map capture and bootstrap length correction
+
+The application rejects the first v6 attempt before upload because the template
+length expectation still described v5. The corrected named byte-length constant
+is now checked with the template and daemon digests against tracked metadata.
+The subsequent pinned v6 RAM boot authenticates successfully on the same SID.
+The real `recovery-rootfs-map` command returns all 2,044 entries and exactly the
+65 unavailable indices from the original ioctl enumeration. Its utility stdout
+is 47,987 bytes, geometry/counters remain stable and ECC failure count is zero.
+Independent primary, backup and corrected U-Boot checks preserve the isolated
+boot test state. No NAND mutation was performed in this RAM session.
+
+The actual map is a host regression fixture and also passes on cross-built ARMv7
+under qemu-arm. A second new fixture verifies that the decoded locked release's
+four zero-error programs cannot satisfy original-program restoration verification.
+Software decoding of that exact locked artifact is not physical BROM acceptance.
+
+`python3 scripts/ci.py validate` exits 0: 159 core tests pass with six child-process
+fixtures intentionally ignored, five integration tests and nine daemon tests
+pass, plus 65 image and 35 script tests. Formatting, strict Clippy, release build,
+provenance and established image/plan checks pass in the same sequence.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. Logs:
+`work/batch3/recovery-map-physical-final-validation.log`,
+`work/batch3/recovery-map-physical-final-workspace-check.log` and
+`work/batch3/recovery-map-physical-arm-fixture.log`.

@@ -247,9 +247,11 @@ authentication. `recovery-rootfs-map` exposes this read-only diagnostic in the C
 There are no caller-supplied addresses or paths in the request.
 
 The v6 magic/version changes reject v5 sessions without compatibility fallback.
-The v6 template is reproducible and pinned with its exact daemon. The existing
-physical v5 session remains available through its preserved v5 host binary for
-the pending SPL isolation test; physical v6 boot/map capture remains pending.
+The v6 template is reproducible and pinned with its exact daemon. The eleventh RAM session physically authenticates v6 and captures the complete
+rootfs map. All 65 unavailable logical indices match the original ioctl capture.
+The initially stale bootstrap byte-length pin rejected before upload; a regression
+test now binds length and both digests to recorded metadata. No NAND write was
+performed in this session. The isolated restored-primary boot remains pending.
 
 The parser requires the measured Hynix SLC geometry, a complete ordered map,
 matching offsets and unavailable count, no diagnostics or unexpected flags, and

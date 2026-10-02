@@ -100,3 +100,16 @@ Indeterminate journal and no success; independent authenticated readback proves
 the device completed erasure with primary/U-Boot intact. Isolated restored-primary boot and
 new-release SPL acceptance remain pending. The production
 manifest/plan and full reflash remain blocked until their required evidence exists.
+
+### Fresh recovery rootfs bad-block map
+
+Protocol v6 now physically enumerates the rootfs through the fixed read-only
+mtdinfo map operation. All 2,044 logical eraseblocks are reported, including the
+same 65 unavailable indices as the original ioctl enumeration. Device-local
+geometry/counters are stable before and after capture, with zero ECC failures;
+the host validates every entry after authentication. The final block is reported
+BAD, preventing acceptance of an early stopped utility query. Original primary
+program and U-Boot digests remain healthy and the backup remains fully erased.
+This establishes fresh recovery enumeration, not bad-marker classification,
+write skip behavior or a production installation. Evidence:
+[the actual map](evidence/batch3/recovery-rootfs-map-11.json).

@@ -212,6 +212,6 @@ checks it before and after enumeration, and returns bounded utility output.
 The host independently validates every logical eraseblock entry, count and final
 BBT sentinel before accepting the response. This snapshot grants no NAND write
 capability; execution still requires the unresolved physical gates. No path,
-address or utility argument is supplied by the GUI or manifest. Physical v6
-execution remains pending; the measured v5 session and preserved host binary
-remain separate from the newly pinned v6 payload.
+address or utility argument is supplied by the GUI or manifest. The eleventh RAM session physically executes v6 enumeration with all 2,044 entries
+and the original 65 unavailable indices. Independent boot-chain readbacks remain
+healthy; write skipping and production installation still require validation.
