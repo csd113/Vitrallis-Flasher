@@ -366,3 +366,9 @@ selection is claimed.
   the inspected inventory; final semantic digest and compressed asset recheck
   pass. This is host-only replay without extraction or device access, not
   runtime installation/readback or physical release approval.
+
+- `rootfs-contained-linux-fixture-check.json`: deterministic Linux filesystem
+  fixture results under ARMv7 qemu and strict ARM Clippy. The retained empty
+  private root capability rejects unsafe/symlink paths and existing leaves.
+  This does not access the device, implement final filesystem metadata or
+  satisfy physical UBI/UBIFS installation and verification gates.

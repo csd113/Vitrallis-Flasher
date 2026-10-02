@@ -26,5 +26,8 @@ tempfile.workspace = true
 rusb = { workspace = true, optional = true }
 ring.workspace = true
 
+[target.'cfg(target_os = "linux")'.dependencies]
+rustix.workspace = true
+
 [lints]
 workspace = true

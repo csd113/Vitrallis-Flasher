@@ -387,3 +387,13 @@ and the compressed snapshot are checked afterward. This remains host-only
 streaming evidence. No contained installer, on-device receiving, UBI mutation
 or semantic installed-content readback is claimed. Evidence:
 `evidence/batch3/rootfs-verified-replay-stream-check.json`.
+
+### Linux contained-root filesystem fixtures
+
+Three Linux-only tests cross-built for ARMv7 pass under qemu-arm, with strict
+ARM Clippy also passing. They exercise descriptor-relative nested creation,
+exclusive leaves, outside symlink targets, unsafe archive paths, empty/private
+root validation and pre-cancellation without mutation. These use temporary host
+filesystem directories, not the PocketCHIP NAND or UBI. No full installer or
+physical rootfs completion is claimed. Evidence:
+`evidence/batch3/rootfs-contained-linux-fixture-check.json`.

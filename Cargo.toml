@@ -12,6 +12,7 @@ keywords = ["pocketchip", "recovery", "fel"]
 categories = ["hardware-support"]
 
 [workspace.dependencies]
+rustix = { version = "=1.1.4", features = ["fs", "process"] }
 flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
 ctrlc = "3.5"
 flasher-core = { path = "crates/flasher-core", default-features = false }

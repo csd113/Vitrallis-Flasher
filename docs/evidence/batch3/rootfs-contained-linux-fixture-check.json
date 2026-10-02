@@ -1,0 +1,25 @@
+{
+  "evidence_kind": "deterministic Linux filesystem fixtures cross-built for ARMv7 and run under qemu-arm",
+  "device_accessed": false,
+  "nand_mutated": false,
+  "production_reflash": false,
+  "full_rootfs_installer": false,
+  "source_sha256": "5b5cbed2b16a8956987421b0e2f805af17071b26a6fd21b771ce1252319927d2",
+  "rust": "1.99.0",
+  "tests_passed": 3,
+  "test_seconds": 0.06,
+  "strict_arm_clippy_passed": true,
+  "validated_behaviors": [
+    "empty private process-owned root descriptor required",
+    "descriptor-relative nested creation",
+    "exclusive file/directory leaves preserve existing contents",
+    "absolute, parent, duplicate separator and backslash paths rejected",
+    "symlink parents and leaves rejected without modifying outside files",
+    "pre-cancellation prevents mutation"
+  ],
+  "limitations": [
+    "Linux-only capability; native macOS tests do not compile this module",
+    "final ownership/modes, link/device creation, installer sink and semantic filesystem readback remain unimplemented",
+    "not a physical UBI installation or NAND authorization"
+  ]
+}

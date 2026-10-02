@@ -325,3 +325,24 @@ checks entry boundaries, chunk sizes, offsets and delivered counts. It creates
 only the private host snapshot, with no extraction or device access. The sink
 interface is the bounded delivery seam for a future contained installer; it
 does not grant filesystem or NAND authority.
+
+### Linux contained filesystem root
+
+`rootfs::contained::Root` owns an already-open empty directory descriptor and
+requires mode 0700 and ownership by the current process. Archive-relative paths
+reuse the bounded path validator. Each parent is opened descriptor-relative with
+`O_DIRECTORY | O_NOFOLLOW`; files use exclusive creation plus `O_NOFOLLOW` and
+initial mode 0600, while directories use exclusive creation and initial mode
+0700. Existing leaves and symlink parents are rejected. The root pathname is
+never reopened, and no shell/process boundary is involved. Safe APIs from the
+already-locked `rustix` 1.1.4 crate provide the Linux descriptor operations; no
+new package/version is added.
+
+This is a filesystem capability rather than a NAND/plan authorization. It does
+not yet implement the installer sink, final numeric ownership/modes, links,
+character devices, sync/completion or semantic readback. Cancellation is checked
+before and after syscalls; a cancellation after creation may leave a new entry,
+so the future installer must preserve truthful interruption state. The recovery
+payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
+validate containment separately from the native macOS suite. API review:
+[descriptor-relative open](https://docs.rs/rustix/1.1.4/rustix/fs/fn.openat.html).

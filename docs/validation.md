@@ -1085,3 +1085,28 @@ Private logs: `work/batch3/rootfs-replay-final-validation.log`,
 `rootfs-replay-arm-tests.log`. This is bounded host delivery evidence, not a
 contained installer, device receiving protocol, UBI mutation, runtime readback
 or successful production reflash.
+
+### Linux contained-root capability checkpoint
+
+Three Linux-only containment fixtures pass cross-built for ARMv7 under qemu-arm
+(0.06 seconds). Strict target Clippy also passes using workspace-equivalent
+flags, all targets/features and the locked graph. The Linux module is excluded
+from native macOS compilation, so host test counts are not evidence for these
+operations. Source hash and tested behaviors are preserved in
+`evidence/batch3/rootfs-contained-linux-fixture-check.json`.
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+208 native core tests (six intentional ignored subprocess fixtures), five
+integration tests, 11 recovery tests, 73 image tests, 35 script tests, locked
+release builds and established provenance/kernel/image/manifest checks.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass. The Linux-only direct dependency uses the already
+locked `rustix` 1.1.4; no package/version addition occurs.
+
+Private logs: `work/batch3/rootfs-contained-full-validation.log`,
+`rootfs-contained-workspace-check.log`, `rootfs-contained-arm-tests.log` and
+`rootfs-contained-arm-clippy.log`. ARM commands use
+`cargo test --locked -p flasher-core --target armv7-unknown-linux-gnueabihf rootfs::contained::tests`
+and `cargo clippy --locked -p flasher-core --all-targets --all-features --target armv7-unknown-linux-gnueabihf -- -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery -D clippy::cargo`.
+This is a contained creation primitive, not a complete installer or a physical
+UBI/UBIFS/NAND completion gate. The frozen hardware v9 payload is unchanged.
