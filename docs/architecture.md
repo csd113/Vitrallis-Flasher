@@ -302,3 +302,26 @@ this path without downloads or extraction. It parses the manifest, validates
 the cache entry into a private snapshot and inspects only the rootfs role. This
 is integrity/semantic inspection, not publisher trust, physical manifest
 approval, an installation capability or a complete production asset set.
+
+### Bounded rootfs replay consumer
+
+`rootfs::replay_gzip` replays against a complete prior inspection. Entry order,
+normalized path, kind, mode, numeric ownership, links, device numbers and size
+must match before `Sink::begin`. Regular-file bytes arrive in at most 8 KiB
+chunks with strictly increasing file-relative offsets. Full content hash and
+padding must match before `Sink::finish`. Final success separately requires the
+complete entry count, byte count, semantic digest, gzip trailer and compressed
+EOF. A completed entry is therefore not archive or installation completion.
+
+`VerifiedAsset::replay_rootfs` first inspects the entire retained snapshot,
+revalidates it, replays it and rechecks the compressed asset afterward. It
+performs no retry/resume. A consumer error, cancellation or changed snapshot
+can follow partial delivery; callers must retain interruption state and cannot
+report installation success. Expected and replay inventories coexist within
+the two bounded metadata-accounting budgets; file data is never retained.
+
+The CLI `rootfs-replay-verified` uses a discard consumer that independently
+checks entry boundaries, chunk sizes, offsets and delivered counts. It creates
+only the private host snapshot, with no extraction or device access. The sink
+interface is the bounded delivery seam for a future contained installer; it
+does not grant filesystem or NAND authority.

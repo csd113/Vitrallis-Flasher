@@ -359,3 +359,10 @@ selection is claimed.
   The mixed diagnostic manifest's other roles are explicitly synthetic; this
   approves no physical manifest or complete asset set and performs no extraction
   or device mutation.
+
+- `rootfs-verified-replay-stream-check.json`: complete locked stock archive
+  delivery from the retained verified snapshot into the CLI discard consumer.
+  Entry boundaries, chunk bounds, ordered file offsets and total counts match
+  the inspected inventory; final semantic digest and compressed asset recheck
+  pass. This is host-only replay without extraction or device access, not
+  runtime installation/readback or physical release approval.

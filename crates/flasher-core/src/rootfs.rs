@@ -37,7 +37,7 @@ impl Kind {
 
 /// Inspected data only. Paths are archive-relative; callers must never follow
 /// symlinks when installing beneath a root. This value grants no write authority.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Entry {
     pub path: String,
     pub kind: Kind,
@@ -63,6 +63,40 @@ impl Inspection {
     #[must_use]
     pub fn entries(&self) -> &[Entry] {
         &self.entries
+    }
+}
+
+/// Reviewed consumer seam for bounded replay.
+///
+/// Callbacks acknowledge delivery, not installation or NAND success.
+/// Consumers must retain interruption state;
+/// an error after some chunks never triggers automatic retry or rollback.
+pub trait Sink {
+    /// Receives inspected metadata before any bytes for this entry.
+    /// # Errors
+    /// Returns consumer validation or delivery failure.
+    fn begin(&mut self, entry: &Entry) -> Result<(), Error>;
+    /// Receives at most 8 KiB, with a file-relative offset, for regular files.
+    /// # Errors
+    /// Returns consumer validation or delivery failure.
+    fn data(&mut self, offset: u64, bytes: &[u8]) -> Result<(), Error>;
+    /// Called only after this entry's complete content hash and padding verify.
+    /// Archive/trailer/source completion must still be verified separately.
+    /// # Errors
+    /// Returns consumer completion failure.
+    fn finish(&mut self, entry: &Entry) -> Result<(), Error>;
+}
+
+struct Discard;
+impl Sink for Discard {
+    fn begin(&mut self, _entry: &Entry) -> Result<(), Error> {
+        Ok(())
+    }
+    fn data(&mut self, _offset: u64, _bytes: &[u8]) -> Result<(), Error> {
+        Ok(())
+    }
+    fn finish(&mut self, _entry: &Entry) -> Result<(), Error> {
+        Ok(())
     }
 }
 
@@ -158,6 +192,32 @@ impl<R: Read> Input<R> {
 /// Rejects unsupported headers, invalid CRC/size trailers, truncation, trailing
 /// bytes/concatenated members, malformed tar, source bounds and cancellation.
 pub fn inspect_gzip(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, Error> {
+    gzip(reader, None, &mut Discard, cancel)
+}
+
+/// Replay one compressed archive against a previously complete inspection.
+///
+/// Entry order/metadata must match before callbacks; content hashes must match
+/// before entry completion. Success additionally requires the complete semantic
+/// inventory, gzip trailer and compressed EOF. Earlier deliveries can exist
+/// when a later failure occurs. This grants no asset trust or NAND authority.
+/// # Errors
+/// Returns archive changes, corruption, cancellation or consumer failure.
+pub fn replay_gzip(
+    reader: impl Read,
+    expected: &Inspection,
+    sink: &mut impl Sink,
+    cancel: &Cancellation,
+) -> Result<Inspection, Error> {
+    gzip(reader, Some(expected), sink, cancel)
+}
+
+fn gzip(
+    reader: impl Read,
+    expected: Option<&Inspection>,
+    sink: &mut impl Sink,
+    cancel: &Cancellation,
+) -> Result<Inspection, Error> {
     cancel.check()?;
     let mut input = Input { reader, bytes: 0 };
     let mut header = [0; 10];
@@ -174,7 +234,7 @@ pub fn inspect_gzip(reader: impl Read, cancel: &Cancellation) -> Result<Inspecti
     };
     let source = header.as_slice().chain(source);
     let mut decoder = flate2::bufread::GzDecoder::new(BufReader::with_capacity(8192, source));
-    let inspected = inspect(&mut decoder, cancel);
+    let inspected = scan(&mut decoder, expected, sink, cancel);
     cancel.check()?;
     let inspected = inspected?;
     let mut source = decoder.into_inner();
@@ -219,6 +279,15 @@ impl<R: Read> Read for Compressed<'_, R> {
 /// Rejects truncation, malformed headers/extensions, unsafe topology, unsupported
 /// metadata/device nodes, expansion bounds and cancellation. No filesystem mutation occurs.
 pub fn inspect(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, Error> {
+    scan(reader, None, &mut Discard, cancel)
+}
+
+fn scan(
+    reader: impl Read,
+    expected: Option<&Inspection>,
+    sink: &mut impl Sink,
+    cancel: &Cancellation,
+) -> Result<Inspection, Error> {
     let mut input = Input { reader, bytes: 0 };
     let mut extensions = Extensions::default();
     let mut entries = Vec::new();
@@ -236,11 +305,19 @@ pub fn inspect(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, E
             input.finish(cancel)?;
             validate_ancestors(&paths, cancel)?;
             cancel.check()?;
-            return Ok(Inspection {
+            let result = Inspection {
                 entries,
                 file_bytes,
                 semantic_sha256: semantic.finalize().into(),
-            });
+            };
+            if let Some(expected) = expected
+                && (result.entries.len() != expected.entries.len()
+                    || result.file_bytes != expected.file_bytes
+                    || result.semantic_sha256 != expected.semantic_sha256)
+            {
+                return Err(reject("replay inventory changed"));
+            }
+            return Ok(result);
         }
         validate_header(&header)?;
         if matches!(header[156], b'L' | b'K' | b'x') {
@@ -262,9 +339,33 @@ pub fn inspect(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, E
         if file_bytes > MAX_DATA {
             return Err(reject("expanded file bound"));
         }
-        entry.content_sha256 = content(&mut input, entry.size, cancel)?;
+        let prior = expected
+            .map(|expected| {
+                expected
+                    .entries
+                    .get(entries.len())
+                    .ok_or_else(|| reject("replay entry count changed"))
+            })
+            .transpose()?;
+        if let Some(prior) = prior {
+            entry.content_sha256 = prior.content_sha256;
+            if entry != *prior {
+                return Err(reject("replay entry metadata changed"));
+            }
+            sink.begin(prior)?;
+            cancel.check()?;
+        }
+        entry.content_sha256 = content(&mut input, entry.size, sink, cancel)?;
         if entry.kind != Kind::File {
             entry.content_sha256 = [0; 32];
+        }
+        if let Some(prior) = prior {
+            if entry != *prior {
+                return Err(reject("replay entry content changed"));
+            }
+            cancel.check()?;
+            sink.finish(prior)?;
+            cancel.check()?;
         }
         canonical(&mut semantic, &name, &entry)?;
         paths.insert(entry.path.clone(), entry.kind);
@@ -275,6 +376,7 @@ pub fn inspect(reader: impl Read, cancel: &Cancellation) -> Result<Inspection, E
 fn content<R: Read>(
     input: &mut Input<R>,
     size: u64,
+    sink: &mut impl Sink,
     cancel: &Cancellation,
 ) -> Result<[u8; 32], Error> {
     let mut bytes = [0; 8192];
@@ -284,6 +386,8 @@ fn content<R: Read>(
         let count = usize::try_from(left.min(bytes.len() as u64)).map_err(|_| Error::Length)?;
         input.exact(&mut bytes[..count], cancel)?;
         hash.update(&bytes[..count]);
+        sink.data(size - left, &bytes[..count])?;
+        cancel.check()?;
         left -= count as u64;
     }
     input.padding(size, cancel)?;
@@ -932,5 +1036,159 @@ mod tests {
             cancel: &cancel,
         };
         assert!(source.read(&mut [0; 1]).is_err());
+    }
+    #[derive(Default)]
+    struct Recorder {
+        started: Vec<String>,
+        finished: Vec<String>,
+        bytes: Vec<u8>,
+        fail_data: bool,
+        cancel_data: Option<Cancellation>,
+    }
+    impl Sink for Recorder {
+        fn begin(&mut self, entry: &Entry) -> Result<(), Error> {
+            self.started.push(entry.path.clone());
+            Ok(())
+        }
+        fn data(&mut self, offset: u64, bytes: &[u8]) -> Result<(), Error> {
+            assert_eq!(offset, self.bytes.len() as u64);
+            assert!(bytes.len() <= 8192 && !bytes.is_empty());
+            self.bytes.extend_from_slice(bytes);
+            if let Some(cancel) = &self.cancel_data {
+                cancel.cancel();
+            }
+            if self.fail_data {
+                return Err(Error::Timeout);
+            }
+            Ok(())
+        }
+        fn finish(&mut self, entry: &Entry) -> Result<(), Error> {
+            self.finished.push(entry.path.clone());
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn replay_delivers_bounded_file_offsets_between_inspected_metadata_and_completion() {
+        let payload = vec![37; 20_000];
+        let tar = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', &payload, ""),
+            member("./link", b'2', b"", "file"),
+        ]);
+        let gzip = compressed(&tar);
+        let expected = scan(&tar).unwrap();
+        let mut recorder = Recorder::default();
+        let result = replay_gzip(
+            gzip.as_slice(),
+            &expected,
+            &mut recorder,
+            &Cancellation::default(),
+        )
+        .unwrap();
+        assert_eq!(result.semantic_sha256, expected.semantic_sha256);
+        assert_eq!(recorder.started, [".", "file", "link"]);
+        assert_eq!(recorder.finished, recorder.started);
+        assert_eq!(recorder.bytes, payload);
+    }
+
+    #[test]
+    fn replay_metadata_changes_precede_delivery_and_content_changes_prevent_finish() {
+        let original = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', b"contents", ""),
+        ]);
+        let expected = scan(&original).unwrap();
+        let changed_name = archive(&[
+            member("./", b'5', b"", ""),
+            member("./other", b'0', b"contents", ""),
+        ]);
+        let mut recorder = Recorder::default();
+        assert!(
+            replay_gzip(
+                compressed(&changed_name).as_slice(),
+                &expected,
+                &mut recorder,
+                &Cancellation::default()
+            )
+            .is_err()
+        );
+        assert_eq!(recorder.started, ["."]);
+        assert_eq!(recorder.bytes, [] as [u8; 0]);
+        let changed_data = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', b"changed!", ""),
+        ]);
+        let mut recorder = Recorder::default();
+        assert!(
+            replay_gzip(
+                compressed(&changed_data).as_slice(),
+                &expected,
+                &mut recorder,
+                &Cancellation::default()
+            )
+            .is_err()
+        );
+        assert_eq!(recorder.started, [".", "file"]);
+        assert_eq!(recorder.finished, ["."]);
+        for changed in [
+            archive(&[member("./", b'5', b"", "")]),
+            archive(&[
+                member("./", b'5', b"", ""),
+                member("./file", b'0', b"contents", ""),
+                member("./extra", b'0', b"", ""),
+            ]),
+        ] {
+            assert!(
+                replay_gzip(
+                    compressed(&changed).as_slice(),
+                    &expected,
+                    &mut Recorder::default(),
+                    &Cancellation::default()
+                )
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn replay_sink_failure_cancellation_and_late_trailer_failure_never_return_success() {
+        let tar = archive(&[
+            member("./", b'5', b"", ""),
+            member("./file", b'0', &vec![17; 20_000], ""),
+        ]);
+        let expected = scan(&tar).unwrap();
+        let gzip = compressed(&tar);
+        for cancel_delivery in [false, true] {
+            let cancel = Cancellation::default();
+            let mut recorder = Recorder {
+                fail_data: !cancel_delivery,
+                cancel_data: cancel_delivery.then(|| cancel.clone()),
+                ..Recorder::default()
+            };
+            let result = replay_gzip(gzip.as_slice(), &expected, &mut recorder, &cancel);
+            assert!(if cancel_delivery {
+                matches!(result, Err(Error::Cancelled))
+            } else {
+                matches!(result, Err(Error::Timeout))
+            });
+            assert_eq!(recorder.bytes.len(), 8192);
+            assert_eq!(recorder.finished, ["."]);
+        }
+        let mut corrupted = gzip;
+        let trailer = corrupted.len() - 8;
+        corrupted[trailer] ^= 1;
+        let mut recorder = Recorder::default();
+        assert!(
+            replay_gzip(
+                corrupted.as_slice(),
+                &expected,
+                &mut recorder,
+                &Cancellation::default()
+            )
+            .is_err()
+        );
+        assert_eq!(recorder.finished, [".", "file"]);
+        assert_eq!(recorder.bytes.len(), 20_000);
     }
 }

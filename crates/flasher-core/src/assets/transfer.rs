@@ -32,6 +32,27 @@ impl VerifiedAsset {
         Ok(inspection)
     }
 
+    /// Inspect and replay this rootfs into a bounded consumer.
+    ///
+    /// The complete archive is inspected before delivery. Replay validates each
+    /// entry against that inventory, and the retained compressed snapshot is
+    /// rechecked before and after replay. Consumers receive no NAND authority;
+    /// a later error can follow partial delivery and never causes a retry.
+    /// # Errors
+    /// Rejects wrong roles, snapshot/archive changes, cancellation or sink failure.
+    pub fn replay_rootfs(
+        &mut self,
+        sink: &mut impl crate::rootfs::Sink,
+        cancel: &Cancellation,
+    ) -> Result<crate::rootfs::Inspection, Error> {
+        let expected = self.inspect_rootfs(cancel)?;
+        let result =
+            crate::rootfs::replay_gzip(self.snapshot.as_file_mut(), &expected, sink, cancel)?;
+        self.recheck(cancel)?;
+        cancel.check()?;
+        Ok(result)
+    }
+
     /// Revalidate before delivery, then deliver ordered bounded chunks from the
     /// same open snapshot. Offsets describe artifact bytes, never NAND addresses.
     /// A successful callback acknowledges delivery only; the caller must retain
@@ -311,5 +332,50 @@ mod tests {
             valid.inspect_rootfs(&cancel),
             Err(Error::Cancelled)
         ));
+    }
+    #[test]
+    fn rootfs_replay_rechecks_snapshot_after_delivery_without_retry() {
+        struct Consumer {
+            file: std::fs::File,
+            mutate: bool,
+            begun: usize,
+            finished: usize,
+        }
+        impl crate::rootfs::Sink for Consumer {
+            fn begin(&mut self, _entry: &crate::rootfs::Entry) -> Result<(), Error> {
+                self.begun += 1;
+                if self.mutate {
+                    let position = self.file.stream_position()?;
+                    self.file.seek(SeekFrom::Start(4))?;
+                    self.file.write_all(&[1])?;
+                    self.file.seek(SeekFrom::Start(position))?;
+                }
+                Ok(())
+            }
+            fn data(&mut self, _offset: u64, _bytes: &[u8]) -> Result<(), Error> {
+                Err(Error::State) // The fixture contains only the root directory.
+            }
+            fn finish(&mut self, _entry: &crate::rootfs::Entry) -> Result<(), Error> {
+                self.finished += 1;
+                Ok(())
+            }
+        }
+        for mutate in [false, true] {
+            let (mut asset, _directory) = snapshot(&rootfs_gzip());
+            let mut consumer = Consumer {
+                file: asset.snapshot.as_file().try_clone().unwrap(),
+                mutate,
+                begun: 0,
+                finished: 0,
+            };
+            let result = asset.replay_rootfs(&mut consumer, &Cancellation::default());
+            assert!(if mutate {
+                matches!(result, Err(Error::Hash))
+            } else {
+                result.is_ok()
+            });
+            assert_eq!(consumer.begun, 1);
+            assert_eq!(consumer.finished, 1);
+        }
     }
 }

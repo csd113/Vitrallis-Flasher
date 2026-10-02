@@ -1059,3 +1059,29 @@ Private logs: `work/batch3/rootfs-verified-inspection-final-validation.log`,
 `rootfs-verified-inspection-arm-tests.log` and
 `rootfs-verified-inspection-clippy.log`. The CLI explicitly reports the temporary
 host snapshot creation separately from rootfs extraction and production flash.
+
+### Bounded rootfs replay checkpoint
+
+New deterministic tests prove bounded ordered delivery, metadata rejection before
+entry delivery, content rejection before entry completion, extra/missing entry
+rejection, consumer failure, cancellation, late gzip trailer failure and final
+compressed snapshot rejection after otherwise valid delivery. There is no
+automatic retry. All 14 parser/decoder tests and the retained-snapshot replay
+test pass natively. The ARMv7 `replay` filter passes all five selected tests
+(0.17 seconds), including the four new rootfs/snapshot regressions.
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+208 core tests (six intentional ignored subprocess fixtures), five integration
+tests, 11 recovery tests, 73 image tests, 35 script tests, locked release builds
+and established provenance/kernel/image/manifest checks. Fresh workspace
+all-target/all-feature check and diff check pass. The final release CLI performs
+complete locked-archive replay into its checked discard consumer, matching
+50,950 members, 1,264,012,666 file bytes and the independent semantic digest.
+Exact binary/source hashes and time are in
+`evidence/batch3/rootfs-verified-replay-stream-check.json`.
+
+Private logs: `work/batch3/rootfs-replay-final-validation.log`,
+`rootfs-replay-final-workspace-check.log`, `rootfs-replay-targeted-tests.log` and
+`rootfs-replay-arm-tests.log`. This is bounded host delivery evidence, not a
+contained installer, device receiving protocol, UBI mutation, runtime readback
+or successful production reflash.

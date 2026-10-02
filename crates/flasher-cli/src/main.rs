@@ -51,8 +51,8 @@ fn run() -> Result<(), Error> {
         }
         [command] if command == "rootfs-audit-tar" => audit_rootfs(&cancel, false)?,
         [command] if command == "rootfs-audit-gzip" => audit_rootfs(&cancel, true)?,
-        [command, manifest, cache] if command == "rootfs-audit-verified" => {
-            audit_verified_rootfs(manifest, cache, &cancel)?;
+        [command, manifest, cache] if is_verified_rootfs(command) => {
+            audit_verified_rootfs(command, manifest, cache, &cancel)?;
         }
         [command] if command == "detect" || command == "fel-probe" => {
             native_diagnostic(command, &cancel)?;
@@ -152,7 +152,16 @@ fn print_rootfs_inspection(inspection: &flasher_core::rootfs::Inspection, snapsh
     );
 }
 
-fn audit_verified_rootfs(manifest: &str, cache: &str, cancel: &Cancellation) -> Result<(), Error> {
+fn is_verified_rootfs(command: &str) -> bool {
+    matches!(command, "rootfs-audit-verified" | "rootfs-replay-verified")
+}
+
+fn audit_verified_rootfs(
+    command: &str,
+    manifest: &str,
+    cache: &str,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
     let manifest = Manifest::read(std::fs::File::open(manifest)?)?;
     let spec = manifest
         .assets()
@@ -162,8 +171,74 @@ fn audit_verified_rootfs(manifest: &str, cache: &str, cancel: &Cancellation) -> 
     let mut asset = Cache::open(Path::new(cache))?
         .lookup(spec, cancel)?
         .ok_or(Error::Manifest("verified rootfs is absent from the cache"))?;
-    print_rootfs_inspection(&asset.inspect_rootfs(cancel)?, true);
+    if command == "rootfs-replay-verified" {
+        let mut sink = RootfsAuditSink::default();
+        let inspection = asset.replay_rootfs(&mut sink, cancel)?;
+        if sink.open.is_some()
+            || sink.members != sink.finished
+            || sink.members != inspection.entries().len() as u64
+            || sink.bytes != inspection.file_bytes
+        {
+            return Err(Error::State);
+        }
+        println!(
+            "{}",
+            serde_json::json!({
+                "replayed_members": sink.members,
+                "replayed_file_bytes": sink.bytes,
+                "semantic_sha256": inspection.semantic_sha256,
+                "private_snapshot_created": true,
+                "rootfs_extracted": false,
+                "production_reflash": false,
+            })
+        );
+    } else {
+        print_rootfs_inspection(&asset.inspect_rootfs(cancel)?, true);
+    }
     Ok(())
+}
+
+#[derive(Default)]
+struct RootfsAuditSink {
+    members: u64,
+    finished: u64,
+    bytes: u64,
+    open: Option<(u64, u64)>,
+}
+impl flasher_core::rootfs::Sink for RootfsAuditSink {
+    fn begin(&mut self, entry: &flasher_core::rootfs::Entry) -> Result<(), Error> {
+        if self.open.is_some() {
+            return Err(Error::State);
+        }
+        self.members = self.members.checked_add(1).ok_or(Error::Length)?;
+        self.open = Some((entry.size, 0));
+        Ok(())
+    }
+    fn data(&mut self, offset: u64, bytes: &[u8]) -> Result<(), Error> {
+        let (size, delivered) = self.open.as_mut().ok_or(Error::State)?;
+        if bytes.is_empty() || bytes.len() > 8192 || offset != *delivered {
+            return Err(Error::Length);
+        }
+        *delivered = delivered
+            .checked_add(bytes.len() as u64)
+            .ok_or(Error::Length)?;
+        if *delivered > *size {
+            return Err(Error::Length);
+        }
+        self.bytes = self
+            .bytes
+            .checked_add(bytes.len() as u64)
+            .ok_or(Error::Length)?;
+        Ok(())
+    }
+    fn finish(&mut self, entry: &flasher_core::rootfs::Entry) -> Result<(), Error> {
+        let (size, delivered) = self.open.take().ok_or(Error::State)?;
+        if size != entry.size || delivered != size {
+            return Err(Error::Length);
+        }
+        self.finished = self.finished.checked_add(1).ok_or(Error::Length)?;
+        Ok(())
+    }
 }
 
 fn is_saved_boot_diagnostic(command: &str) -> bool {
@@ -454,7 +529,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  rootfs-audit-tar (read decompressed tar from stdin; no extraction)\n  rootfs-audit-gzip (bounded native gzip inspection from stdin; no extraction)\n  rootfs-audit-verified manifest.json existing-private-cache (retained hash-checked snapshot inspection)\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  uboot-check-pair /absolute/path/to/pinned-pair.bin (read-only original/release snapshots)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block|fourth-boot-block-corrected\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. U-Boot trial operations: program-release-uboot-backup, erase-original-uboot-primary, restore-original-uboot-primary, program-release-uboot-primary, erase-release-uboot-backup, restore-release-uboot-backup. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  rootfs-audit-tar (read decompressed tar from stdin; no extraction)\n  rootfs-audit-gzip (bounded native gzip inspection from stdin; no extraction)\n  rootfs-audit-verified manifest.json existing-private-cache (retained hash-checked snapshot inspection)\n  rootfs-replay-verified manifest.json existing-private-cache (bounded discard-consumer replay; no extraction)\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  uboot-check-pair /absolute/path/to/pinned-pair.bin (read-only original/release snapshots)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block|fourth-boot-block-corrected\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. U-Boot trial operations: program-release-uboot-backup, erase-original-uboot-primary, restore-original-uboot-primary, program-release-uboot-primary, erase-release-uboot-backup, restore-release-uboot-backup. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

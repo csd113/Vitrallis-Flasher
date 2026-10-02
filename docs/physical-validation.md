@@ -376,3 +376,14 @@ synthetic fixture assets for other roles. It explicitly preserves unresolved
 aggregate licensing and is not a physical release manifest or approval. No
 other-role acquisition, extraction, NAND access or payload upload occurs.
 Evidence: `evidence/batch3/rootfs-verified-snapshot-stream-check.json`.
+
+### Complete stock rootfs replay host cross-check
+
+The locked stock archive passes complete verified-snapshot replay into the
+CLI's discard consumer. Delivered member/data counts and the final semantic
+digest match the independent inspection. Consumer entry boundaries, file
+offsets and 8 KiB chunk bounds are checked during actual delivery; gzip/tar EOF
+and the compressed snapshot are checked afterward. This remains host-only
+streaming evidence. No contained installer, on-device receiving, UBI mutation
+or semantic installed-content readback is claimed. Evidence:
+`evidence/batch3/rootfs-verified-replay-stream-check.json`.
