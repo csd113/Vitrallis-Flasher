@@ -118,3 +118,17 @@ tries `0xc00000` after a primary-load error and disables saved environments, but
 that does not prove the original installed SPL used those compiled options or
 that fallback has physically succeeded. The plan gate descriptions now acknowledge
 measured diagnostic recovery while retaining release/executor approval barriers.
+
+`original-nand-normal-boot.json` records SSH inventory after the user removed the
+FEL bridge and rebooted to the Vitrallis shell. The original UBIFS UUID matches
+the baseline; no MMC storage boot alternative was present. This proves the
+original installation still boots, not a new reflash or a particular SPL fallback.
+
+`spl-original-bch64-readback.json` records native software BCH-64 correction of
+the hash-verified original raw captures. All eight copies produce the same
+16 KiB SHA256 and valid eGON checksum. Per-codeword corrections peak at nine
+bits. The padding-only known-answer fixture in `fixtures/nand/` comes from the
+already-pinned image builder and contains no executable SPL program. Live
+authenticated decoding, regenerated-image BROM acceptance and physical fallback
+tests remain outstanding. A decoder result must still match a trusted artifact
+digest; BCH bounded-distance correction alone cannot authenticate intended data.

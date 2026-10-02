@@ -52,18 +52,15 @@ fn run() -> Result<(), Error> {
         [command] if command == "detect" || command == "fel-probe" => {
             native_diagnostic(command, &cancel)?;
         }
-        [command, assets, template, daemon, tool] if command == "recovery-boot" => {
-            let private = flasher_core::recovery_boot::boot(
-                Path::new(assets),
-                Path::new(template),
-                Path::new(daemon),
-                Path::new(tool),
-                &cancel,
-            )?;
+        [command, path] if command == "boot0-readback" => {
+            let report = flasher_core::boot0::read_saved_region(Path::new(path), &cancel)?;
             println!(
-                "RAM-only boot dispatched; authenticated inventory still required.\nPrivate session directory: {}",
-                private.display()
+                "{}",
+                serde_json::to_string_pretty(&report).map_err(|_| Error::Recovery)?
             );
+        }
+        [command, assets, template, daemon, tool] if command == "recovery-boot" => {
+            boot_recovery_diagnostic(assets, template, daemon, tool, &cancel)?;
         }
         [command, config, binary, region] if command == "recovery-boot-readback" => {
             boot_readback_diagnostic(config, binary, region, &cancel)?;
@@ -128,6 +125,27 @@ fn run() -> Result<(), Error> {
     }
     Ok(())
 }
+fn boot_recovery_diagnostic(
+    assets: &str,
+    template: &str,
+    daemon: &str,
+    tool: &str,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    let private = flasher_core::recovery_boot::boot(
+        Path::new(assets),
+        Path::new(template),
+        Path::new(daemon),
+        Path::new(tool),
+        cancel,
+    )?;
+    println!(
+        "RAM-only boot dispatched; authenticated inventory still required.\nPrivate session directory: {}",
+        private.display()
+    );
+    Ok(())
+}
+
 fn native_diagnostic(command: &str, cancel: &Cancellation) -> Result<(), Error> {
     let transport = NativeFel;
     let device = select(&transport.discover(cancel)?)?;
@@ -188,7 +206,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

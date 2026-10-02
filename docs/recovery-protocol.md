@@ -114,3 +114,14 @@ boot returned a kernel-corrected U-Boot digest identical to the preserved origin
 with 6,136 corrected bits and zero uncorrectable errors. The raw/OOB digests are
 still diagnostic, not a flat-NAND verification policy. Historical evidence retains
 the protocol version actually measured.
+
+The separate `boot0-readback` CLI diagnostic decodes bounded saved 4 MiB SPL
+data captures with native BCH-64. The reviewed boot0 format uses GF(2^14),
+primitive polynomial 0x5803, 1,024 data bytes, four FF metadata bytes and 112
+parity bytes, with the builder's byte bit order and LFSR seed 0x4a80. It requires
+zero post-correction syndromes and validates the eGON/SPL header and checksum.
+It reads regular capture files and emits bounded reports; it exposes no NAND
+mutation. The padding-only pinned known-answer test covers up to 64 bit errors
+across data and parity, including metadata errors. All eight original captured
+copies decode to the same program digest, but this host diagnostic does not
+establish live protocol verification or physical fallback behavior.

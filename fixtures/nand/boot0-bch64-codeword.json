@@ -1,0 +1,15 @@
+{
+  "provenance": "Page 16 deterministic padding from pinned tool-generated Batch 1 Hynix SPL artifact; no executable SPL code in this fixture",
+  "source_artifact_sha256": "0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a",
+  "fixture_sha256": "dec98615bb87412efd2bffd0e56167016beec297a6773991fed01439af5f6458",
+  "page": 16,
+  "data_bytes": 1024,
+  "metadata_bytes": 4,
+  "ecc_bytes": 112,
+  "field_order": 14,
+  "correction_bits": 64,
+  "primitive_polynomial": "0x5803",
+  "expected_data_sha256": "4608af7a94879fbad2f208ee76912b309111e9d0c928e8ae78f736fc130feffb",
+  "tool_source_revision": "d7bbd172a5da601a08f94479de308c6fb714a19a",
+  "tool_source_sha256": "3876bac0aca5d5160d2f05f1715444c8e65cc72898f77c17e614147e21cbfc0d"
+}

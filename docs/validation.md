@@ -385,3 +385,24 @@ and zero uncorrectable failures. `python3 scripts/ci.py validate` exited 0; log:
 `work/batch3/readback-milestone-8-validation.log`. All-target/all-feature workspace
 check, formatting and diff checks also passed. This is readback of the original
 installation, not destructive-flash or BROM fallback validation.
+
+### Batch 3 saved SPL BCH-64 verification and original normal boot
+
+Three native decoder tests pass: pinned encoder known answer, corrections through
+64 bits across data/parity, metadata correction, invalid lengths/copy indices,
+erased data, a rejected 65-bit pattern and cancellation. The same three tests
+pass for ARMv7 under qemu (0.69 seconds); this is emulation, not live recovery.
+The fixture was independently checked against the exact padding page of the
+locked Batch 1 Hynix artifact. No executable firmware is tracked in the fixture.
+
+`python3 scripts/ci.py validate` exited 0, including formatting, strict Clippy,
+workspace tests, Python image/script tests, provenance/kernel configuration,
+stock/Vitrallis plan checks, release build, manifest checks and diff validation.
+Log: `work/batch3/boot0-milestone-validation.log`. The separate
+`cargo check --workspace --all-targets --all-features --locked` also passed.
+
+All eight original SPL copies from hash-verified raw captures decode to the same
+16 KiB digest and valid eGON checksum. This is software correction of measured
+captures, not BROM fallback proof. After removing the FEL bridge, the user observed
+the Vitrallis shell and SSH inventory confirmed the unchanged root UUID and
+healthy original boot. No NAND erase/write or new installation is claimed.

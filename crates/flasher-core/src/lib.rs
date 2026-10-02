@@ -1,5 +1,6 @@
 //! Host-independent, fail-closed `PocketCHIP` recovery services.
 pub mod assets;
+pub mod boot0;
 pub mod clock;
 pub mod device;
 pub mod fel;
@@ -56,6 +57,8 @@ pub enum Error {
     #[cfg(feature = "native-fel")]
     #[error("USB transport: {0}")]
     Usb(#[from] rusb::Error),
+    #[error("boot0 BCH-64 codeword or SPL checksum could not be verified")]
+    Boot0Ecc,
     #[error("recovery authentication or protocol failed")]
     Recovery,
     #[error("invalid operation for the current recovery state")]

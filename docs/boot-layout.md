@@ -64,19 +64,26 @@ The authenticated corrected read recorded 6,136 corrected bits and zero
 uncorrectable errors. Raw digest equality cannot be the verification rule for
 these programmed regions.
 
-Analysis of the original raw SPL backups found four eGON boot0 groups per
-block, with 64-page spacing and a declared 16 KiB SPL size. A bit-majority
-reconstruction across eight copies matches the stored SPL checksum. That is
-host analysis of uncorrected bytes, not BCH correction or physical BROM search
-validation. See [the analysis](evidence/batch3/spl-original-raw-analysis.json).
+Native BCH-64 decoding of the hash-verified original SPL captures validates
+four eGON boot0 groups per block, with 64-page spacing and a 16 KiB SPL size.
+All eight copies have corrected SHA256
+`a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb`
+and pass the stored eGON checksum. The maximum observed correction is nine bits
+in one protected codeword. This is software decoding of physical captures;
+live authenticated SPL decoding and BROM fallback selection remain unproven.
+See [the BCH evidence](evidence/batch3/spl-original-bch64-readback.json).
 
 The fourth boot block at `0xC00000` remains completely FF in data and OOB,
 and its raw hashes match the original backup. The Linux `env` label does not
 establish a stored environment. The exact reviewed source/configuration hashes
 and redundant-load behavior are preserved in
 [the source-policy evidence](evidence/batch3/uboot-backup-source-policy.json).
-Normal NAND boot, generated SPL acceptance and controlled primary/backup
-fallback still require physical testing. No NAND erase or write has occurred.
+After removing the FEL bridge, the original installation boots to the Vitrallis
+shell and SSH returns. Its root UBIFS identity matches the baseline, with no
+uncorrectable NAND/UBI failure in the captured boot log. See
+[the normal-boot evidence](evidence/batch3/original-nand-normal-boot.json).
+Generated SPL acceptance and controlled primary/backup fallback still require
+physical testing. No NAND erase or write has occurred.
 
 ## The `0xC00000` conflict
 
@@ -108,8 +115,9 @@ redundant U-Boot copy. The current review plan still schedules no operation ther
 
 ## Other unresolved layout facts (require hardware)
 
-* Hynix geometry is measured above; executable bad-block handling, SPL ECC-aware
-  verification and Toshiba geometry remain unresolved.
+* Hynix geometry and saved-capture SPL ECC decoding are measured above;
+  executable bad-block handling, live SPL verification and Toshiba geometry
+  remain unresolved.
 * Whether the BROM/SPL accepts the `sunxi-nand-image-builder` output for both
   the Hynix H27UCG8T2ETR (OOB 1664) and Toshiba TC58TEG5DCLTA00 (OOB 1280)
   parts (`lib-nand.sh:22-34`).
