@@ -2,17 +2,17 @@
 
 Batch 3 live inventory and boot readbacks are recorded in
 [evidence](evidence/batch3/README.md). No production installation has completed.
-All current installation-flow evidence is simulated. The downloaded OS was inspected as
-an archive, not executed. Hardware testing must be separately authorized and recorded
-with exact application/upstream revisions, asset hashes, board revision, NAND part,
-host/driver versions and sanitized logs. Never promote a failed or incomplete test.
+Native FEL identity, SRAM upload/readback/execute/restore and RAM-only recovery
+boot are now physically measured. Recovery authentication and board/NAND inventory
+succeed over macOS ECM. The initial RAM restart failed; adding the pinned reset module corrected it.
+Authenticated recovery now returns to FEL and the native transport rechecks SID. No NAND
+executor or physical manifest is approved, and no destructive installation has run.
 
-Batch 2 added host-side `ToolRunner`, `FelTransport`, `NandPlan`, `HttpClient` and
-`Clock` seams with scripted failure injection and a `VerifiedAssets` planning gate.
-These are testable host abstractions only: no hardware was accessed, no FEL transfer
-occurred, no NAND erase/write path exists, no physical manifest is approved and every
-item below remains open. The scripted PocketCHIP/R8+NAND fixtures prove host decision
-logic, not real device behavior.
+Batch 2 added host abstractions and scripted failure injection without hardware
+access. Those historical tests remain distinct from the measured Batch 3 evidence.
+The remaining release gates below must be closed using exact application/upstream
+revisions, hashes, board/NAND identity and sanitized logs. Failed or incomplete
+hardware tests never count as successful validation.
 
 ## Release gates
 

@@ -1,0 +1,27 @@
+{
+  "evidence_class": "physically measured",
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "template": {
+    "protocol": 1,
+    "sid": null,
+    "session_id": null,
+    "daemon_sha256": "ac1f94fc0d53f9378950355cc7ab318c0a1e2af288d5a253b43c5702cb503f7f",
+    "image_sha256": "0a70b77efd34143b6ba00b0a36cf1c7e5ed3afe9f2d16f9c253b8c548a773965",
+    "image_bytes": 31923414,
+    "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+    "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+    "operations": [
+      "ping",
+      "inventory",
+      "return-to-fel"
+    ],
+    "nand_writes": false
+  },
+  "authenticated_response": "RestartAccepted",
+  "fel_rediscovery": true,
+  "rediscovery_output": "Native FEL candidate: A13 001:001 SID 16254217:50303858:31333030:0e0288c0\nBROM SoC 0x1625, protocol 1, scratchpad 0x00007e00\nBROM packet: [41, 57, 55, 53, 42, 46, 45, 58, 00, 25, 16, 00, 01, 00, 00, 00, 01, 00, 44, 08, 00, 7e, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]\nBoard, NAND and recovery policy remain unverified; physical flashing is blocked.\n",
+  "delay_seconds": 3,
+  "bridge_connected": true,
+  "nand_writes": false,
+  "conclusion": "Loading the pinned sunxi_wdt reset module corrected the prior failed restart. Authenticated RAM recovery -> BROM FEL re-entry measured on the same SID."
+}

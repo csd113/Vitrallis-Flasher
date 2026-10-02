@@ -75,8 +75,7 @@ def parse(data: bytes):
 def build(header: dict, payload: bytes) -> bytes:
     """Build a deterministic uImage from a header dict and payload.
 
-    Only used by tests and fixture tooling; the builder never synthesizes a
-    boot artifact.
+    Used by tests, fixture tooling and the reviewed RAM-only recovery builder.
     """
     name = header.get("name", "test")[:31].encode()
     fields = struct.pack(

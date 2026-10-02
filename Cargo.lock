@@ -727,12 +727,14 @@ version = "0.1.0"
 dependencies = [
  "ctrlc",
  "flasher-core",
+ "serde_json",
 ]
 
 [[package]]
 name = "flasher-core"
 version = "0.1.0"
 dependencies = [
+ "ring",
  "rusb",
  "serde",
  "serde_json",
@@ -749,6 +751,15 @@ version = "0.1.0"
 dependencies = [
  "eframe",
  "flasher-core",
+ "tempfile",
+]
+
+[[package]]
+name = "flasher-recovery"
+version = "0.1.0"
+dependencies = [
+ "flasher-core",
+ "sha2",
  "tempfile",
 ]
 

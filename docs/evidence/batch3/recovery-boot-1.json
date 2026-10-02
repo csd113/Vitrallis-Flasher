@@ -1,0 +1,34 @@
+{
+  "evidence_class": "real RAM boot and macOS ECM enumeration/DHCP/ICMP; authenticated service not reachable",
+  "kernel_address": "0x42000000",
+  "dtb_address": "0x43000000",
+  "script_address": "0x43100000",
+  "overlay_address": "0x43200000",
+  "initrd_address": "0x43300000",
+  "template": {
+    "protocol": 1,
+    "sid": null,
+    "session_id": null,
+    "daemon_sha256": "3ad59134182674a41a2a649a6e7a953d8acbc5ecd3ca7b28c7657a97d3f47055",
+    "image_sha256": "6b6e500ccdf780a85fe666c9c1500210b64156dcccd89cb02515e4e5bd3fe10a",
+    "image_bytes": 31850032,
+    "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+    "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+    "operations": [
+      "ping",
+      "inventory"
+    ],
+    "nand_writes": false
+  },
+  "boot_command_exit": 0,
+  "usb_product": "Vitrallis-recovery-v1",
+  "host_interface": "en11",
+  "host_ipv4": "192.168.81.10",
+  "device_ipv4": "192.168.81.1",
+  "icmp_received": 2,
+  "icmp_sent": 2,
+  "tcp_authenticated": false,
+  "screen_report": "blank",
+  "credential_append_validated": true,
+  "nand_erase_or_write": false
+}

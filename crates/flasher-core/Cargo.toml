@@ -10,6 +10,10 @@ categories.workspace = true
 description = "Verified assets and safe PocketCHIP recovery state machine"
 publish = false
 
+[features]
+default = ["native-fel"]
+native-fel = ["dep:rusb"]
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
@@ -18,7 +22,8 @@ thiserror.workspace = true
 url.workspace = true
 ureq.workspace = true
 tempfile.workspace = true
-rusb.workspace = true
+rusb = { workspace = true, optional = true }
+ring.workspace = true
 
 [lints]
 workspace = true

@@ -168,3 +168,13 @@ CLI `detect` and GUI detection with the optional tool field blank use native
 USB. The explicitly selected external tool remains a diagnostic alternative.
 CLI `fel-probe` exercises the bounded SRAM diagnostic without exposing editable
 addresses. Recovery and destructive plan authorization remain blocked.
+
+
+### Read-only recovery development boundary
+
+`flasher-recovery` is an ARMv7 daemon with two authenticated diagnostic
+operations. The core `native-fel` feature separates desktop USB code from the
+recovery build: CLI/GUI enable it, while the device daemon does not link libusb.
+RAM bootstrap uses only fixed, hash-pinned inputs and constructed `ToolRequest`
+arguments. Per-boot credentials live in a private directory and RAM initramfs.
+This work has not changed NAND authorization or enabled a destructive executor.

@@ -337,3 +337,26 @@ Formatting and all-target/all-feature workspace check passed. The final mileston
 tests, image/script tests, provenance, stock/Vitrallis planning checks and release
 build. The ignored local log is `work/batch3/fel-milestone-validation.log`.
 No final Batch 3 completion or destructive-flash validation is claimed.
+
+
+### Batch 3 read-only recovery work in progress
+
+The ARMv7 release daemon builds in the pinned Rust 1.99.0 container. Eight core
+protocol tests cover authentication/framing and controlled restart acceptance;
+bootstrap tests cover bounded archive staging and cancellation. Four daemon tests
+cover the measured memory node, NAND mount rejection and fixed module invocations.
+Four Python tests cover bounded CPIO parsing. Current strict Clippy passes.
+
+Three physical RAM boots prove the reviewed addresses and macOS ECM/ACM path.
+Authenticated Ping and Inventory succeed. Actual wrong-key/SID/session/implementation
+and previous-boot rejection tests pass. The first boot's incorrect kmod invocation
+and second boot's memory-node mismatch are regression-tested. The third accepted
+RAM restart but failed FEL rediscovery. The fourth boot loaded the reset module and returned to FEL successfully; native
+rediscovery confirmed the same SID. No NAND operation was performed.
+See the evidence index for exact hashes and measured failures. The corrected recovery milestone passed `cargo fmt --all --check`,
+`cargo check --workspace --all-targets --all-features --locked`, strict workspace
+Clippy, `cargo test --workspace --all-features --locked`, workspace release build,
+all image/script tests, provenance/kernel configuration and stock/Vitrallis checks,
+manifest checks and `git diff --check`. The complete established suite
+`python3 scripts/ci.py validate` exited 0; its ignored local log is
+`work/batch3/recovery-milestone-6-validation.log`.

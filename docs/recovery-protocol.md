@@ -3,7 +3,7 @@
 The host should reuse proven x-chip-tools NAND/SPL behavior through an external,
 reviewed recovery boundary. It must not invent host-side ECC or use the broken
 fastboot/SLC path. The current upstream installer is **not** an implementation of
-this proposed protocol. No physical protocol client or device daemon is shipped.
+this proposed protocol. Batch 3 now has a bounded read-only client and daemon; physical endpoint authentication remains unproven.
 
 Required sequence before implementing a real backend:
 
@@ -44,8 +44,8 @@ future approved payloads without exposing physical erase now.
 
 Batch 2 implements the parts of this protocol that need no hardware.
 `FelTransport` names discovery, identification, device information, RAM upload,
-execution and memory/status readback; its production default `UnavailableFel`
-refuses every operation and only `ScriptedFel` answers in tests.
+execution and memory/status readback; the original Batch 2 `UnavailableFel`
+refuses every operation. Batch 3 now uses `NativeFel` for physical diagnostics.
 `IdentifiedTarget::identify` enforces the closed board/SoC/NAND decision and rejects
 ambiguous or unknown fixtures. `NandPlan` records the ordered operations, exact
 lengths/digests and readback checks that steps 5-9 require, with the unresolved
@@ -54,12 +54,44 @@ physical questions attached as hard `PlanGate`s; `authorize_execution` always fa
 reviewed protocol, device daemon, session authentication and hardware validation;
 nothing in Batch 2 executes a plan or contacts a device.
 
-## Batch 3 current evidence boundary
+## Batch 3 measured recovery boundary
 
-The native FEL diagnostic transport now exists, but it does not implement an
-authenticated recovery endpoint. FEL SoC/SID proof is separate from board/NAND
-identity, DRAM initialization and recovery authentication. Current Linux SSH
-identity and read-only NAND observations are preserved in
-[evidence](evidence/batch3/README.md). No SSH credential, fixed USB IP or current
-OS label grants recovery authorization. The existing plan gates remain closed
-until the recovery implementation and physical boot have been demonstrated.
+`flasher-core::recovery` and the ARMv7 `flasher-recovery` daemon expose only
+`Ping`, `Inventory` and a RAM-only `ReturnToFel` request. A fresh 32-byte boot
+secret, independently checked 16-byte SID and random session ID bind each boot.
+HMAC-SHA256 from the existing ring dependency authenticates both roles, protocol
+version, implementation hash and fresh client/server nonces. Frames bind direction
+and monotonically increasing sequence numbers and reject lengths over 64 KiB
+before allocation. Socket I/O supports cancellation and bounded deadlines.
+Credentials are redacted from Debug and excluded from tracked evidence. Public
+diagnostic inventory is authenticated but not encrypted.
+
+The daemon loads fixed matching SID and reset modules through `ToolRunner` and
+checks Linux nvmem against the host's freshly identified FEL SID. The host pins
+the exact diagnostic utility, bootloader, kernel, DTB, overlay, daemon and RAM
+template. These diagnostic pins do not approve a physical NAND manifest. The
+reviewed U-Boot script has no NAND operation. The host appends a mode-0600 boot
+credential archive; Linux documents concatenated compressed/uncompressed newc
+archives in its [initramfs buffer format](https://docs.kernel.org/driver-api/early-userspace/buffer-format.html).
+
+Three physical RAM boots established the reviewed load addresses, macOS ECM
+networking and output-only ACM diagnostics. The second boot authenticated a Ping
+and rejected wrong keys, SID, session, implementation hash and prior-boot credentials.
+The third returned authenticated board, memory, kernel and NAND inventory. Its
+DT memory node is `memory`, rather than `memory@40000000`; this measured difference
+now has a regression test. The first boot exposed an incorrect kmod applet
+invocation, also covered by a regression test.
+
+The third boot accepted ReturnToFel but did not re-enumerate. The pinned kernel
+builds its reset driver as a module, omitted by that template; this is the likely
+cause, derived from configuration and upstream restart-handler source. A corrected
+template includes and verifies the driver before accepting connections. The fourth boot verified the loaded driver in its boot log and successfully
+returned to FEL, where the native transport rediscovered the same SID. RestartAccepted means request acceptance;
+it is not proof of FEL re-entry. The restart refuses NAND-backed mounts or attached
+UBI and requires the physical FEL bridge to remain connected.
+
+The blank display is not used as proof of startup. ACM connects no getty, SSH or
+interactive input. ECM DHCP, TCP authentication and inventory are measured on
+macOS; NCM and Windows workflows remain unresolved. The daemon exposes no NAND
+write/erase request. All destructive plan gates remain closed. Evidence is indexed
+in [the Batch 3 evidence directory](evidence/batch3/README.md).

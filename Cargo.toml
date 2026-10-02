@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/flasher-core", "crates/flasher-cli", "crates/flasher-gui"]
+members = ["crates/flasher-core", "crates/flasher-cli", "crates/flasher-gui", "crates/flasher-recovery"]
 resolver = "3"
 
 [workspace.package]
@@ -13,7 +13,7 @@ categories = ["hardware-support"]
 
 [workspace.dependencies]
 ctrlc = "3.5"
-flasher-core = { path = "crates/flasher-core" }
+flasher-core = { path = "crates/flasher-core", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
@@ -21,6 +21,7 @@ thiserror = "2.0"
 url = "2.5"
 ureq = { version = "=3.4.1", default-features = false, features = ["rustls"] }
 tempfile = "3.27"
+ring = "=0.17.14"
 rusb = { version = "=0.9.4", features = ["vendored"] }
 eframe = { version = "0.36.2", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
 

@@ -1,0 +1,13 @@
+{
+  "evidence_class": "physically measured",
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "template_sha256": "f4ba5ed4dc6f58596c3fa3f74cd3b96aa9df21b98bb883b570665b220b724982",
+  "daemon_sha256": "f115cbda2464548555d9d1425123a1fa1dcef45fa7a0803ded34de44b43685fc",
+  "authenticated_response": "RestartAccepted",
+  "fel_rediscovery": false,
+  "tcp_reconnect": "timeout",
+  "usb_entry_retained": "Vitrallis-recovery-v1 0525:a4aa",
+  "acm_open": "blocked; host reader terminated",
+  "nand_writes": false,
+  "derived_cause": "Pinned kernel CONFIG_SUNXI_WATCHDOG=m; prior RAM template omitted reset module. Upstream driver registers watchdog restart handler. Corrected template must be tested; cause remains an inference."
+}

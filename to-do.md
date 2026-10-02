@@ -172,7 +172,9 @@ Detailed supporting requirements: [image build](docs/image-build.md),
 - [x] Implement native, bounded FEL framing and restricted SRAM diagnostics,
   with host regression tests and native GUI/CLI discovery.
 - [x] Physically identify BROM/FEL and validate 256-byte SRAM diagnostics.
-- [ ] Establish recovery load addresses, authenticated endpoint and boot.
+- [x] Establish recovery load addresses, authenticated endpoint and boot on macOS.
+- [x] Prove authenticated RAM-only return to FEL and recheck the same SID.
+- [ ] Validate NCM and Windows recovery gadget workflows.
 - [ ] Resolve SPL/ECC/fallback and logical/physical bad-block semantics.
 - [ ] Approve exact physical artifacts, enable the gated executor and demonstrate
   production flashing, readback, rootfs verification and successful boot.

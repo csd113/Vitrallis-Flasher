@@ -3,6 +3,7 @@ pub mod assets;
 pub mod clock;
 pub mod device;
 pub mod fel;
+#[cfg(feature = "native-fel")]
 pub mod fel_native;
 pub mod http;
 pub mod manifest;
@@ -10,6 +11,9 @@ pub mod nand;
 pub mod platform;
 pub mod process;
 pub mod profile;
+pub mod recovery;
+#[cfg(feature = "native-fel")]
+pub mod recovery_boot;
 pub mod releases;
 pub mod script;
 pub mod session;
@@ -49,8 +53,11 @@ pub enum Error {
     FelUnavailable,
     #[error("invalid FEL protocol response: {0}")]
     FelProtocol(&'static str),
+    #[cfg(feature = "native-fel")]
     #[error("USB transport: {0}")]
     Usb(#[from] rusb::Error),
+    #[error("recovery authentication or protocol failed")]
+    Recovery,
     #[error("invalid operation for the current recovery state")]
     State,
     #[error("confirmation does not match the device and image")]

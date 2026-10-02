@@ -50,29 +50,35 @@ fn run() -> Result<(), Error> {
             );
         }
         [command] if command == "detect" || command == "fel-probe" => {
-            let transport = NativeFel;
-            let device = select(&transport.discover(&cancel)?)?;
-            let version = transport.brom_version(&device, &cancel)?;
+            native_diagnostic(command, &cancel)?;
+        }
+        [command, assets, template, daemon, tool] if command == "recovery-boot" => {
+            let private = flasher_core::recovery_boot::boot(
+                Path::new(assets),
+                Path::new(template),
+                Path::new(daemon),
+                Path::new(tool),
+                &cancel,
+            )?;
             println!(
-                "Native FEL candidate: {} {:03}:{:03} SID {}\nBROM SoC {:#06x}, protocol {}, scratchpad {:#010x}\nBROM packet: {:02x?}",
-                device.soc,
-                device.bus,
-                device.address,
-                device.sid,
-                version.soc_id,
-                version.protocol,
-                version.scratchpad,
-                version.raw
+                "RAM-only boot dispatched; authenticated inventory still required.\nPrivate session directory: {}",
+                private.display()
             );
-            if command == "fel-probe" {
-                transport.diagnostic_probe(&device, &cancel)?;
-                println!(
-                    "256-byte scratch SRAM upload/readback, bx lr execution and restoration verified."
-                );
-            }
-            println!(
-                "Board, NAND and recovery policy remain unverified; physical flashing is blocked."
-            );
+        }
+        [command, config, binary]
+            if matches!(
+                command.as_str(),
+                "recovery-inventory" | "recovery-ping" | "recovery-return-to-fel"
+            ) =>
+        {
+            let diagnostic = match command.as_str() {
+                "recovery-ping" => flasher_core::recovery::diagnostic_ping,
+                "recovery-return-to-fel" => flasher_core::recovery::diagnostic_return_to_fel,
+                _ => flasher_core::recovery::diagnostic_inventory,
+            };
+            let response = diagnostic(Path::new(config), Path::new(binary), &cancel)?;
+            let json = serde_json::to_string_pretty(&response).map_err(|_| Error::Recovery)?;
+            println!("{json}");
         }
         [command, tool] if command == "detect" => {
             let backend = RealFel::new(
@@ -119,9 +125,34 @@ fn run() -> Result<(), Error> {
     }
     Ok(())
 }
+fn native_diagnostic(command: &str, cancel: &Cancellation) -> Result<(), Error> {
+    let transport = NativeFel;
+    let device = select(&transport.discover(cancel)?)?;
+    let version = transport.brom_version(&device, cancel)?;
+    println!(
+        "Native FEL candidate: {} {:03}:{:03} SID {}\nBROM SoC {:#06x}, protocol {}, scratchpad {:#010x}\nBROM packet: {:02x?}",
+        device.soc,
+        device.bus,
+        device.address,
+        device.sid,
+        version.soc_id,
+        version.protocol,
+        version.scratchpad,
+        version.raw
+    );
+    if command == "fel-probe" {
+        transport.diagnostic_probe(&device, cancel)?;
+        println!(
+            "256-byte scratch SRAM upload/readback, bx lr execution and restoration verified."
+        );
+    }
+    println!("Board, NAND and recovery policy remain unverified; physical flashing is blocked.");
+    Ok(())
+}
+
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

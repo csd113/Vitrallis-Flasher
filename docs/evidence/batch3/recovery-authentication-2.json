@@ -1,0 +1,47 @@
+{
+  "evidence_class": "real authenticated macOS USB Ethernet endpoint; no NAND requests",
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "daemon_sha256": "3fcc545c4bc8458359d784200902895cc90798401b1854528f42b18142bd0252",
+  "template_sha256": "3f922b616ff8258f74f2189d9db47301ca777e702c3d950cc52d4a11eac8bf12",
+  "protocol": 1,
+  "serial_startup_log": "Authenticated read-only recovery ready; NAND writes unavailable",
+  "inventory_error": "No such file or directory after successful authentication; wrong memory-node path",
+  "results": [
+    {
+      "case": "wrong-key",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "recovery authentication or protocol failed\n"
+    },
+    {
+      "case": "wrong-sid",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "recovery authentication or protocol failed\n"
+    },
+    {
+      "case": "stale-session",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "recovery authentication or protocol failed\n"
+    },
+    {
+      "case": "wrong-implementation",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "recovery authentication or protocol failed\n"
+    },
+    {
+      "case": "previous-boot",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "recovery authentication or protocol failed\n"
+    },
+    {
+      "case": "fresh-reconnect",
+      "exit": 0,
+      "stdout": "\"Pong\"\n",
+      "stderr": ""
+    }
+  ]
+}

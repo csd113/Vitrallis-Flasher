@@ -45,3 +45,11 @@ The GUI uses the GL renderer and embedded fonts. Optional WebGPU dependencies ma
 appear in Cargo.lock/metadata but are not enabled in the native build. Core and CLI do
 not depend on the GUI crates. No SDL2, system libusb, web runtime, database, SSH library
 or host filesystem-generation tool is required for simulation and asset verification.
+
+
+The recovery protocol directly uses the already locked ring 0.17.14 dependency
+for operating-system randomness and constant-time HMAC verification. No custom
+cryptography was added. The ARMv7 recovery compiler image pins Rust 1.99.0 and
+a signed Debian snapshot in `recovery/Dockerfile`; cross libc headers are required
+alongside the GCC cross compiler. Native USB is an optional core feature so the
+device daemon does not carry desktop libusb.

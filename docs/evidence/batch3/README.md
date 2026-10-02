@@ -57,7 +57,38 @@ Both findings are regression-tested using `fixtures/fel/r8-batch3.json`.
 SRAM 0x1000 was selected from pinned sunxi-tools `soc_info.c` for SoC 0x1625.
 The source identifies the FEL stacks at 0x1c00-0x1fff and 0x5c00-0x6fff, and
 other BROM state at 0x7c00-0x7fff; the tested 0x1000-0x10ff range avoids them.
-This is not a recovery DRAM load address. Recovery DRAM initialization, full
-payload boot and authentication remain unresolved.
+This is not a recovery DRAM load address. At the FEL milestone, recovery DRAM initialization, full payload boot and
+authentication were still unresolved; later measurements below establish them.
 
-No recovery payload has booted and no destructive flash has occurred yet.
+At the FEL milestone, no recovery payload had booted and no destructive flash has occurred yet.
+
+
+`recovery-boot-1.json` and `recovery-usb-1.json` record the first real RAM-only
+recovery boot. The fixed reviewed script loaded the pinned kernel, DTB and
+PocketCHIP overlay, then the read-only initramfs. macOS enumerated the recovery
+gadget at 480 Mbit/s, assigned DHCP address 192.168.81.10 and received two ICMP
+replies from 192.168.81.1. The authenticated TCP endpoint was not reachable;
+no authenticated inventory, NAND execution or final OS boot is claimed.
+Private session images/configuration remain outside tracked evidence.
+
+`recovery-authentication-2.json` records a physical authenticated Ping and rejection
+of wrong key, SID, session, daemon identity and previous-boot credentials, followed
+by a successful fresh authenticated reconnect. Inventory initially failed because
+the actual DT memory node is named `memory`; a deterministic test protects the fix.
+
+`recovery-boot-3-tool.json` and `recovery-inventory-3.json` record the third RAM boot
+and authenticated board, memory, kernel, MTD/ECC, boot-log and nanddump capability
+inventory. All five partitions report writable capability, but no write operation
+is exposed or authorized by this diagnostic protocol.
+
+`recovery-return-to-fel-3.json` records an accepted restart followed by failed FEL
+rediscovery and TCP timeout. It preserves the failure rather than claiming re-entry.
+The kernel's reset driver is modular and absent in that template; a corrected image
+includes it. The subsequent fourth boot physically validated the correction.
+
+`recovery-boot-4-tool.json`, `recovery-inventory-4.json` and
+`recovery-return-to-fel-4.json` establish the corrected RAM recovery boot, loaded
+sunxi-wdt driver, authenticated inventory and successful authenticated return to
+BROM FEL on the same SID. The physical bridge remained connected. This proves a
+reload route without another manual power cycle; it does not characterize normal
+NAND boot or approve destructive execution.

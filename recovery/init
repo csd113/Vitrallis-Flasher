@@ -1,0 +1,45 @@
+#!/bin/sh
+# Reviewed RAM-only PID 1. Failure leaves a diagnostic on the serial console.
+# It never attaches UBI, mounts NAND, starts SSH or runs an interactive shell.
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin
+start_recovery() {
+    mount -t proc proc /proc || return 1
+    mount -t sysfs sys /sys || return 1
+    mount -t devtmpfs dev /dev || return 1
+    mount -t configfs none /sys/kernel/config || return 1
+    G=/sys/kernel/config/usb_gadget/vitrallis
+    mkdir -p "$G" || return 1
+    echo 0x0525 > "$G/idVendor" || return 1
+    echo 0xa4aa > "$G/idProduct" || return 1
+    # Composite ECM + diagnostic serial, with the USB IAD device class.
+    echo 0xef > "$G/bDeviceClass" || return 1
+    echo 0x02 > "$G/bDeviceSubClass" || return 1
+    echo 0x01 > "$G/bDeviceProtocol" || return 1
+    mkdir -p "$G/strings/0x409" "$G/configs/c.1/strings/0x409" "$G/functions/ecm.usb0" "$G/functions/acm.usb0" || return 1
+    echo Vitrallis > "$G/strings/0x409/manufacturer" || return 1
+    echo Vitrallis-recovery-v1 > "$G/strings/0x409/product" || return 1
+    echo recovery > "$G/strings/0x409/serialnumber" || return 1
+    echo ECM > "$G/configs/c.1/strings/0x409/configuration" || return 1
+    echo de:ad:be:ef:53:01 > "$G/functions/ecm.usb0/dev_addr" || return 1
+    echo de:ad:be:ef:53:02 > "$G/functions/ecm.usb0/host_addr" || return 1
+    ln -s "$G/functions/ecm.usb0" "$G/configs/c.1/" || return 1
+    ln -s "$G/functions/acm.usb0" "$G/configs/c.1/" || return 1
+    set -- /sys/class/udc/*
+    [ "$#" = 1 ] && [ -e "$1" ] || return 1
+    echo "${1##*/}" > "$G/UDC" || return 1
+    sleep 2
+    ip addr add 192.168.81.1/24 dev usb0 || return 1
+    ip link set usb0 up || return 1
+    dnsmasq --interface=usb0 --bind-interfaces \
+      --dhcp-range=192.168.81.10,192.168.81.20,255.255.255.0,1h \
+      --dhcp-option=3 --dhcp-option=6 --port=0 --user=root \
+      --dhcp-leasefile=/run/dnsmasq.leases --pid-file=/run/dnsmasq.pid || return 1
+    /usr/sbin/flasher-recovery > /run/recovery.log 2>&1 &
+    daemon_pid=$!
+    # Output only. No getty, shell or command input is connected to ACM.
+    tail -f /run/recovery.log > /dev/ttyGS0 &
+    wait "$daemon_pid"
+}
+start_recovery
+echo 'Vitrallis recovery stopped; NAND writes remain unavailable.'
+while :; do sleep 60; done

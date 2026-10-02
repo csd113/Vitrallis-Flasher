@@ -11,8 +11,9 @@ description = "PocketCHIP recovery diagnostics and simulation CLI"
 publish = false
 
 [dependencies]
-flasher-core.workspace = true
+flasher-core = { workspace = true, features = ["native-fel"] }
 ctrlc.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true
