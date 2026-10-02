@@ -372,3 +372,8 @@ selection is claimed.
   private root capability rejects unsafe/symlink paths and existing leaves.
   This does not access the device, implement final filesystem metadata or
   satisfy physical UBI/UBIFS installation and verification gates.
+
+- `rootfs-contained-links-metadata-fixture-check.json`: Linux/ARM fixture results
+  for symlink/hardlink containment, inode identity, numeric UID/GID 1000, final
+  setuid/setgid mode and invalid owner rejection. This does not access NAND or
+  prove whole-tree installation, device nodes or semantic filesystem readback.

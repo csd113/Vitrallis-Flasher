@@ -1110,3 +1110,23 @@ Private logs: `work/batch3/rootfs-contained-full-validation.log`,
 and `cargo clippy --locked -p flasher-core --all-targets --all-features --target armv7-unknown-linux-gnueabihf -- -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery -D clippy::cargo`.
 This is a contained creation primitive, not a complete installer or a physical
 UBI/UBIFS/NAND completion gate. The frozen hardware v9 payload is unchanged.
+
+### Contained Linux links and metadata checkpoint
+
+All five Linux containment tests pass cross-built for ARMv7 under qemu-arm
+(0.07 seconds). Strict target Clippy passes with all targets/features, locked
+graph and the complete workspace lint flags. The root builder fixture changes
+file and symlink ownership to UID/GID 1000 and confirms final mode 06750, hardlink
+inode identity, target preservation and pre-mutation invalid-owner rejection.
+Native macOS excludes this module and is not evidence for its syscalls.
+
+Full `python3 scripts/ci.py validate` passes formatting, strict Clippy,
+208 native core tests (six intentional ignored subprocess fixtures), five
+integration tests, 11 recovery tests, 73 image tests, 35 script tests, release
+builds and established provenance/kernel/image/manifest checks. Workspace
+all-target/all-feature check and diff check pass. Private logs:
+`work/batch3/rootfs-links-full-validation.log`, `rootfs-links-workspace-check.log`,
+`rootfs-links-final-arm-tests.log` and `rootfs-links-final-arm-clippy.log`.
+Source hash and fixture results are in the separate link/metadata evidence.
+The installer sink, device nodes, full tree verification and physical UBI
+installation remain required; no new recovery payload is uploaded.

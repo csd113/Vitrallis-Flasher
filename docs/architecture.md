@@ -338,11 +338,28 @@ never reopened, and no shell/process boundary is involved. Safe APIs from the
 already-locked `rustix` 1.1.4 crate provide the Linux descriptor operations; no
 new package/version is added.
 
-This is a filesystem capability rather than a NAND/plan authorization. It does
-not yet implement the installer sink, final numeric ownership/modes, links,
-character devices, sync/completion or semantic readback. Cancellation is checked
+This is a filesystem capability rather than a NAND/plan authorization. Held-descriptor metadata and inspected link helpers are now implemented, as
+described below. The complete installer sink, character devices, whole-tree
+completion and semantic readback remain unfinished. Cancellation is checked
 before and after syscalls; a cancellation after creation may leave a new entry,
 so the future installer must preserve truthful interruption state. The recovery
 payload has not been rebuilt or uploaded for this code. Linux/ARM fixtures
 validate containment separately from the native macOS suite. API review:
 [descriptor-relative open](https://docs.rs/rustix/1.1.4/rustix/fs/fn.openat.html).
+
+### Contained links and numeric metadata
+
+Symlink creation validates the canonical path, lexical target, numeric owner
+IDs and Linux-supported symlink mode before mutation, then stores the target
+verbatim. Ownership applies to a captured `O_PATH | O_NOFOLLOW` symlink inode
+using `AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW`. Hardlinks require a regular source
+with matching owner/mode; destination device/inode identity and metadata are
+checked afterward. No operation follows a stored link target.
+
+Held regular files and reopened directory descriptors receive numeric ownership
+before final chmod, preserving setuid/setgid bits cleared by chown. Metadata
+is checked afterward and the object fsynced. UID/GID `u32::MAX` sentinels and
+unsupported modes are rejected before metadata mutation. Directory metadata
+must be deferred until descendants are installed. These primitives do not
+replace complete inventory validation, a contained replay installer, character
+node creation, whole-tree sync or semantic installed-content verification.

@@ -1,0 +1,31 @@
+{
+  "evidence_kind": "deterministic Linux link and numeric metadata fixtures under ARMv7 qemu",
+  "device_accessed": false,
+  "nand_mutated": false,
+  "production_reflash": false,
+  "full_rootfs_installer": false,
+  "source_sha256": "ac73d27b015db2ec112b590b0913b467ec2c24586c8627567f55b85cc3f61a9a",
+  "tests_passed": 5,
+  "test_seconds": 0.07,
+  "strict_arm_clippy_passed": true,
+  "numeric_ownership_fixture": {
+    "file_and_symlink_uid": 1000,
+    "file_and_symlink_gid": 1000,
+    "file_mode_octal": "6750",
+    "container_process_uid": 0
+  },
+  "validated_behaviors": [
+    "symlink targets stored without resolution",
+    "symlink ownership applied to captured O_PATH inode with EMPTY_PATH and SYMLINK_NOFOLLOW",
+    "hardlink target must be a regular inode with matching numeric owner and mode",
+    "hardlink destination retains source device/inode identity",
+    "chown precedes chmod and final setuid/setgid bits remain present",
+    "invalid owner sentinels fail before metadata mutation",
+    "unsupported symlink modes and unsafe escaping targets rejected",
+    "file and directory metadata checked after application and fsynced"
+  ],
+  "limitations": [
+    "temporary host filesystem fixtures, not PocketCHIP UBI",
+    "whole-inventory installer preflight, character nodes, installer sink, complete tree sync and semantic readback remain unfinished"
+  ]
+}

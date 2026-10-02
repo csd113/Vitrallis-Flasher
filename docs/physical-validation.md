@@ -397,3 +397,14 @@ root validation and pre-cancellation without mutation. These use temporary host
 filesystem directories, not the PocketCHIP NAND or UBI. No full installer or
 physical rootfs completion is claimed. Evidence:
 `evidence/batch3/rootfs-contained-linux-fixture-check.json`.
+
+### Linux contained link/metadata fixtures
+
+Five containment tests pass under ARMv7 qemu, including actual fixture file and
+symlink ownership changes to UID/GID 1000 in the root-owned builder container.
+Mode 06750 survives ownership application, hardlinks preserve the same inode,
+symlink ownership changes do not modify the target, and invalid owner sentinels
+fail before mutation. Strict ARM Clippy passes. These remain temporary host
+filesystem tests, not a physical UBI installation or complete stock-rootfs
+extraction. Evidence:
+`evidence/batch3/rootfs-contained-links-metadata-fixture-check.json`.

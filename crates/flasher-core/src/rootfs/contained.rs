@@ -2,8 +2,9 @@
 //! This is a filesystem capability, not a NAND or physical-plan authorization.
 use crate::{Cancellation, Error};
 use rustix::{
-    fd::OwnedFd,
-    fs::{self, FileType, Mode, OFlags},
+    fd::{AsFd, OwnedFd},
+    fs::{self, AtFlags, FileType, Mode, OFlags},
+    process::{Gid, Uid},
 };
 use std::fs::File;
 
@@ -71,6 +72,148 @@ impl Root {
         Ok(file.into())
     }
 
+    /// Store an inspected symlink without resolving its target.
+    /// # Errors
+    /// Rejects unsafe targets/paths, other kinds, existing leaves or cancellation.
+    pub fn create_symlink(&self, entry: &super::Entry, cancel: &Cancellation) -> Result<(), Error> {
+        validate_owner(entry)?;
+        if entry.kind != super::Kind::Symlink
+            || entry.mode != 0o777
+            || super::path(&entry.path)? != entry.path
+        {
+            return Err(Error::UnsafePath);
+        }
+        super::validate_link(entry, &std::collections::BTreeMap::new())?;
+        let (parent, leaf) = self.parent(&entry.path, cancel)?;
+        cancel.check()?;
+        fs::symlinkat(entry.link.as_str(), parent, leaf.as_str()).map_err(std::io::Error::from)?;
+        cancel.check()
+    }
+
+    /// Link an earlier regular file, preserving its inode and metadata.
+    /// # Errors
+    /// Rejects unsafe/symlink targets, metadata mismatch, replacement or cancellation.
+    pub fn create_hardlink(
+        &self,
+        entry: &super::Entry,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
+        if entry.kind != super::Kind::Hardlink {
+            return Err(Error::UnsafePath);
+        }
+        let (source_parent, source_leaf) = self.parent(&entry.link, cancel)?;
+        let source = fs::openat(
+            &source_parent,
+            source_leaf.as_str(),
+            OFlags::PATH | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        let before = fs::fstat(&source).map_err(std::io::Error::from)?;
+        validate_metadata(&before, entry, FileType::RegularFile)?;
+        let (parent, leaf) = self.parent(&entry.path, cancel)?;
+        cancel.check()?;
+        fs::linkat(
+            source_parent,
+            source_leaf.as_str(),
+            &parent,
+            leaf.as_str(),
+            AtFlags::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        let after = fs::statat(parent, leaf.as_str(), AtFlags::SYMLINK_NOFOLLOW)
+            .map_err(std::io::Error::from)?;
+        if after.st_dev != before.st_dev || after.st_ino != before.st_ino {
+            return Err(Error::UnsafePath);
+        }
+        validate_metadata(&after, entry, FileType::RegularFile)?;
+        cancel.check()
+    }
+
+    /// Apply numeric ownership and mode to a held regular-file descriptor.
+    /// Ownership precedes chmod so setuid/setgid bits are restored after chown.
+    /// # Errors
+    /// Rejects invalid metadata/kinds, syscall failures or cancellation.
+    pub fn finish_file(
+        file: &File,
+        entry: &super::Entry,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
+        if entry.kind != super::Kind::File {
+            return Err(Error::UnsafePath);
+        }
+        set_metadata(file, entry, FileType::RegularFile, cancel)?;
+        cancel.check()?;
+        fs::fsync(file).map_err(std::io::Error::from)?;
+        cancel.check()
+    }
+
+    /// Apply directory metadata after its descendants have been installed.
+    /// # Errors
+    /// Rejects other kinds, symlink paths, invalid metadata or cancellation.
+    pub fn finish_directory(
+        &self,
+        entry: &super::Entry,
+        cancel: &Cancellation,
+    ) -> Result<(), Error> {
+        if entry.kind != super::Kind::Directory {
+            return Err(Error::UnsafePath);
+        }
+        let directory = if entry.path == "." {
+            self.directory.try_clone()?
+        } else {
+            let (parent, leaf) = self.parent(&entry.path, cancel)?;
+            fs::openat(
+                parent,
+                leaf.as_str(),
+                OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+                Mode::empty(),
+            )
+            .map_err(std::io::Error::from)?
+        };
+        set_metadata(&directory, entry, FileType::Directory, cancel)?;
+        cancel.check()?;
+        fs::fsync(directory).map_err(std::io::Error::from)?;
+        cancel.check()
+    }
+
+    /// Apply symlink ownership to its captured inode without following the link.
+    /// # Errors
+    /// Rejects other kinds, unsupported symlink mode, invalid owner IDs or cancellation.
+    pub fn finish_symlink(&self, entry: &super::Entry, cancel: &Cancellation) -> Result<(), Error> {
+        if entry.kind != super::Kind::Symlink || entry.mode != 0o777 {
+            return Err(Error::UnsafePath);
+        }
+        validate_owner(entry)?;
+        let (parent, leaf) = self.parent(&entry.path, cancel)?;
+        let link = fs::openat(
+            parent,
+            leaf.as_str(),
+            OFlags::PATH | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+            Mode::empty(),
+        )
+        .map_err(std::io::Error::from)?;
+        let stat = fs::fstat(&link).map_err(std::io::Error::from)?;
+        if FileType::from_raw_mode(stat.st_mode) != FileType::Symlink {
+            return Err(Error::UnsafePath);
+        }
+        cancel.check()?;
+        fs::chownat(
+            &link,
+            "",
+            Some(Uid::from_raw(entry.uid)),
+            Some(Gid::from_raw(entry.gid)),
+            AtFlags::EMPTY_PATH | AtFlags::SYMLINK_NOFOLLOW,
+        )
+        .map_err(std::io::Error::from)?;
+        validate_metadata(
+            &fs::fstat(&link).map_err(std::io::Error::from)?,
+            entry,
+            FileType::Symlink,
+        )?;
+        cancel.check()
+    }
+
     fn parent(&self, relative: &str, cancel: &Cancellation) -> Result<(OwnedFd, String), Error> {
         cancel.check()?;
         let normalized = super::path(relative)?;
@@ -94,6 +237,49 @@ impl Root {
         }
         Ok((directory, leaf.to_owned()))
     }
+}
+
+const fn validate_owner(entry: &super::Entry) -> Result<(), Error> {
+    if entry.uid == u32::MAX || entry.gid == u32::MAX || entry.mode > 0o7777 {
+        return Err(Error::UnsafePath);
+    }
+    Ok(())
+}
+
+fn validate_metadata(stat: &fs::Stat, entry: &super::Entry, kind: FileType) -> Result<(), Error> {
+    validate_owner(entry)?;
+    if FileType::from_raw_mode(stat.st_mode) != kind
+        || stat.st_uid != entry.uid
+        || stat.st_gid != entry.gid
+        || stat.st_mode & 0o7777 != entry.mode
+    {
+        return Err(Error::UnsafePath);
+    }
+    Ok(())
+}
+
+fn set_metadata(
+    fd: &impl AsFd,
+    entry: &super::Entry,
+    kind: FileType,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    cancel.check()?;
+    validate_owner(entry)?;
+    let stat = fs::fstat(fd).map_err(std::io::Error::from)?;
+    if FileType::from_raw_mode(stat.st_mode) != kind {
+        return Err(Error::UnsafePath);
+    }
+    fs::fchown(
+        fd,
+        Some(Uid::from_raw(entry.uid)),
+        Some(Gid::from_raw(entry.gid)),
+    )
+    .map_err(std::io::Error::from)?;
+    cancel.check()?;
+    fs::fchmod(fd, Mode::from_raw_mode(entry.mode)).map_err(std::io::Error::from)?;
+    validate_metadata(&fs::fstat(fd).map_err(std::io::Error::from)?, entry, kind)?;
+    cancel.check()
 }
 
 #[cfg(test)]
@@ -206,5 +392,105 @@ mod tests {
             Err(Error::Cancelled)
         ));
         assert_eq!(std::fs::read_dir(empty.path()).unwrap().count(), 0);
+    }
+    fn entry(path: &str, kind: super::super::Kind, mode: u32, link: &str) -> super::super::Entry {
+        super::super::Entry {
+            path: path.into(),
+            kind,
+            mode,
+            uid: rustix::process::geteuid().as_raw(),
+            gid: rustix::process::getegid().as_raw(),
+            link: link.into(),
+            major: 0,
+            minor: 0,
+            size: 0,
+            content_sha256: [0; 32],
+        }
+    }
+
+    #[test]
+    fn ownership_mode_and_links_preserve_inodes_without_following_targets() {
+        use super::super::Kind;
+        use std::os::unix::fs::MetadataExt;
+        let (root, directory) = root();
+        let cancel = Cancellation::default();
+        root.create_directory("etc", &cancel).unwrap();
+        let mut file = root.create_file("etc/source", &cancel).unwrap();
+        file.write_all(b"contents").unwrap();
+        let mut regular = entry("etc/source", Kind::File, 0o6750, "");
+        if rustix::process::geteuid().as_raw() == 0 {
+            regular.uid = 1000;
+            regular.gid = 1000;
+        }
+        Root::finish_file(&file, &regular, &cancel).unwrap();
+        let mut hardlink = entry("etc/hard", Kind::Hardlink, 0o6750, "./etc/source");
+        hardlink.uid = regular.uid;
+        hardlink.gid = regular.gid;
+        root.create_hardlink(&hardlink, &cancel).unwrap();
+        let source = std::fs::metadata(directory.path().join("etc/source")).unwrap();
+        let hard = std::fs::metadata(directory.path().join("etc/hard")).unwrap();
+        assert_eq!(source.ino(), hard.ino());
+        assert_eq!((source.uid(), source.gid()), (regular.uid, regular.gid));
+        assert_eq!(source.permissions().mode() & 0o7777, 0o6750);
+        let mut link = entry("etc/link", Kind::Symlink, 0o777, "source");
+        link.uid = regular.uid;
+        link.gid = regular.gid;
+        root.create_symlink(&link, &cancel).unwrap();
+        root.finish_symlink(&link, &cancel).unwrap();
+        let symbolic = std::fs::symlink_metadata(directory.path().join("etc/link")).unwrap();
+        assert_eq!((symbolic.uid(), symbolic.gid()), (link.uid, link.gid));
+        assert_eq!(
+            std::fs::read_link(directory.path().join("etc/link")).unwrap(),
+            std::path::Path::new("source")
+        );
+        root.finish_directory(&entry("etc", Kind::Directory, 0o755, ""), &cancel)
+            .unwrap();
+        assert_eq!(
+            std::fs::metadata(directory.path().join("etc"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o7777,
+            0o755
+        );
+    }
+
+    #[test]
+    fn invalid_link_targets_and_owner_sentinels_fail_before_metadata_changes() {
+        use super::super::Kind;
+        let (root, directory) = root();
+        let outside = tempfile::tempdir().unwrap();
+        let cancel = Cancellation::default();
+        let file = root.create_file("source", &cancel).unwrap();
+        let mut invalid = entry("source", Kind::File, 0o7777, "");
+        invalid.uid = u32::MAX;
+        assert!(Root::finish_file(&file, &invalid, &cancel).is_err());
+        assert_eq!(
+            file.metadata().unwrap().permissions().mode() & 0o7777,
+            0o600
+        );
+        assert!(
+            root.create_symlink(
+                &entry("escape", Kind::Symlink, 0o777, "../outside"),
+                &cancel
+            )
+            .is_err()
+        );
+        assert!(!directory.path().join("escape").exists());
+        symlink(outside.path(), directory.path().join("foreign")).unwrap();
+        assert!(
+            root.create_hardlink(&entry("hard", Kind::Hardlink, 0o600, "foreign"), &cancel)
+                .is_err()
+        );
+        assert!(!directory.path().join("hard").exists());
+        let link = entry("link", Kind::Symlink, 0o777, "source");
+        root.create_symlink(&link, &cancel).unwrap();
+        let mut unsupported = link;
+        unsupported.mode = 0o600;
+        assert!(root.finish_symlink(&unsupported, &cancel).is_err());
+        assert_eq!(
+            file.metadata().unwrap().permissions().mode() & 0o7777,
+            0o600
+        );
     }
 }
