@@ -1,0 +1,25 @@
+{
+  "protocol": 6,
+  "sid": null,
+  "session_id": null,
+  "daemon_sha256": "f00caaf5b82bed672e1e4c11d576da848b3bb29fb881c08f8dc3b24340f902a2",
+  "image_sha256": "84e3baa083f1a26f335a7e707f16336d88762c9bdcdf4d1133f8b1c330489ba7",
+  "image_bytes": 36595460,
+  "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+  "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+  "operations": [
+    "ping",
+    "inventory",
+    "rootfs-map",
+    "boot-readback",
+    "return-to-fel",
+    "prepare-spl-trial",
+    "execute-spl-trial"
+  ],
+  "nand_writes": "restricted-original-spl-block-trial",
+  "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+  "byte_identical_repeat": true,
+  "physical_boot": "Pending; earlier v6 session 11 used the preceding implementation",
+  "inventory_topology": "Enumerate canonical contiguous mtd0 through mtd4, include optional mtd5; reject unknown/missing/oversized topology",
+  "trial_write_policy": "Exactly five MTD entries required; any sixth alias denies original-SPL trial"
+}

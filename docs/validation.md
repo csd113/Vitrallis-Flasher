@@ -679,3 +679,30 @@ tests. `python3 scripts/ci.py validate` exits 0, including formatting, strict
 Clippy, workspace tests, release build, provenance and established image/plan
 checks. The log is `work/batch3/marker-probe-preparation-validation.log`.
 `git diff --check` passes.
+
+### Batch 3 recovery inventory topology guard
+
+The device inventory no longer silently truncates MTD class enumeration to the
+first five devices. It returns the optional sixth alias and rejects missing,
+noncanonical, unsupported or oversized layouts. The unchanged original-SPL
+preflight requires exactly five entries; an added read-only marker alias is
+covered by a rejection fixture. A new daemon test covers enumeration, paired
+read-only character nodes, absent devices and malformed names. The latter test
+also passes cross-built on ARMv7 under qemu-arm. This is simulated/host evidence;
+the new recovery image has not been loaded onto the PocketCHIP.
+
+Two recovery builds are byte-identical, 36,595,460 bytes, SHA256
+`84e3baa083f1a26f335a7e707f16336d88762c9bdcdf4d1133f8b1c330489ba7`.
+The current bootstrap pins and its metadata regression test use this image and
+its exact daemon digest. Historical session 11 metadata is preserved separately.
+
+`cargo fmt --all --check`, targeted tests, strict Clippy and
+`cargo check --workspace --all-targets --all-features --locked` pass.
+`python3 scripts/ci.py validate` exits 0: 159 core tests pass with six intentional
+child-process fixture ignores, five integration and ten daemon tests pass,
+plus 71 image and 35 script tests. Formatting, strict workspace Clippy, release
+build, provenance and established image/plan checks pass in that sequence.
+`git diff --check` passes. Logs:
+`work/batch3/marker-inventory-guard-final-validation.log`,
+`work/batch3/marker-inventory-guard-final-workspace-check.log` and
+`work/batch3/marker-inventory-guard-arm-test.log`.

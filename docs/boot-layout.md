@@ -235,3 +235,10 @@ paths. The diagnostic DTB is reproducible and independently parses with dtc;
 it has not been integrated into bootstrap or loaded on hardware. A closed read
 operation and direct physical marker observation remain pending. This preparation
 changes no NAND plan or production authorization.
+
+Recovery inventory now enumerates bounded canonical MTD class entries, including
+an optional sixth alias. Missing, noncanonical or larger layouts fail closed.
+The original-SPL trial continues to require exactly five partitions, so a
+physical marker alias blocks both preparation and fresh execution preflight.
+Host and ARMv7 tests cover this boundary; physical loading of the updated
+implementation remains pending.

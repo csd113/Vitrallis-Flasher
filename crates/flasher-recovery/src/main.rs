@@ -43,7 +43,10 @@ pub(crate) fn number(path: &Path) -> Result<u64, Error> {
 }
 fn inventory(cancel: &Cancellation) -> Result<Inventory, Error> {
     let mut mtd = Vec::new();
-    for index in 0..5 {
+    // Do not silently hide a diagnostic alias or changed partition topology.
+    // The original-SPL preflight requires exactly five entries and therefore
+    // rejects a sixth device, including the read-only physical marker alias.
+    for index in mtd_indices(Path::new("/sys/class/mtd"))? {
         cancel.check()?;
         let base = format!("/sys/class/mtd/mtd{index}");
         let base = Path::new(&base);
@@ -88,6 +91,43 @@ fn inventory(cancel: &Cancellation) -> Result<Inventory, Error> {
         mtd_report,
         nanddump_help,
     })
+}
+
+fn mtd_indices(root: &Path) -> Result<Vec<u8>, Error> {
+    let mut devices = [false; 6];
+    let mut read_only = [false; 6];
+    for (count, entry) in fs::read_dir(root)?.enumerate() {
+        if count >= 12 {
+            return Err(Error::Length);
+        }
+        let name = entry?.file_name();
+        let name = name.to_str().ok_or(Error::Device)?;
+        let suffix = name.strip_prefix("mtd").ok_or(Error::Device)?;
+        let (digits, is_read_only) = suffix
+            .strip_suffix("ro")
+            .map_or((suffix, false), |digits| (digits, true));
+        let index: u8 = digits.parse().map_err(|_| Error::Device)?;
+        if digits != index.to_string() || usize::from(index) >= devices.len() {
+            return Err(Error::Device);
+        }
+        let seen = if is_read_only {
+            &mut read_only
+        } else {
+            &mut devices
+        };
+        seen[usize::from(index)] = true;
+    }
+    if devices[..5].iter().any(|present| !present)
+        || read_only
+            .iter()
+            .zip(devices)
+            .any(|(ro, device)| *ro && !device)
+    {
+        return Err(Error::Device);
+    }
+    Ok((0_u8..6)
+        .filter(|index| devices[usize::from(*index)])
+        .collect())
 }
 fn rootfs_info(cancel: &Cancellation) -> Result<MtdInfo, Error> {
     inventory(cancel)?
@@ -245,6 +285,30 @@ fn run() -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inventory_includes_extra_alias_and_rejects_unknown_or_missing_devices() {
+        let root = tempfile::tempdir().unwrap();
+        for index in (0..5).rev() {
+            fs::create_dir(root.path().join(format!("mtd{index}"))).unwrap();
+            fs::create_dir(root.path().join(format!("mtd{index}ro"))).unwrap();
+        }
+        assert_eq!(mtd_indices(root.path()).unwrap(), [0, 1, 2, 3, 4]);
+        fs::create_dir(root.path().join("mtd5")).unwrap();
+        assert_eq!(mtd_indices(root.path()).unwrap(), [0, 1, 2, 3, 4, 5]);
+        fs::create_dir(root.path().join("mtd5ro")).unwrap();
+        assert_eq!(mtd_indices(root.path()).unwrap(), [0, 1, 2, 3, 4, 5]);
+        fs::remove_dir(root.path().join("mtd2")).unwrap();
+        assert!(mtd_indices(root.path()).is_err());
+        fs::create_dir(root.path().join("mtd2")).unwrap();
+        fs::remove_dir(root.path().join("mtd5ro")).unwrap();
+        for invalid in ["mtd6", "mtd05", "mtd-1", "mtd", "mtd0extra", "other"] {
+            let path = root.path().join(invalid);
+            fs::create_dir(&path).unwrap();
+            assert!(mtd_indices(root.path()).is_err());
+            fs::remove_dir(path).unwrap();
+        }
+    }
 
     #[test]
     fn measured_unaddressed_memory_node_is_validated() {

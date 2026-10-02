@@ -654,7 +654,7 @@ mod tests {
             )
             .is_err()
         );
-        let mutations: [fn(&mut Inventory); 7] = [
+        let mutations: [fn(&mut Inventory); 8] = [
             |i| i.model = "Other board".into(),
             |i| i.boot_log.clear(),
             |i| i.mtd[0].offset = BLOCK,
@@ -662,6 +662,16 @@ mod tests {
             |i| i.mtd[0].page_size = 4096,
             |i| i.mtd[2].ecc_failures = 1,
             |i| i.mtd[4].bad_blocks = 62,
+            |i| {
+                let mut alias: crate::recovery::MtdInfo =
+                    serde_json::from_value(serde_json::to_value(&i.mtd[4]).unwrap()).unwrap();
+                alias.index = 5;
+                alias.name = "BBM.probe".into();
+                alias.offset = 947_912_704;
+                alias.size = BLOCK;
+                alias.erase_size = BLOCK;
+                i.mtd.push(alias);
+            },
         ];
         for mutate in mutations {
             let (mut inventory, backup, uboot) = measured();

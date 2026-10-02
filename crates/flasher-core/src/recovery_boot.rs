@@ -20,9 +20,9 @@ use std::{
 };
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
-const TEMPLATE_HASH: &str = "3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7";
-const TEMPLATE_BYTES: usize = 36_594_582;
-const DAEMON_HASH: &str = "a1f1049019bbb762af3a0bcdac55ec02465f9fc3599458ed1c293b23bb8bce7a";
+const TEMPLATE_HASH: &str = "84e3baa083f1a26f335a7e707f16336d88762c9bdcdf4d1133f8b1c330489ba7";
+const TEMPLATE_BYTES: usize = 36_595_460;
+const DAEMON_HASH: &str = "f00caaf5b82bed672e1e4c11d576da848b3bb29fb881c08f8dc3b24340f902a2";
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
 const INPUTS: [(&str, &str, &str, usize); 4] = [
     (
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn bootstrap_pins_match_the_recorded_template_bytes_and_implementation() {
         let metadata: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-template-v6.json"
+            "../../../docs/evidence/batch3/recovery-template-v6-inventory-guard.json"
         ))
         .unwrap();
         assert_eq!(

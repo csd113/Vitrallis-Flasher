@@ -264,3 +264,9 @@ selection is claimed.
   discrepancy and metadata for the reproducible append-only read-only marker
   alias DTB. Six deterministic tests protect transformation and file boundaries.
   No diagnostic DTB load, raw marker read or NAND write has occurred.
+
+- `recovery-template-v6-inventory-guard.json`: reproducible v6 recovery payload
+  that reports the optional sixth MTD alias instead of silently excluding it.
+  Original-SPL write preflight still requires exactly five partitions. This
+  updated payload has not yet been loaded; session 11 uses the preceding v6
+  implementation. ARMv7 qemu and host tests cover enumeration and alias rejection.
