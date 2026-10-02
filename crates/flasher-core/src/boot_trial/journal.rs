@@ -9,7 +9,8 @@ use std::{
     path::Path,
 };
 
-const VERSION: u8 = 1;
+const ORIGINAL_VERSION: u8 = 1;
+const RELEASE_VERSION: u8 = 2;
 const MAX_BYTES: u64 = 8192;
 const MAX_LINE: usize = 1024;
 
@@ -56,6 +57,8 @@ pub struct Header {
     pub context: Context,
     pub restoration_sha256: String,
     pub original_spl_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_spl: Option<super::release::Pins>,
 }
 #[derive(Debug, Serialize, PartialEq, Eq)]
 pub struct Report {
@@ -78,12 +81,18 @@ impl Journal {
         cancel.check()?;
         context.validate()?;
         let parent = private_parent(path)?;
+        let release_trial = context.operation.is_release_trial();
         let report = Report {
             header: Header {
-                version: VERSION,
+                version: if release_trial {
+                    RELEASE_VERSION
+                } else {
+                    ORIGINAL_VERSION
+                },
                 context,
                 restoration_sha256: super::RESTORATION_IMAGE.into(),
                 original_spl_sha256: super::ORIGINAL_SPL.into(),
+                release_spl: release_trial.then(super::release::Pins::expected),
             },
             entries: vec![Entry {
                 sequence: 0,
@@ -127,14 +136,7 @@ impl Journal {
     /// Rejects cancellation, invalid result/transition or journal I/O failure.
     pub fn verify(&mut self, report: &BootReadback, cancel: &Cancellation) -> Result<(), Error> {
         cancel.check()?;
-        match self.report.header.context.operation {
-            Operation::ErasePrimary | Operation::EraseBackup => {
-                super::verify_erased(report, self.report.header.context.operation.target())?;
-            }
-            Operation::RestorePrimary | Operation::RestoreBackup => {
-                super::verify_spl(report, self.report.header.context.operation.target())?;
-            }
-        }
+        self.report.header.context.operation.verify(report)?;
         cancel.check()?;
         self.append(Stage::Verified)
     }
@@ -236,9 +238,16 @@ pub fn read(path: &Path, cancel: &Cancellation) -> Result<Report, Error> {
     let mut lines = bytes[..bytes.len() - 1].split(|b| *b == b'\n');
     let header: Header = parse(lines.next().ok_or(Error::Length)?)?;
     header.context.validate()?;
-    if header.version != VERSION
+    let release_trial = header.context.operation.is_release_trial();
+    if header.version
+        != if release_trial {
+            RELEASE_VERSION
+        } else {
+            ORIGINAL_VERSION
+        }
         || header.restoration_sha256 != super::RESTORATION_IMAGE
         || header.original_spl_sha256 != super::ORIGINAL_SPL
+        || header.release_spl != release_trial.then(super::release::Pins::expected)
     {
         return Err(Error::Recovery);
     }
@@ -275,6 +284,52 @@ fn parse<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn release_journal_binds_exact_pins_and_cannot_downgrade_to_original_version() {
+        let directory = crate::assets::temporary_directory().unwrap();
+        let path = directory.path().join("release.jsonl");
+        let mut context = context();
+        context.operation = Operation::ProgramReleasePrimary;
+        let mut journal = Journal::create(&path, context, &Cancellation::default()).unwrap();
+        assert_eq!(
+            read(&path, &Cancellation::default())
+                .unwrap()
+                .header
+                .version,
+            2
+        );
+        journal
+            .advance(Stage::Prepared, &Cancellation::default())
+            .unwrap();
+        journal
+            .advance(Stage::Dispatched, &Cancellation::default())
+            .unwrap();
+        journal
+            .verify(
+                &super::super::release::scripted_fixture(),
+                &Cancellation::default(),
+            )
+            .unwrap();
+        let valid = std::fs::read_to_string(&path).unwrap();
+        let (header, entries) = valid.split_once('\n').unwrap();
+        for change in 0..3 {
+            let mut header: serde_json::Value = serde_json::from_str(header).unwrap();
+            match change {
+                0 => header["version"] = 1.into(),
+                1 => {
+                    header.as_object_mut().unwrap().remove("release_spl");
+                }
+                _ => header["release_spl"]["program_sha256"] = "0".repeat(64).into(),
+            }
+            std::fs::write(
+                &path,
+                format!("{}\n{entries}", serde_json::to_string(&header).unwrap()),
+            )
+            .unwrap();
+            assert!(read(&path, &Cancellation::default()).is_err());
+        }
+    }
 
     fn context() -> Context {
         Context {
@@ -419,11 +474,6 @@ mod tests {
             Err(Error::Cancelled)
         ));
         journal.advance(Stage::Indeterminate, &cancel).unwrap();
-        assert!(
-            journal
-                .verify(&measured_primary(), &Cancellation::default())
-                .is_err()
-        );
         assert!(
             journal
                 .advance(Stage::Dispatched, &Cancellation::default())

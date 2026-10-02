@@ -4,6 +4,7 @@ use flasher_core::{
     boot_trial::{
         self, Observations, Operation, OriginalSplFile, Preflight,
         journal::{Journal, Stage},
+        release::LockedHynixSplFile,
     },
     recovery::{
         BootRegion, Channel, Credentials, ReadInterpretation, Request, Response, spl_trial::Ticket,
@@ -17,6 +18,7 @@ use std::{
 };
 
 const RESTORATION: &str = "/run/vitrallis-original-spl.nand";
+const RELEASE: &str = "/run/vitrallis-locked-hynix-spl.nand";
 // One erase/fallback and one restoration per RAM boot. A reconnect never resumes
 // a ticket, and failed/indeterminate operations consume the same bounded budget.
 const MAX_DISPATCHES: usize = 2;
@@ -28,6 +30,7 @@ pub struct Service {
 struct Prepared {
     ticket: Ticket,
     restoration: OriginalSplFile,
+    release: Option<LockedHynixSplFile>,
 }
 
 fn tool_capabilities(cancel: &Cancellation) -> Result<(), Error> {
@@ -96,7 +99,15 @@ fn prepare(operation: Operation, cancel: &Cancellation) -> Result<(Prepared, Res
     // Restoration is mandatory even for erase: recovery must already have the
     // exact clean original program available before removing either SPL block.
     let restoration = OriginalSplFile::open(Path::new(RESTORATION), cancel)?;
-    if matches!(operation, Operation::ErasePrimary | Operation::EraseBackup) {
+    let release = if operation.is_release_trial() {
+        Some(LockedHynixSplFile::open(Path::new(RELEASE), cancel)?)
+    } else {
+        None
+    };
+    if matches!(
+        operation,
+        Operation::ErasePrimary | Operation::EraseBackup | Operation::EraseBackupForReleasePrimary
+    ) {
         let existing_target = super::readback::read(
             operation.target(),
             ReadInterpretation::Boot0Corrected,
@@ -109,6 +120,7 @@ fn prepare(operation: Operation, cancel: &Cancellation) -> Result<(Prepared, Res
         Prepared {
             ticket,
             restoration,
+            release,
         },
         Response::SplTrialPrepared(response),
     ))
@@ -158,6 +170,7 @@ impl Service {
                     state.ticket.consume(operation, &token)?;
                     self.execute(
                         state.restoration,
+                        state.release,
                         operation,
                         credentials,
                         implementation,
@@ -172,6 +185,7 @@ impl Service {
     fn execute(
         &mut self,
         mut restoration: OriginalSplFile,
+        mut release: Option<LockedHynixSplFile>,
         operation: Operation,
         credentials: &Credentials,
         implementation: [u8; 32],
@@ -183,6 +197,12 @@ impl Service {
         // Fresh SID, geometry, mounts and the protected boot chain immediately before intent.
         let checked = preflight(operation, cancel)?;
         restoration.revalidate(cancel)?;
+        if operation.is_release_trial() != release.is_some() {
+            return Err(Error::State);
+        }
+        if let Some(candidate) = &mut release {
+            candidate.revalidate(cancel)?;
+        }
         let directory = flasher_core::assets::temporary_directory()?;
         let path = directory.path().join("trial.jsonl");
         let mut journal = Journal::create(
@@ -193,7 +213,7 @@ impl Service {
         journal.advance(Stage::Prepared, cancel)?;
         journal.advance(Stage::Dispatched, cancel)?;
         eprintln!(
-            "Original-SPL diagnostic dispatched: {operation:?}; RAM journal {}",
+            "Pinned SPL diagnostic dispatched: {operation:?}; RAM journal {}",
             path.display()
         );
         self.journals.push(directory); // retain diagnosis even after disconnect/failure
@@ -206,11 +226,26 @@ impl Service {
                 || super::readback::read(checked.target(), ReadInterpretation::Raw, &committed),
                 &committed,
             )?;
-            let readback = if matches!(
-                operation,
-                Operation::RestorePrimary | Operation::RestoreBackup
-            ) {
-                restoration.restore(&checked, &SystemToolRunner, &committed)?;
+            let programmed = match operation {
+                Operation::RestorePrimary
+                | Operation::RestoreBackup
+                | Operation::RestoreBackupForReleasePrimary => {
+                    restoration.restore(&checked, &SystemToolRunner, &committed)?;
+                    true
+                }
+                Operation::ProgramReleasePrimary => {
+                    release.as_mut().ok_or(Error::State)?.program(
+                        &checked,
+                        &SystemToolRunner,
+                        &committed,
+                    )?;
+                    true
+                }
+                Operation::ErasePrimary
+                | Operation::EraseBackup
+                | Operation::EraseBackupForReleasePrimary => false,
+            };
+            let readback = if programmed {
                 super::readback::read(
                     checked.target(),
                     ReadInterpretation::Boot0Corrected,

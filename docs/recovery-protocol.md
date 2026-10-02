@@ -291,3 +291,32 @@ rejected. Fresh v7 requests and independent original boot-chain readback remain
 healthy. Production plan/manifest gates
 remain denied. Metadata is in
 [evidence/batch3/recovery-template-v7.json](evidence/batch3/recovery-template-v7.json).
+
+### Protocol v8 exact locked Hynix SPL diagnostics
+
+Protocol v8 rejects older recovery sessions and adds three closed operations:
+`ProgramReleasePrimary`, `EraseBackupForReleasePrimary` and
+`RestoreBackupForReleasePrimary`. The original four diagnostic operations retain
+their original-program guards. The new primary operation protects the original
+backup and U-Boot; the two new backup operations require the exact locked release
+primary and original U-Boot. All retain the measured SID, five-partition inventory,
+RAM-only state, zero ECC failures, fresh preflight and two-dispatch RAM-boot limit.
+
+The RAM image contains separate hash-validated private snapshots of the original
+restoration image and exact locked Hynix artifact. Prepared replies and version-2
+release journals bind the artifact, decoded program and source manifest hashes.
+Original journals remain version 1. These hashes identify diagnostic provenance;
+they do not approve a physical manifest or enable production flashing. No request
+accepts an image path, NAND address or replacement hash. All four native decoded
+programs, checksum and ECC interpretation must pass before Verified. A lost
+response after dispatch remains Indeterminate without automatic retry.
+
+The read-only `boot0-check-release-hynix` command validates the exact candidate
+before hardware use. Two v8 templates build byte-identically; physical loading
+and isolated release boot are pending in
+[evidence/batch3/recovery-template-v8.json](evidence/batch3/recovery-template-v8.json).
+
+The v8 builder additionally requires `--release-spl` for the pinned Hynix image;
+it rejects the Toshiba size/profile, corruption, oversize and symlink inputs
+before emitting the RAM image. Both original and release files are root-only
+archive entries at fixed paths.

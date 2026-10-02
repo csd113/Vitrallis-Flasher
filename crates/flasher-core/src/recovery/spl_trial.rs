@@ -25,6 +25,8 @@ pub struct Prepared {
     pub restoration_sha256: String,
     pub original_spl_sha256: String,
     pub original_uboot_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release_spl: Option<boot_trial::release::Pins>,
 }
 impl Prepared {
     /// Checks exact known candidate and backup chain; this is not release approval.
@@ -36,6 +38,10 @@ impl Prepared {
             || self.restoration_sha256 != boot_trial::RESTORATION_IMAGE
             || self.original_spl_sha256 != boot_trial::ORIGINAL_SPL
             || self.original_uboot_sha256 != boot_trial::ORIGINAL_UBOOT
+            || self.release_spl
+                != operation
+                    .is_release_trial()
+                    .then(boot_trial::release::Pins::expected)
         {
             return Err(Error::Recovery);
         }
@@ -69,6 +75,9 @@ impl Ticket {
             restoration_sha256: boot_trial::RESTORATION_IMAGE.into(),
             original_spl_sha256: boot_trial::ORIGINAL_SPL.into(),
             original_uboot_sha256: boot_trial::ORIGINAL_UBOOT.into(),
+            release_spl: operation
+                .is_release_trial()
+                .then(boot_trial::release::Pins::expected),
         };
         Ok((ticket, prepared))
     }
@@ -94,14 +103,7 @@ impl Ticket {
 }
 
 pub(super) fn verify(operation: Operation, readback: &BootReadback) -> Result<(), Error> {
-    match operation {
-        Operation::ErasePrimary | Operation::EraseBackup => {
-            boot_trial::verify_erased(readback, operation.target())
-        }
-        Operation::RestorePrimary | Operation::RestoreBackup => {
-            boot_trial::verify_spl(readback, operation.target())
-        }
-    }
+    operation.verify(readback)
 }
 
 /// Checks the live device and restoration snapshot, then disconnects without dispatch.
@@ -215,6 +217,101 @@ const fn failure_stage(dispatched: bool, error: &Error) -> Stage {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn prepared_release_pins_bind_exact_artifact_program_manifest_and_operation() {
+        for operation in [
+            Operation::ProgramReleasePrimary,
+            Operation::EraseBackupForReleasePrimary,
+            Operation::RestoreBackupForReleasePrimary,
+        ] {
+            let (_, mut prepared) = Ticket::issue(operation).unwrap();
+            prepared.validate(operation).unwrap();
+            prepared.release_spl.as_mut().unwrap().artifact_sha256 = "0".repeat(64);
+            assert!(prepared.validate(operation).is_err());
+            prepared.release_spl = None;
+            assert!(prepared.validate(operation).is_err());
+        }
+        let (_, mut prepared) = Ticket::issue(Operation::RestorePrimary).unwrap();
+        prepared.release_spl = Some(boot_trial::release::Pins::expected());
+        assert!(prepared.validate(Operation::RestorePrimary).is_err());
+    }
+
+    #[test]
+    fn release_trial_wrong_pins_fail_before_dispatch_and_bad_readback_stays_indeterminate() {
+        for outcome in 0..4 {
+            let directory = crate::assets::temporary_directory().unwrap();
+            let path = directory.path().join("release.jsonl");
+            let operation = Operation::ProgramReleasePrimary;
+            let mut journal = Journal::create(
+                &path,
+                Context {
+                    sid: boot_trial::SID,
+                    session: [1; 16],
+                    daemon_sha256: [2; 32],
+                    operation,
+                },
+                &Cancellation::default(),
+            )
+            .unwrap();
+            let mut calls = 0;
+            let result = perform(
+                &mut journal,
+                operation,
+                |request| {
+                    calls += 1;
+                    if calls == 1 {
+                        assert!(matches!(
+                            request,
+                            Request::PrepareSplTrial {
+                                operation: Operation::ProgramReleasePrimary
+                            }
+                        ));
+                        let (_, mut prepared) = Ticket::issue(operation).unwrap();
+                        if outcome == 0 {
+                            prepared.release_spl.as_mut().unwrap().manifest_sha256 = "0".repeat(64);
+                        }
+                        return Ok(Response::SplTrialPrepared(prepared));
+                    }
+                    assert!(matches!(
+                        request,
+                        Request::ExecuteSplTrial {
+                            operation: Operation::ProgramReleasePrimary,
+                            ..
+                        }
+                    ));
+                    if outcome == 2 {
+                        return Err(Error::Timeout);
+                    }
+                    let mut report = boot_trial::release::scripted_fixture();
+                    if outcome == 1 {
+                        report.spl_copies[0].data_sha256 = boot_trial::ORIGINAL_SPL.into();
+                    }
+                    Ok(Response::SplTrialVerified {
+                        operation,
+                        readback: Box::new(report),
+                    })
+                },
+                &Cancellation::default(),
+            );
+            assert_eq!(result.is_ok(), outcome == 3);
+            let expected = match outcome {
+                0 => Stage::FailedBeforeDispatch,
+                3 => Stage::Verified,
+                _ => Stage::Indeterminate,
+            };
+            assert_eq!(
+                boot_trial::journal::read(&path, &Cancellation::default())
+                    .unwrap()
+                    .entries
+                    .last()
+                    .unwrap()
+                    .stage,
+                expected
+            );
+            assert_eq!(calls, if outcome == 0 { 1 } else { 2 });
+        }
+    }
 
     #[test]
     fn physical_backup_restoration_checks_corrected_programs_and_exact_target() {

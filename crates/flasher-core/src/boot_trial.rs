@@ -1,4 +1,4 @@
-//! Restricted original-SPL fallback diagnostic for the sacrificial Batch 3 unit.
+//! Restricted pinned-SPL diagnostics for the sacrificial Batch 3 unit.
 //!
 //! This is not release approval or production `NandPlan` authorization. The
 //! recovery caller must collect every observation locally, in the authenticated
@@ -19,8 +19,9 @@ use std::{
 };
 
 pub mod journal;
+pub mod release;
 
-/// The four reviewed original-SPL isolation/restoration operations; no addresses or paths.
+/// Closed original and exact locked-release SPL diagnostics; no addresses or paths.
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub enum Operation {
@@ -28,22 +29,58 @@ pub enum Operation {
     RestorePrimary,
     EraseBackup,
     RestoreBackup,
+    ProgramReleasePrimary,
+    EraseBackupForReleasePrimary,
+    RestoreBackupForReleasePrimary,
 }
 impl Operation {
     /// Closed diagnostic target; no user-supplied addresses.
     #[must_use]
     pub const fn target(self) -> BootRegion {
         match self {
-            Self::ErasePrimary | Self::RestorePrimary => BootRegion::SplPrimary,
-            Self::EraseBackup | Self::RestoreBackup => BootRegion::SplBackup,
+            Self::ErasePrimary | Self::RestorePrimary | Self::ProgramReleasePrimary => {
+                BootRegion::SplPrimary
+            }
+            Self::EraseBackup
+            | Self::RestoreBackup
+            | Self::EraseBackupForReleasePrimary
+            | Self::RestoreBackupForReleasePrimary => BootRegion::SplBackup,
         }
     }
-    /// The opposite SPL block must retain the original program before mutation.
+    /// The opposite SPL block must retain the operation's exact protected program.
     #[must_use]
     pub const fn protected_region(self) -> BootRegion {
         match self {
-            Self::ErasePrimary | Self::RestorePrimary => BootRegion::SplBackup,
-            Self::EraseBackup | Self::RestoreBackup => BootRegion::SplPrimary,
+            Self::ErasePrimary | Self::RestorePrimary | Self::ProgramReleasePrimary => {
+                BootRegion::SplBackup
+            }
+            Self::EraseBackup
+            | Self::RestoreBackup
+            | Self::EraseBackupForReleasePrimary
+            | Self::RestoreBackupForReleasePrimary => BootRegion::SplPrimary,
+        }
+    }
+    #[must_use]
+    pub const fn is_release_trial(self) -> bool {
+        matches!(
+            self,
+            Self::ProgramReleasePrimary
+                | Self::EraseBackupForReleasePrimary
+                | Self::RestoreBackupForReleasePrimary
+        )
+    }
+    /// Checks this operation's completion without granting any new authority.
+    /// # Errors
+    /// Rejects wrong targets, programs, ECC interpretation or incomplete erasure.
+    pub fn verify(self, report: &BootReadback) -> Result<(), Error> {
+        match self {
+            Self::ErasePrimary | Self::EraseBackup | Self::EraseBackupForReleasePrimary => {
+                verify_erased(report, self.target())
+            }
+            Self::RestorePrimary | Self::RestoreBackup | Self::RestoreBackupForReleasePrimary => {
+                verify_spl(report, self.target())
+            }
+            Self::ProgramReleasePrimary => release::verify_primary(report),
         }
     }
 }
@@ -59,6 +96,26 @@ pub const IMAGE_BYTES: usize = 4_620_288;
 const BLOCK: u64 = 4_194_304;
 const PAGE: usize = 16_384;
 const OOB: usize = 1_664;
+
+#[derive(Clone, Copy)]
+enum Program {
+    Original,
+    LockedHynix,
+}
+impl Program {
+    const fn digest(self) -> &'static str {
+        match self {
+            Self::Original => ORIGINAL_SPL,
+            Self::LockedHynix => release::PROGRAM,
+        }
+    }
+    const fn checksum(self) -> u32 {
+        match self {
+            Self::Original => 0x5605_fb91,
+            Self::LockedHynix => 0x5305_ee97,
+        }
+    }
+}
 
 /// Fresh local recovery observations; the protected SPL is opposite the trial target.
 pub struct Observations<'a> {
@@ -90,7 +147,14 @@ impl Preflight {
         }
         ram_only(observed.mounts, observed.ubi_devices)?;
         hardware(observed.inventory)?;
-        verify_spl(observed.protected_spl, operation.protected_region())?;
+        if matches!(
+            operation,
+            Operation::EraseBackupForReleasePrimary | Operation::RestoreBackupForReleasePrimary
+        ) {
+            release::verify_primary(observed.protected_spl)?;
+        } else {
+            verify_spl(observed.protected_spl, operation.protected_region())?;
+        }
         let uboot = observed.uboot;
         common_readback(uboot)?;
         if uboot.region != BootRegion::UBoot
@@ -253,6 +317,13 @@ fn common_readback(report: &BootReadback) -> Result<(), Error> {
 /// # Errors
 /// Rejects missing copies, wrong interpretation/digest/header, ECC errors or wrong region.
 pub fn verify_spl(report: &BootReadback, region: BootRegion) -> Result<(), Error> {
+    verify_program(report, region, Program::Original)
+}
+fn verify_program(
+    report: &BootReadback,
+    region: BootRegion,
+    program: Program,
+) -> Result<(), Error> {
     common_readback(report)?;
     if !matches!(region, BootRegion::SplPrimary | BootRegion::SplBackup)
         || report.region != region
@@ -263,12 +334,12 @@ pub fn verify_spl(report: &BootReadback, region: BootRegion) -> Result<(), Error
     }
     for (index, copy) in report.spl_copies.iter().enumerate() {
         if usize::from(copy.copy) != index
-            || copy.data_sha256 != ORIGINAL_SPL
+            || copy.data_sha256 != program.digest()
             || copy.corrected_bits.iter().any(|bits| *bits > 64)
             || copy.header_bytes.len() != 32
             || &copy.header_bytes[4..12] != b"eGON.BT0"
             || &copy.header_bytes[20..24] != b"SPL\x02"
-            || copy.checksum != 0x5605_fb91
+            || copy.checksum != program.checksum()
         {
             return Err(Error::Device);
         }
@@ -333,20 +404,7 @@ impl OriginalSplFile {
     /// # Errors
     /// Rejects unsafe paths, wrong size/hash, bad markers, ECC/headers or cancellation.
     pub fn open(path: &Path, cancel: &Cancellation) -> Result<Self, Error> {
-        cancel.check()?;
-        crate::assets::regular_components(path)?;
-        let file = File::open(path)?;
-        if !file.metadata()?.is_file() || file.metadata()?.len() != IMAGE_BYTES as u64 {
-            return Err(Error::Length);
-        }
-        let mut bytes = Vec::new();
-        file.take(IMAGE_BYTES as u64 + 1).read_to_end(&mut bytes)?;
-        validate_image(&bytes, cancel)?;
-        let directory = crate::assets::temporary_directory()?;
-        let mut file = tempfile::NamedTempFile::new_in(directory.path())?;
-        file.write_all(&bytes)?;
-        file.as_file().sync_all()?;
-        cancel.check()?;
+        let (file, directory) = snapshot(path, validate_image, cancel)?;
         Ok(Self {
             file,
             _directory: directory,
@@ -357,14 +415,7 @@ impl OriginalSplFile {
     /// # Errors
     /// Returns cancellation, changed bytes or I/O failure.
     pub fn revalidate(&mut self, cancel: &Cancellation) -> Result<(), Error> {
-        cancel.check()?;
-        self.file.as_file_mut().rewind()?;
-        let mut bytes = Vec::new();
-        self.file
-            .as_file_mut()
-            .take(IMAGE_BYTES as u64 + 1)
-            .read_to_end(&mut bytes)?;
-        validate_image(&bytes, cancel)
+        revalidate_snapshot(&mut self.file, validate_image, cancel)
     }
 
     /// Rechecks the open snapshot and writes only the validated fixed SPL partition.
@@ -379,7 +430,9 @@ impl OriginalSplFile {
     ) -> Result<ToolOutput, Error> {
         if !matches!(
             preflight.operation,
-            Operation::RestorePrimary | Operation::RestoreBackup
+            Operation::RestorePrimary
+                | Operation::RestoreBackup
+                | Operation::RestoreBackupForReleasePrimary
         ) {
             return Err(Error::State);
         }
@@ -401,6 +454,42 @@ impl OriginalSplFile {
             cancel,
         )
     }
+}
+
+fn snapshot(
+    path: &Path,
+    validate: fn(&[u8], &Cancellation) -> Result<(), Error>,
+    cancel: &Cancellation,
+) -> Result<(tempfile::NamedTempFile, tempfile::TempDir), Error> {
+    cancel.check()?;
+    crate::assets::regular_components(path)?;
+    let file = File::open(path)?;
+    if !file.metadata()?.is_file() || file.metadata()?.len() != IMAGE_BYTES as u64 {
+        return Err(Error::Length);
+    }
+    let mut bytes = Vec::new();
+    file.take(IMAGE_BYTES as u64 + 1).read_to_end(&mut bytes)?;
+    validate(&bytes, cancel)?;
+    let directory = crate::assets::temporary_directory()?;
+    let mut file = tempfile::NamedTempFile::new_in(directory.path())?;
+    file.write_all(&bytes)?;
+    file.as_file().sync_all()?;
+    cancel.check()?;
+    Ok((file, directory))
+}
+
+fn revalidate_snapshot(
+    file: &mut tempfile::NamedTempFile,
+    validate: fn(&[u8], &Cancellation) -> Result<(), Error>,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    cancel.check()?;
+    file.as_file_mut().rewind()?;
+    let mut bytes = Vec::new();
+    file.as_file_mut()
+        .take(IMAGE_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)?;
+    validate(&bytes, cancel)
 }
 
 fn validate_image(bytes: &[u8], cancel: &Cancellation) -> Result<(), Error> {

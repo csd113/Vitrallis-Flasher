@@ -802,3 +802,29 @@ ARMv7 under qemu-arm. Logs:
 Structured physical records for sessions 12–14 are indexed in
 `docs/evidence/batch3/README.md`; private session 12 journal remains at
 `work/batch3/original-spl-trial-session-12/restore-backup.jsonl`.
+
+### Batch 3 locked Hynix release diagnostic preparation
+
+The exact locked Hynix SPL passes the read-only host CLI snapshot check: all four
+native decoded copies match the locked program and checksum without correction.
+The release operations remain distinct from original restoration. Regression
+tests cover wrong protected programs, snapshot substitution, altered artifact/
+manifest bindings, journal version/pin changes, malformed paths and cancellation.
+The 11 targeted release-related core tests pass natively and under ARMv7 qemu.
+Software-combined release readback fixtures are explicitly simulated, not NAND
+observations. The ARM daemon builds with the pinned Rust 1.99.0 container.
+
+Two independent v8 template builds are byte-identical at 41,215,158 bytes; the
+host bootstrap pins their exact digest, length and daemon implementation.
+Physical v8 loading, release programming and isolated BROM acceptance are pending.
+Metadata is in `evidence/batch3/recovery-template-v8.json`; private build/check
+logs are under `work/batch3/locked-release-*`. No production manifest approval
+or full reflash is established by this preparation.
+
+Full `python3 scripts/ci.py validate` passes: formatting, strict workspace Clippy,
+172 core tests (six intentional ignored subprocess fixtures), five integration
+tests, 11 daemon tests, 72 image tests, 35 script tests, provenance/kernel checks,
+stock/Vitrallis plans and established checks, release builds and manifest checks.
+`cargo check --workspace --all-targets --all-features --locked` and
+`git diff --check` pass independently. Logs: `work/batch3/locked-release-v8-full-validation.log`
+and `work/batch3/locked-release-v8-workspace-check.log`.

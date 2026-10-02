@@ -7,6 +7,19 @@ import recovery
 
 
 class RecoveryArchiveTests(unittest.TestCase):
+    def test_release_candidate_rejects_wrong_profile_corruption_and_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'candidate'
+            for data in [b'', bytes(4521984), bytes(recovery.RESTORATION_BYTES), bytes(recovery.RESTORATION_BYTES + 1)]:
+                path.write_bytes(data)
+                with self.assertRaises(ValueError):
+                    recovery.release_bytes(path)
+                self.assertEqual(path.read_bytes(), data)
+            link = pathlib.Path(directory) / 'link'
+            link.symlink_to(path)
+            with self.assertRaises(ValueError):
+                recovery.release_bytes(link)
+
     def test_restoration_rejects_unpinned_short_oversized_and_symlink_inputs(self):
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / 'candidate'

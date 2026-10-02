@@ -17,7 +17,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 7;
+const VERSION: u32 = 8;
 const LIMIT: usize = 64 * 1024;
 // Bounded device-local preflight, erase/write and checked readback may take longer
 // than read-only diagnostics. Polling and cancellation remain at 500 ms.
@@ -28,7 +28,7 @@ pub mod marker;
 pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC07";
+const MAGIC: &[u8; 8] = b"VTRREC08";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -768,15 +768,19 @@ mod tests {
         (client, server.join().unwrap())
     }
     #[test]
-    fn older_protocol_hellos_are_rejected_by_v7_without_compatibility_fallback() {
+    fn older_protocol_hellos_are_rejected_by_v8_without_compatibility_fallback() {
         let expected = hello(&credentials(1), &[2; 32], &[3; 32]);
-        for (magic, version) in [(b"VTRREC05", 5_u32), (b"VTRREC06", 6_u32)] {
+        for (magic, version) in [
+            (b"VTRREC05", 5_u32),
+            (b"VTRREC06", 6_u32),
+            (b"VTRREC07", 7_u32),
+        ] {
             let mut old = expected;
             old[..8].copy_from_slice(magic);
             old[8..12].copy_from_slice(&version.to_be_bytes());
             assert!(check_hello(&old, &expected).is_err());
         }
-        assert_eq!(&expected[..8], b"VTRREC07");
+        assert_eq!(&expected[..8], b"VTRREC08");
         assert!(check_hello(&expected, &expected).is_ok());
     }
 

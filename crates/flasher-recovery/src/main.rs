@@ -267,7 +267,7 @@ fn run() -> Result<(), Error> {
     let implementation: [u8; 32] = Sha256::digest(binary).into();
     let listener = TcpListener::bind(("192.168.81.1", 3333))?;
     let mut trials = trial::Service::default();
-    eprintln!("Authenticated recovery ready; only fixed original-SPL trial mutations available");
+    eprintln!("Authenticated recovery ready; only fixed pinned SPL diagnostic mutations available");
     for incoming in listener.incoming() {
         let stream = incoming?;
         match Channel::accept(stream, &credentials, &implementation, &cancel) {
