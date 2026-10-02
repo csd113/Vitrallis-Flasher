@@ -363,4 +363,8 @@ are unchanged. Host software tests are not physical U-Boot boot evidence.
 The v9 template builds byte-identically twice at 41,687,740 bytes, leaving
 255,300 bytes under the existing 40 MiB bound. Metadata:
 [evidence/batch3/recovery-template-v9.json](evidence/batch3/recovery-template-v9.json).
-Its physical boot and the release U-Boot/fallback tests remain pending here.
+RAM session 17 physically authenticates v9 and verifies the measured mixed SPL
+chain, original primary U-Boot and erased backup before dispatch. The release
+backup programming and original primary erasure complete Verified with version-3
+journals. Independent readbacks preserve both SPL programs and the exact release
+backup with zero ECC failures. Normal release U-Boot boot/fallback remains pending.

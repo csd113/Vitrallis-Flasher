@@ -1,0 +1,18 @@
+{
+  "production_reflash": false,
+  "dispatched": false,
+  "prepared": {
+    "operation": "ProgramReleaseUbootBackup",
+    "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+    "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+    "original_uboot_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+    "uboot_images": {
+      "bundle_sha256": "982e47c825762cb6a88b1c21561ef624bd61dfb1a3a89191f3ccbc7b09e9350b",
+      "original_program_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+      "release_program_sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8",
+      "manifest_sha256": "48e46f66e4c1b6927b0864f9b285ae46a8c1c6e3c74033947a80643e7f723cc2",
+      "primary_spl_sha256": "879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0",
+      "backup_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb"
+    }
+  }
+}

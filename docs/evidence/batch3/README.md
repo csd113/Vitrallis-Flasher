@@ -319,3 +319,10 @@ selection is claimed.
   preflight succeeds without Execute. Independent both-SPL/U-Boot checks retain
   original digests and zero ECC failure counts. No application NAND mutation
   was dispatched. Device is left in this standard RAM recovery session.
+
+- `recovery-template-v9.json`: reproducible bounded v9 payload; physically
+  authenticated in session 17. The boot-tool, inventory, before/after chain,
+  preflight, backup-program and primary-erase records ending in `17.json`
+  preserve actual pinned U-Boot programming and complete primary erasure with
+  both SPLs and the protected release backup healthy. The cold backup boot test
+  remains pending; program/readback success is not normal boot evidence.

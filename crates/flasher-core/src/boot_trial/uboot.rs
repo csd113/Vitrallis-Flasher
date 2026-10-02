@@ -569,6 +569,90 @@ mod tests {
     }
 
     #[test]
+    fn physically_programmed_release_backup_requires_normal_ecc_and_exact_program() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-boot-chain-after-uboot-backup-17.json"
+        ))
+        .unwrap();
+        let inventory: Inventory =
+            serde_json::from_value(evidence["inventory"]["Inventory"].clone()).unwrap();
+        let mut reports: Vec<BootReadback> =
+            serde_json::from_value(evidence["records"].clone()).unwrap();
+        assert!(reports[3].corrected_bits_after > reports[3].corrected_bits_before);
+        Operation::ProgramReleaseUbootBackup
+            .verify(&reports[3])
+            .unwrap();
+        Preflight::validate(
+            Operation::EraseOriginalUbootPrimary,
+            &observe(&inventory, &reports),
+            &Cancellation::default(),
+        )
+        .unwrap();
+        reports[3].interpretation = ReadInterpretation::Raw;
+        assert!(
+            Operation::ProgramReleaseUbootBackup
+                .verify(&reports[3])
+                .is_err()
+        );
+        reports[3].interpretation = ReadInterpretation::Boot0Corrected;
+        assert!(
+            Operation::ProgramReleaseUbootBackup
+                .verify(&reports[3])
+                .is_err()
+        );
+        reports[3].interpretation = ReadInterpretation::KernelCorrected;
+        reports[3].data_sha256 = super::super::ORIGINAL_UBOOT.into();
+        assert!(
+            Operation::ProgramReleaseUbootBackup
+                .verify(&reports[3])
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn physical_primary_erasure_is_complete_and_preserves_recovery_prerequisites() {
+        let evidence: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-release-uboot-backup-isolated-preboot-17.json"
+        )).unwrap();
+        let inventory: Inventory =
+            serde_json::from_value(evidence["inventory"]["Inventory"].clone()).unwrap();
+        let mut reports: Vec<BootReadback> =
+            serde_json::from_value(evidence["records"].clone()).unwrap();
+        let cancel = Cancellation::default();
+        Operation::EraseOriginalUbootPrimary
+            .verify(&reports[2])
+            .unwrap();
+        for operation in [
+            Operation::RestoreOriginalUbootPrimary,
+            Operation::ProgramReleaseUbootPrimary,
+        ] {
+            Preflight::validate(operation, &observe(&inventory, &reports), &cancel).unwrap();
+        }
+        assert!(
+            Preflight::validate(
+                Operation::EraseOriginalUbootPrimary,
+                &observe(&inventory, &reports),
+                &cancel
+            )
+            .is_err()
+        );
+        reports[2].erased_oob_pages.pop();
+        assert!(
+            Operation::EraseOriginalUbootPrimary
+                .verify(&reports[2])
+                .is_err()
+        );
+        assert!(
+            Preflight::validate(
+                Operation::ProgramReleaseUbootPrimary,
+                &observe(&inventory, &reports),
+                &cancel
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
     fn bundle_rejects_wrong_sizes_corruption_symlink_and_cancellation() {
         let directory = crate::assets::temporary_directory().unwrap();
         let path = directory.path().join("bundle.bin");

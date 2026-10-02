@@ -939,3 +939,26 @@ Private logs: `work/batch3/uboot-v9-full-validation.log`,
 `uboot-v9-workspace-check.log`, `uboot-v9-clippy.log`, `uboot-v9-arm-tests.log`,
 `uboot-v9-final-arm-build.log` and the two recovery-template-v9 build logs.
 Metadata: `evidence/batch3/recovery-template-v9.json`.
+
+### Session 17 actual U-Boot programming and erasure regressions
+
+The authenticated v9 device completes release backup programming and original
+primary erasure with Verified version-3 journals (30.904 / 28.095 seconds).
+Independent complete boot-chain reads retain both SPL programs and the exact
+release U-Boot backup; primary raw data/OOB is entirely erased. No ECC failure
+or new bad block is observed. The two actual reports are deterministic fixtures:
+wrong ECC interpretation/program cannot verify the release write, incomplete OOB
+erasure cannot verify erasure or authorize release-primary programming, and the
+healthy erased primary preserves the guarded restore/program prerequisites.
+Normal bridge-free boot and production reflash remain pending.
+
+Full `python3 scripts/ci.py validate` passes after these fixtures: formatting,
+strict Clippy, 189 core tests (six intentional ignored subprocess fixtures),
+five integration tests, 11 recovery tests, 73 image tests, 35 script tests,
+release builds and established provenance/image/manifest checks. Workspace
+all-target/all-feature check and diff check pass. All 33 boot-trial tests pass
+on ARMv7 under qemu-arm (6.78 seconds). Private logs:
+`work/batch3/uboot-physical-17-full-validation.log`,
+`uboot-physical-17-workspace-check.log`, `uboot-physical-17-arm-tests.log` and
+`uboot-v9-physical-fixture-tests.log`. Physical evidence is indexed in
+`evidence/batch3/README.md` and the session 17 physical-validation section.

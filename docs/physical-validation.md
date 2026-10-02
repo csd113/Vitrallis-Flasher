@@ -246,3 +246,35 @@ Version-3 journals and prepared replies bind all candidate/protected SPL hashes.
 Normal U-Boot ECC remains separate from boot0 SPL ECC. This is software/build
 validation; physical v9 boot, locked release U-Boot acceptance and measured SPL
 fallback to the fourth block remain pending. Production flashing stays blocked.
+
+### RAM session 17: release U-Boot backup and isolated preboot
+
+The pinned v9 image is physically loaded after authenticated RAM return from
+session 16 to FEL and fresh native confirmation of the same SID. Authenticated
+inventory and independent boot reads preserve the release primary SPL, original
+backup SPL, original primary U-Boot and erased fourth block. The no-write backup
+preflight validates the exact pair and protected-chain bindings.
+
+`ProgramReleaseUbootBackup` completes Verified in 30.904 seconds. Its complete
+kernel-corrected 4 MiB data hash is the exact locked release `2c5de011…afb8`;
+OOB markers remain FF and ECC failures remain zero. Independent readbacks verify
+the unchanged original primary U-Boot and both SPL programs. This measures
+program/readback acceptance, not normal boot acceptance.
+
+The second and final permitted session dispatch, `EraseOriginalUbootPrimary`,
+completes Verified in 28.095 seconds. Independent raw primary readback contains
+FF in every data/OOB byte, hash `71c22040…fdab`, while both SPL programs and the
+corrected release backup remain intact. All MTD ECC failures are zero; the four
+boot blocks remain good and rootfs bad/BBT counts remain 61/4. Both journals are
+version 3 with Intent → Prepared → Dispatched → Verified. Rootfs is untouched.
+Cold normal boot with the bridge removed is requested; actual SPL fallback and
+release U-Boot boot are still pending. No production reflash is claimed.
+
+Evidence under `evidence/batch3/`: `recovery-boot-17-v9-tool.json`,
+`recovery-inventory-17-v9.json`, `recovery-boot-chain-before-uboot-17.json`,
+`recovery-uboot-backup-preflight-17.json`,
+`recovery-program-release-uboot-backup-trial-17.json`,
+`recovery-boot-chain-after-uboot-backup-17.json`,
+`recovery-erase-original-uboot-primary-trial-17.json` and
+`recovery-release-uboot-backup-isolated-preboot-17.json`. Private version-3
+journals are under `work/batch3/uboot-trial-session-17/`.
