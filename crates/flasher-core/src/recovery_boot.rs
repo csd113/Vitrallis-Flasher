@@ -20,8 +20,8 @@ use std::{
 };
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
-const TEMPLATE_HASH: &str = "0a70b77efd34143b6ba00b0a36cf1c7e5ed3afe9f2d16f9c253b8c548a773965";
-const DAEMON_HASH: &str = "ac1f94fc0d53f9378950355cc7ab318c0a1e2af288d5a253b43c5702cb503f7f";
+const TEMPLATE_HASH: &str = "77b5ff71d9bcaf56c610b7e61846cf4273281e0b86e4937e94b1d2fc8a0383cc";
+const DAEMON_HASH: &str = "51e0da6a141b51b3f6b7abdde295dedbbfba965c0f15626d0a06675291fe4cfb";
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
 const INPUTS: [(&str, &str, &str, usize); 4] = [
     (
@@ -147,7 +147,7 @@ pub fn boot(
 ) -> Result<PathBuf, Error> {
     cancel.check()?;
     let selected = select(&NativeFel.discover(cancel)?)?;
-    let template = verified(template, TEMPLATE_HASH, 40 * 1024 * 1024, 31_923_414)?;
+    let template = verified(template, TEMPLATE_HASH, 40 * 1024 * 1024, 31_934_994)?;
     let daemon = verified(daemon, DAEMON_HASH, 32 * 1024 * 1024, 0)?;
     let _tool_bytes = verified(tool, TOOL_HASH, 4 * 1024 * 1024, 0)?;
     let staging = temporary_directory()?;

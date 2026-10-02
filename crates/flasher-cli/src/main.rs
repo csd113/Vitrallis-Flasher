@@ -65,6 +65,9 @@ fn run() -> Result<(), Error> {
                 private.display()
             );
         }
+        [command, config, binary, region] if command == "recovery-boot-readback" => {
+            boot_readback_diagnostic(config, binary, region, &cancel)?;
+        }
         [command, config, binary]
             if matches!(
                 command.as_str(),
@@ -150,9 +153,36 @@ fn native_diagnostic(command: &str, cancel: &Cancellation) -> Result<(), Error> 
     Ok(())
 }
 
+fn boot_readback_diagnostic(
+    config: &str,
+    binary: &str,
+    region: &str,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    use flasher_core::recovery::BootRegion;
+    let region = match region {
+        "spl-primary" => BootRegion::SplPrimary,
+        "spl-backup" => BootRegion::SplBackup,
+        "uboot" => BootRegion::UBoot,
+        "fourth-boot-block" => BootRegion::FourthBootBlock,
+        _ => return Err(Error::Device),
+    };
+    let response = flasher_core::recovery::diagnostic_boot_readback(
+        Path::new(config),
+        Path::new(binary),
+        region,
+        cancel,
+    )?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&response).map_err(|_| Error::Recovery)?
+    );
+    Ok(())
+}
+
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned read-only diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|uboot|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. No physical write command is available. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

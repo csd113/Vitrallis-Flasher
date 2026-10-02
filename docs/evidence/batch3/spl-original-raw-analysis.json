@@ -1,0 +1,33 @@
+{
+  "evidence_class": "derived from measured raw backups; host analysis, not ECC correction or boot-ROM validation",
+  "method": "Descramble first 1140 bytes per physical page using reviewed boot0 LFSR; concatenate first 1024 bytes of pages 0..15 in each 64-page group; bit-majority across eight copies in MTD0/MTD1",
+  "groups_per_boot_block": 4,
+  "group_spacing_pages": 64,
+  "spl_bytes": 16384,
+  "magic": "eGON.BT0",
+  "consensus_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+  "stored_checksum": "0x5605fb91",
+  "computed_checksum": "0x5605fb91",
+  "checksum_matches": true,
+  "each_copy_difference_bits": [
+    24,
+    27,
+    52,
+    57,
+    13,
+    20,
+    40,
+    36
+  ],
+  "each_raw_decoded_copy_sha256": [
+    "8ab3648decdde9cfbb8d5bf33dc990802cb5a1845b24f955068e66e68ed5375b",
+    "16c1869f0934afff1fe5f09311ec3ce7ac232139df9a7096095ea5567af0516f",
+    "3594171081cfa6bb45584797fbdd80d6b5e129bd8a4b930351337234b0c0c132",
+    "b920df09bd917a8e0f87f519995a4ec17eb955cd41336f29439727c3a62a90e7",
+    "1b49f67ec4da25e9d97dd23d4b7fda8e0c130377af361d95fa1d7d01cf6291ab",
+    "107c85ebacd1148ba371b7b912a9095b19c25cef5ea2a7a5be5e36cc44b80e57",
+    "24025d52a3e71bb114ccce4805173e0a686b1479512c655de81efd962e46ba74",
+    "c8173c096900e164286b8d0bec162e1b85c26b2e4398080e6c8a2299f822694c"
+  ],
+  "consensus_is_not_ecc_corrected_readback": true
+}

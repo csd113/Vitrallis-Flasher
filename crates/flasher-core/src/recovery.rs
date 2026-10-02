@@ -86,7 +86,49 @@ impl Credentials {
 pub enum Request {
     Ping,
     Inventory,
+    BootReadback(BootRegion),
     ReturnToFel,
+}
+
+/// Closed boot partitions. Their physical offsets are measured policy, not input.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub enum BootRegion {
+    SplPrimary,
+    SplBackup,
+    UBoot,
+    FourthBootBlock,
+}
+impl BootRegion {
+    #[must_use]
+    pub const fn index(self) -> u8 {
+        match self {
+            Self::SplPrimary => 0,
+            Self::SplBackup => 1,
+            Self::UBoot => 2,
+            Self::FourthBootBlock => 3,
+        }
+    }
+}
+/// Fixed-size raw data/OOB readback evidence. It grants no write capability.
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct BootReadback {
+    pub region: BootRegion,
+    pub data_bytes: u64,
+    pub oob_bytes: u64,
+    pub data_sha256: String,
+    pub oob_sha256: String,
+    pub interleaved_sha256: String,
+    pub first_data_bytes: Vec<u8>,
+    pub erased_data_pages: Vec<u16>,
+    pub erased_oob_pages: Vec<u16>,
+    pub page_marker_bytes: Vec<[u8; 2]>,
+    pub corrected_bits_before: u64,
+    pub corrected_bits_after: u64,
+    pub ecc_failures_before: u64,
+    pub ecc_failures_after: u64,
+    pub tool_stderr: String,
 }
 
 /// NAND facts reported by the running recovery kernel; not a write capability.
@@ -127,6 +169,7 @@ pub struct Inventory {
 pub enum Response {
     Pong,
     Inventory(Box<Inventory>),
+    BootReadback(Box<BootReadback>),
     RestartAccepted,
 }
 
@@ -393,6 +436,8 @@ impl Channel {
                 (Request::Ping, Response::Pong)
                 | (Request::Inventory, Response::Inventory(_))
                 | (Request::ReturnToFel, Response::RestartAccepted) => {}
+                (Request::BootReadback(region), Response::BootReadback(report))
+                    if *region == report.region => {}
                 _ => return Err(Error::Recovery),
             }
             self.advance()?;
@@ -410,6 +455,7 @@ impl Channel {
     pub fn serve(
         &mut self,
         mut inventory: impl FnMut() -> Result<Inventory, Error>,
+        mut readback: impl FnMut(BootRegion) -> Result<BootReadback, Error>,
         cancel: &Cancellation,
     ) -> Result<(), Error> {
         if self.client {
@@ -420,6 +466,9 @@ impl Channel {
                 Request::Ping => Response::Pong,
                 Request::Inventory => Response::Inventory(Box::new(inventory()?)),
                 Request::ReturnToFel => Response::RestartAccepted,
+                Request::BootReadback(region) => {
+                    Response::BootReadback(Box::new(readback(region)?))
+                }
             };
             self.write(&response, cancel)?;
             self.advance()?;
@@ -440,6 +489,18 @@ pub fn diagnostic_inventory(
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
     diagnostic_request(config, binary, &Request::Inventory, cancel)
+}
+
+/// Reads one reviewed boot block without accepting paths or addresses.
+/// # Errors
+/// Rejects unsafe credentials, authentication, bounds and readback failures.
+pub fn diagnostic_boot_readback(
+    config: &std::path::Path,
+    binary: &std::path::Path,
+    region: BootRegion,
+    cancel: &Cancellation,
+) -> Result<Response, Error> {
+    diagnostic_request(config, binary, &Request::BootReadback(region), cancel)
 }
 
 /// Authenticates the live endpoint without depending on inventory collection.
@@ -564,8 +625,13 @@ mod tests {
     #[test]
     fn controlled_restart_is_authenticated_and_returns_after_response() {
         let (mut client, mut server) = pair();
-        let task =
-            thread::spawn(move || server.serve(|| Err(Error::State), &Cancellation::default()));
+        let task = thread::spawn(move || {
+            server.serve(
+                || Err(Error::State),
+                |_| Err(Error::State),
+                &Cancellation::default(),
+            )
+        });
         assert_eq!(
             client
                 .request(&Request::ReturnToFel, &Cancellation::default())
@@ -573,6 +639,47 @@ mod tests {
             Response::RestartAccepted
         );
         assert!(task.join().unwrap().is_ok());
+    }
+    #[test]
+    fn boot_readback_cannot_substitute_a_different_partition() {
+        for reported in [BootRegion::SplPrimary, BootRegion::UBoot] {
+            let (mut client, mut server) = pair();
+            let task = thread::spawn(move || {
+                assert_eq!(
+                    server.read::<Request>(&Cancellation::default()).unwrap(),
+                    Request::BootReadback(BootRegion::SplPrimary)
+                );
+                let report = BootReadback {
+                    region: reported,
+                    data_bytes: 4_194_304,
+                    oob_bytes: 425_984,
+                    data_sha256: "a".repeat(64),
+                    oob_sha256: "b".repeat(64),
+                    interleaved_sha256: "c".repeat(64),
+                    first_data_bytes: vec![0xff; 32],
+                    erased_data_pages: Vec::new(),
+                    erased_oob_pages: Vec::new(),
+                    page_marker_bytes: vec![[0xff; 2]; 256],
+                    corrected_bits_before: 0,
+                    corrected_bits_after: 0,
+                    ecc_failures_before: 0,
+                    ecc_failures_after: 0,
+                    tool_stderr: String::new(),
+                };
+                server
+                    .write(
+                        &Response::BootReadback(Box::new(report)),
+                        &Cancellation::default(),
+                    )
+                    .unwrap();
+            });
+            let response = client.request(
+                &Request::BootReadback(BootRegion::SplPrimary),
+                &Cancellation::default(),
+            );
+            assert_eq!(response.is_ok(), reported == BootRegion::SplPrimary);
+            task.join().unwrap();
+        }
     }
     #[test]
     fn wrong_key_session_sid_or_implementation_rejected() {

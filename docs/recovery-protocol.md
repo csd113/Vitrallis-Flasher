@@ -57,7 +57,7 @@ nothing in Batch 2 executes a plan or contacts a device.
 ## Batch 3 measured recovery boundary
 
 `flasher-core::recovery` and the ARMv7 `flasher-recovery` daemon expose only
-`Ping`, `Inventory` and a RAM-only `ReturnToFel` request. A fresh 32-byte boot
+`Ping`, `Inventory`, fixed-region `BootReadback` and RAM-only `ReturnToFel`. A fresh 32-byte boot
 secret, independently checked 16-byte SID and random session ID bind each boot.
 HMAC-SHA256 from the existing ring dependency authenticates both roles, protocol
 version, implementation hash and fresh client/server nonces. Frames bind direction
@@ -95,3 +95,13 @@ interactive input. ECM DHCP, TCP authentication and inventory are measured on
 macOS; NCM and Windows workflows remain unresolved. The daemon exposes no NAND
 write/erase request. All destructive plan gates remain closed. Evidence is indexed
 in [the Batch 3 evidence directory](evidence/batch3/README.md).
+
+The fifth physical boot exercised `BootReadback` on all four 4 MiB boot blocks.
+Requests contain a closed region enum, with no address, length, path or command.
+The daemon rechecks each partition's measured geometry, offset and zero bad-block
+count, then runs fixed `nanddump --noecc --oob --bb=dumpbad` arguments through
+`ToolRunner`. Raw output stays in a private temporary RAM directory. Only bounded
+hashes, first bytes, page marker observations, erased-page lists and counters return.
+The host rejects a response for a different region. Readbacks are diagnostic;
+uncorrected digest equality is not a production verification policy. `0xC00000`
+is still erased and its boot fallback role remains unproven.

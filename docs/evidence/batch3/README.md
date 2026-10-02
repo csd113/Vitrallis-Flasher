@@ -92,3 +92,15 @@ sunxi-wdt driver, authenticated inventory and successful authenticated return to
 BROM FEL on the same SID. The physical bridge remained connected. This proves a
 reload route without another manual power cycle; it does not characterize normal
 NAND boot or approve destructive execution.
+
+`recovery-boot-5-tool.json` and `recovery-boot-readbacks-5.json` record authenticated
+raw data/OOB readback of all four boot blocks. The fourth remains completely FF
+and matches the original raw/OOB hashes. Programmed regions differ between raw
+reads, showing why ECC-aware interpretation is required. Zero error-counter
+increments on a no-ECC read do not establish corrected-read health.
+
+`spl-original-raw-analysis.json` derives four boot0 groups per original block,
+64-page spacing, eGON header and 16 KiB declared size by applying the reviewed
+scrambler to the private backups. Eight raw decoded copies have 13–57 bit
+differences from a majority reconstruction whose stored checksum matches.
+This reconstruction is host analysis, not BCH correction or a BROM fallback test.

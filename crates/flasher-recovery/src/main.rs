@@ -1,4 +1,6 @@
 //! RAM-only, read-only recovery daemon. No NAND write operation is exposed.
+mod readback;
+
 use flasher_core::{
     Cancellation, Error,
     recovery::{Channel, Credentials, Inventory, MtdInfo},
@@ -22,7 +24,7 @@ fn main() -> ExitCode {
         }
     }
 }
-fn bytes(path: &Path, limit: u64) -> Result<Vec<u8>, Error> {
+pub(crate) fn bytes(path: &Path, limit: u64) -> Result<Vec<u8>, Error> {
     let mut bytes = Vec::new();
     File::open(path)?.take(limit + 1).read_to_end(&mut bytes)?;
     if bytes.len() as u64 > limit {
@@ -35,7 +37,7 @@ fn text(path: &Path) -> Result<String, Error> {
         .map(|s| s.trim_end_matches(['\0', '\n']).to_owned())
         .map_err(|_| Error::Output)
 }
-fn number(path: &Path) -> Result<u64, Error> {
+pub(crate) fn number(path: &Path) -> Result<u64, Error> {
     text(path)?.parse().map_err(|_| Error::Device)
 }
 fn inventory(cancel: &Cancellation) -> Result<Inventory, Error> {
@@ -207,7 +209,11 @@ fn run() -> Result<(), Error> {
     for incoming in listener.incoming() {
         let stream = incoming?;
         match Channel::accept(stream, &credentials, &implementation, &cancel) {
-            Ok(mut channel) => match channel.serve(|| inventory(&cancel), &cancel) {
+            Ok(mut channel) => match channel.serve(
+                || inventory(&cancel),
+                |region| readback::read(region, &cancel),
+                &cancel,
+            ) {
                 Ok(()) => reboot_to_fel()?,
                 Err(error) => eprintln!("Recovery connection closed: {error}"),
             },

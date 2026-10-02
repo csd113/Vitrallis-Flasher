@@ -5,7 +5,8 @@ Batch 3 live inventory and boot readbacks are recorded in
 Native FEL identity, SRAM upload/readback/execute/restore and RAM-only recovery
 boot are now physically measured. Recovery authentication and board/NAND inventory
 succeed over macOS ECM. The initial RAM restart failed; adding the pinned reset module corrected it.
-Authenticated recovery now returns to FEL and the native transport rechecks SID. No NAND
+Authenticated recovery now returns to FEL and the native transport rechecks SID. Authenticated raw boot readbacks independently match the erased fourth block;
+programmed raw hashes differ, requiring ECC-aware verification. No NAND
 executor or physical manifest is approved, and no destructive installation has run.
 
 Batch 2 added host abstractions and scripted failure injection without hardware

@@ -360,3 +360,17 @@ all image/script tests, provenance/kernel configuration and stock/Vitrallis chec
 manifest checks and `git diff --check`. The complete established suite
 `python3 scripts/ci.py validate` exited 0; its ignored local log is
 `work/batch3/recovery-milestone-6-validation.log`.
+
+### Batch 3 authenticated boot readbacks
+
+Six device tests pass, including raw data/OOB separation, exact-length rejection
+and fixed physical-offset-preserving arguments. The new protocol test rejects a
+reply for a different boot partition. Strict Clippy and all-target/all-feature
+workspace check pass. `python3 scripts/ci.py validate` exited 0 for the readback
+implementation; the ignored log is `work/batch3/readback-milestone-7-validation.log`.
+The RAM template reproduced with the same SHA256 in two independent builder runs.
+The fifth physical boot read all four regions through the new CLI/daemon path;
+its first connection timed out, then authenticated Ping and an explicit diagnostic
+retry succeeded. No automatic retry or write occurred. Raw programmed hashes differ
+from the original uncorrected snapshots. Final ECC-aware verification and normal
+boot/fallback characterization remain open.
