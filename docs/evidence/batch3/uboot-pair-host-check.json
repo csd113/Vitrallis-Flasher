@@ -1,0 +1,9 @@
+{
+  "bundle_sha256": "982e47c825762cb6a88b1c21561ef624bd61dfb1a3a89191f3ccbc7b09e9350b",
+  "nand_mutation_performed": false,
+  "original_program_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+  "physical_manifest_approved": false,
+  "program_bytes": 4194304,
+  "release_program_sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8",
+  "evidence_class": "Read-only native host validation and private snapshot recheck of the exact paired original/locked programs; no NAND write or boot proof"
+}

@@ -52,13 +52,8 @@ fn run() -> Result<(), Error> {
         [command] if command == "detect" || command == "fel-probe" => {
             native_diagnostic(command, &cancel)?;
         }
-        [command, path]
-            if matches!(
-                command.as_str(),
-                "boot0-readback" | "boot0-check-restoration" | "boot0-check-release-hynix"
-            ) =>
-        {
-            saved_boot0_diagnostic(command, path, &cancel)?;
+        [command, path] if is_saved_boot_diagnostic(command) => {
+            saved_boot_diagnostic(command, path, &cancel)?;
         }
         [command, primary, backup, digest, output] if command == "boot0-recover-source" => {
             recover_boot0_source(primary, backup, digest, output, &cancel)?;
@@ -127,6 +122,16 @@ fn run() -> Result<(), Error> {
     }
     Ok(())
 }
+fn is_saved_boot_diagnostic(command: &str) -> bool {
+    matches!(
+        command,
+        "boot0-readback"
+            | "boot0-check-restoration"
+            | "boot0-check-release-hynix"
+            | "uboot-check-pair"
+    )
+}
+
 fn is_recovery_diagnostic(command: &str) -> bool {
     matches!(
         command,
@@ -219,8 +224,10 @@ fn read_trial_journal(path: &str, cancel: &Cancellation) -> Result<(), Error> {
     Ok(())
 }
 
-fn saved_boot0_diagnostic(command: &str, path: &str, cancel: &Cancellation) -> Result<(), Error> {
-    if command == "boot0-check-release-hynix" {
+fn saved_boot_diagnostic(command: &str, path: &str, cancel: &Cancellation) -> Result<(), Error> {
+    if command == "uboot-check-pair" {
+        check_uboot_pair(path, cancel)?;
+    } else if command == "boot0-check-release-hynix" {
         let _snapshot =
             flasher_core::boot_trial::release::LockedHynixSplFile::open(Path::new(path), cancel)?;
         println!(
@@ -253,6 +260,25 @@ fn saved_boot0_diagnostic(command: &str, path: &str, cancel: &Cancellation) -> R
             serde_json::to_string_pretty(&report).map_err(|_| Error::Recovery)?
         );
     }
+    Ok(())
+}
+
+fn check_uboot_pair(path: &str, cancel: &Cancellation) -> Result<(), Error> {
+    use flasher_core::boot_trial::uboot;
+    let mut images = uboot::Images::open(Path::new(path), cancel)?;
+    images.revalidate(cancel)?;
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "bundle_sha256": uboot::BUNDLE,
+            "original_program_sha256": flasher_core::boot_trial::ORIGINAL_UBOOT,
+            "release_program_sha256": uboot::RELEASE_PROGRAM,
+            "program_bytes": uboot::PROGRAM_BYTES,
+            "nand_mutation_performed": false,
+            "physical_manifest_approved": false,
+        }))
+        .map_err(|_| Error::Recovery)?
+    );
     Ok(())
 }
 
@@ -378,7 +404,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-check-release-hynix /absolute/path/to/spl-hynix.nand (fixed locked candidate)\n  uboot-check-pair /absolute/path/to/pinned-pair.bin (read-only original/release snapshots)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. SPL diagnostics are restricted to the measured sacrificial unit and exact original/locked Hynix artifacts; no release approval is granted. Release trial operations: program-release-primary, erase-backup-for-release-primary, restore-backup-for-release-primary. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

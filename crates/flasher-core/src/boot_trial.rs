@@ -20,6 +20,7 @@ use std::{
 
 pub mod journal;
 pub mod release;
+pub mod uboot;
 
 /// Closed original and exact locked-release SPL diagnostics; no addresses or paths.
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq)]

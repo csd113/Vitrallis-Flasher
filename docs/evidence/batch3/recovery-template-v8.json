@@ -29,5 +29,5 @@
   "physical_manifest_approval": false,
   "physical_backup_isolation": "EraseBackupForReleasePrimary Verified in 18.800 seconds; independent raw data/OOB readback all FF, release primary and original U-Boot preserved",
   "physical_release_brom_acceptance": "Measured normal boot with bridge removed and backup fully erased: SSH boot ID 055f9c77-8e1c-406e-a11d-e25d6dec63ee; all four post-boot native primary copies match locked program; normal-locked-release-primary-isolated-boot-15.json",
-  "post_boot_backup_restoration": "Pending return to FEL after clean poweroff"
+  "post_boot_backup_restoration": "RAM session 16: RestoreBackupForReleasePrimary Verified in 20.487 seconds; independent release-primary/original-backup/original-U-Boot and erased fourth-block readbacks all healthy"
 }

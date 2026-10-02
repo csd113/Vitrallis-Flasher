@@ -2,6 +2,11 @@
 
 Batch 3 live inventory and boot readbacks are recorded in
 [evidence](evidence/batch3/README.md). No production installation has completed.
+The exact locked Hynix SPL now passes isolated normal boot with the backup
+fully erased. RAM session 16 restores the original backup while preserving the
+release primary and original U-Boot. Locked U-Boot acceptance and the full
+production installation remain pending.
+
 Native FEL identity, SRAM upload/readback/execute/restore and RAM-only recovery
 boot are now physically measured. Recovery authentication and board/NAND inventory
 succeed over macOS ECM. The initial RAM restart failed; adding the pinned reset module corrected it.
@@ -194,3 +199,39 @@ Evidence: `evidence/batch3/normal-locked-release-primary-isolated-boot-15.json`.
 Private raw/data dumps are under `work/batch3/locked-release-trial-session-15/`.
 No package-management process was active before clean SSH poweroff (exit 0).
 Backup restoration is pending the requested return to FEL.
+
+### Original backup restored after isolated release-primary boot
+
+RAM session 16 authenticates the same pinned v8 implementation on the same SID.
+`RestoreBackupForReleasePrimary` preflight requires the exact release primary and
+original U-Boot. Its closed restoration reaches Verified in 20.487 seconds and
+the durable host journal ends in Verified with version-2 release pins. All four
+backup copies match the original program; native correction totals are 19, 15,
+18 and 15 (67 total, maximum four per chunk), with zero ECC failures. The raw
+interleaved digest differs from the clean encoding, as expected for corrected
+NAND data. Independent subsequent readbacks confirm the release primary,
+original backup, original U-Boot and full raw FF fourth block. The five-partition
+RAM inventory remains healthy. No U-Boot or rootfs diagnostic write was dispatched.
+
+Evidence: `evidence/batch3/recovery-backup-restoration-preflight-16.json`,
+`recovery-backup-restoration-trial-16.json` and
+`recovery-boot-chain-after-backup-restoration-16.json` in the same directory.
+The private version-2 journal is under `work/batch3/locked-release-trial-session-16/`.
+
+### Bounded U-Boot candidate preparation
+
+The read-only `uboot-check-pair` CLI validates a fixed 8 MiB bundle containing
+512 alternating original/release 8 KiB chunk pairs. It checks the bundle and both
+4 MiB program digests before creating private snapshots, then revalidates their
+open descriptors. The pair contains bytes only; no caller address, command or
+replacement digest is accepted. It exposes no NAND operation.
+
+A bounded host archive probe adds that bundle to the pinned v8 archive with the
+unchanged v8 daemon: the compressed image is 41,673,253 bytes, leaving 269,787
+bytes under the existing 40 MiB limit. This is a size probe, not a loaded or
+reviewed U-Boot-execution payload. It uses the existing gzip archive builder and
+adds no decompression dependency. The next daemon/build still needs validation
+against this limit, authenticated physical boot and a separately guarded U-Boot
+diagnostic. Exact release U-Boot boot and redundant-slot behavior remain pending.
+Evidence: `evidence/batch3/uboot-pair-host-check.json` and
+`uboot-pair-ram-size-preparation.json` in the same directory.

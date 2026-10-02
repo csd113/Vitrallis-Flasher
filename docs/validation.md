@@ -891,3 +891,33 @@ UBI layout, bad-block counts and zero ECC failures are checked. The evidence is
 poweroff succeeds with no active package processes. Backup restoration still
 requires the requested FEL action. Release U-Boot/full production flash remain
 unverified.
+
+### Batch 3 backup restoration under release-primary guard and U-Boot pair preparation
+
+Session 16 physically authenticates v8 and restores the original backup SPL under
+the exact release-primary/original-U-Boot guard. The operation completes Verified
+in 20.487 seconds with a version-2 durable host journal. Independent corrected
+SPL/U-Boot and raw fourth-block readbacks preserve the checked boot chain and
+zero ECC failures. The actual restoration report is a regression fixture: the
+release-guarded restoration still requires original backup programs and cannot
+be interpreted as release-primary programming.
+
+The read-only native and release CLI `uboot-check-pair` commands validate the
+fixed paired original/locked U-Boot bundle and recheck private open snapshots.
+Negative tests reject wrong sizes, corruption, symlinks, cancellation and retained
+snapshot changes. A host-only archive size probe with the unchanged v8 daemon
+fits the pair within the existing 40 MiB bound; it is not uploaded and has no
+U-Boot mutation endpoint. No dependency or production authorization is added.
+
+Full `python3 scripts/ci.py validate` passes: formatting, strict Clippy, 180 core
+tests (six intentional ignored subprocess fixtures), five integration tests,
+11 daemon tests, 72 image tests, 35 script tests, release builds and established
+provenance/kernel/image/manifest checks. Fresh workspace all-target/all-feature
+check and diff check pass. All 26 boot-trial tests pass cross-built on ARMv7
+under qemu-arm (3.13 seconds). Private logs:
+`work/batch3/uboot-pair-full-validation.log`, `uboot-pair-workspace-check.log`,
+`uboot-pair-targeted-tests.log`, `uboot-pair-arm-tests.log` and
+`backup-restoration-16-and-uboot-pair-arm-tests.log` in the same directory.
+Evidence records: `recovery-backup-restoration-trial-16.json`,
+`recovery-boot-chain-after-backup-restoration-16.json`, `uboot-pair-host-check.json`
+and `uboot-pair-ram-size-preparation.json` under `evidence/batch3/`.

@@ -1,0 +1,14 @@
+{
+  "SplTrialPrepared": {
+    "operation": "RestoreBackupForReleasePrimary",
+    "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+    "original_spl_sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+    "original_uboot_sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+    "release_spl": {
+      "artifact_sha256": "0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a",
+      "program_sha256": "879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0",
+      "manifest_sha256": "48e46f66e4c1b6927b0864f9b285ae46a8c1c6e3c74033947a80643e7f723cc2"
+    }
+  },
+  "execute_dispatched": false
+}

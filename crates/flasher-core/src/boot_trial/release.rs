@@ -272,6 +272,22 @@ mod tests {
     }
 
     #[test]
+    fn physical_backup_restoration_with_release_primary_retains_original_verifier() {
+        let record: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-backup-restoration-trial-16.json"
+        ))
+        .unwrap();
+        let report: BootReadback =
+            serde_json::from_value(record["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        Operation::RestoreBackupForReleasePrimary
+            .verify(&report)
+            .unwrap();
+        assert!(Operation::ProgramReleasePrimary.verify(&report).is_err());
+        assert_eq!(report.ecc_failures_after, 0);
+    }
+
+    #[test]
     fn wrong_variant_corruption_paths_and_cancellation_fail_before_snapshot() {
         let directory = crate::assets::temporary_directory().unwrap();
         let path = directory.path().join("candidate.nand");

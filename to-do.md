@@ -183,7 +183,8 @@ Detailed supporting requirements: [image build](docs/image-build.md),
 - [x] Program and natively verify the exact locked Hynix release primary through
   the authenticated closed diagnostic; verify backup erasure independently while
   protecting the release primary and original U-Boot. Isolated normal boot with backup
-  erased now verifies BROM acceptance; subsequent backup restoration is pending.
+  erased now verifies BROM acceptance; subsequent original backup restoration is
+  verified while protecting the exact release primary.
 - [ ] Validate exact locked release SPL/U-Boot acceptance, write skip behavior
   and remaining logical/physical bad-block semantics.
 - [ ] Approve exact physical artifacts, enable the gated executor and demonstrate

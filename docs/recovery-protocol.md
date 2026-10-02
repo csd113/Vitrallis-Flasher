@@ -312,8 +312,9 @@ programs, checksum and ECC interpretation must pass before Verified. A lost
 response after dispatch remains Indeterminate without automatic retry.
 
 The read-only `boot0-check-release-hynix` command validates the exact candidate
-before hardware use. Two v8 templates build byte-identically; physical loading
-and isolated release boot are pending in
+before hardware use. Two v8 templates build byte-identically; RAM session 15 physically programs/verifies the release primary and completes
+isolated normal boot with the backup erased. Session 16 restores the original
+backup under the release-primary guard. Metadata is in
 [evidence/batch3/recovery-template-v8.json](evidence/batch3/recovery-template-v8.json).
 
 The v8 builder additionally requires `--release-spl` for the pinned Hynix image;

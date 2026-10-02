@@ -1,0 +1,15 @@
+{
+  "evidence_class": "Host archive size/validation probe with unchanged v8 daemon; not uploaded, not a reviewed U-Boot executor payload",
+  "base_template_sha256": "d7d209536c4a17db90e6c36a56e5aa5996d28cca4eb625675da20c983221b781",
+  "base_image_bytes": 41215158,
+  "base_archive_bytes": 106248192,
+  "bundle_bytes": 8388608,
+  "bundle_sha256": "982e47c825762cb6a88b1c21561ef624bd61dfb1a3a89191f3ccbc7b09e9350b",
+  "bundle_format": "512 pairs of original/release 8192-byte chunks, fixed 4 MiB programs",
+  "archive_bytes_with_bundle": 114636800,
+  "image_bytes_with_bundle": 41673253,
+  "image_limit_bytes": 41943040,
+  "headroom_bytes": 269787,
+  "nand_mutation_performed": false,
+  "decompression_dependency_added": false
+}
