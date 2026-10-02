@@ -17,12 +17,12 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 const LIMIT: usize = 64 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(15);
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC01";
+const MAGIC: &[u8; 8] = b"VTRREC02";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -86,7 +86,10 @@ impl Credentials {
 pub enum Request {
     Ping,
     Inventory,
-    BootReadback(BootRegion),
+    BootReadback {
+        region: BootRegion,
+        interpretation: ReadInterpretation,
+    },
     ReturnToFel,
 }
 
@@ -110,11 +113,20 @@ impl BootRegion {
         }
     }
 }
+/// Raw data/OOB or the kernel's normal ECC interpretation.
+/// Kernel ECC is reviewed only for U-Boot, not the special boot0 SPL layout.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub enum ReadInterpretation {
+    Raw,
+    KernelCorrected,
+}
 /// Fixed-size raw data/OOB readback evidence. It grants no write capability.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct BootReadback {
     pub region: BootRegion,
+    pub interpretation: ReadInterpretation,
     pub data_bytes: u64,
     pub oob_bytes: u64,
     pub data_sha256: String,
@@ -436,8 +448,13 @@ impl Channel {
                 (Request::Ping, Response::Pong)
                 | (Request::Inventory, Response::Inventory(_))
                 | (Request::ReturnToFel, Response::RestartAccepted) => {}
-                (Request::BootReadback(region), Response::BootReadback(report))
-                    if *region == report.region => {}
+                (
+                    Request::BootReadback {
+                        region,
+                        interpretation,
+                    },
+                    Response::BootReadback(report),
+                ) if *region == report.region && *interpretation == report.interpretation => {}
                 _ => return Err(Error::Recovery),
             }
             self.advance()?;
@@ -455,7 +472,7 @@ impl Channel {
     pub fn serve(
         &mut self,
         mut inventory: impl FnMut() -> Result<Inventory, Error>,
-        mut readback: impl FnMut(BootRegion) -> Result<BootReadback, Error>,
+        mut readback: impl FnMut(BootRegion, ReadInterpretation) -> Result<BootReadback, Error>,
         cancel: &Cancellation,
     ) -> Result<(), Error> {
         if self.client {
@@ -466,9 +483,10 @@ impl Channel {
                 Request::Ping => Response::Pong,
                 Request::Inventory => Response::Inventory(Box::new(inventory()?)),
                 Request::ReturnToFel => Response::RestartAccepted,
-                Request::BootReadback(region) => {
-                    Response::BootReadback(Box::new(readback(region)?))
-                }
+                Request::BootReadback {
+                    region,
+                    interpretation,
+                } => Response::BootReadback(Box::new(readback(region, interpretation)?)),
             };
             self.write(&response, cancel)?;
             self.advance()?;
@@ -498,9 +516,21 @@ pub fn diagnostic_boot_readback(
     config: &std::path::Path,
     binary: &std::path::Path,
     region: BootRegion,
+    interpretation: ReadInterpretation,
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
-    diagnostic_request(config, binary, &Request::BootReadback(region), cancel)
+    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
+        return Err(Error::Device);
+    }
+    diagnostic_request(
+        config,
+        binary,
+        &Request::BootReadback {
+            region,
+            interpretation,
+        },
+        cancel,
+    )
 }
 
 /// Authenticates the live endpoint without depending on inventory collection.
@@ -628,7 +658,7 @@ mod tests {
         let task = thread::spawn(move || {
             server.serve(
                 || Err(Error::State),
-                |_| Err(Error::State),
+                |_, _| Err(Error::State),
                 &Cancellation::default(),
             )
         });
@@ -642,15 +672,23 @@ mod tests {
     }
     #[test]
     fn boot_readback_cannot_substitute_a_different_partition() {
-        for reported in [BootRegion::SplPrimary, BootRegion::UBoot] {
+        for (reported, interpretation) in [
+            (BootRegion::SplPrimary, ReadInterpretation::Raw),
+            (BootRegion::UBoot, ReadInterpretation::Raw),
+            (BootRegion::SplPrimary, ReadInterpretation::KernelCorrected),
+        ] {
             let (mut client, mut server) = pair();
             let task = thread::spawn(move || {
                 assert_eq!(
                     server.read::<Request>(&Cancellation::default()).unwrap(),
-                    Request::BootReadback(BootRegion::SplPrimary)
+                    Request::BootReadback {
+                        region: BootRegion::SplPrimary,
+                        interpretation: ReadInterpretation::Raw
+                    }
                 );
                 let report = BootReadback {
                     region: reported,
+                    interpretation,
                     data_bytes: 4_194_304,
                     oob_bytes: 425_984,
                     data_sha256: "a".repeat(64),
@@ -674,10 +712,16 @@ mod tests {
                     .unwrap();
             });
             let response = client.request(
-                &Request::BootReadback(BootRegion::SplPrimary),
+                &Request::BootReadback {
+                    region: BootRegion::SplPrimary,
+                    interpretation: ReadInterpretation::Raw,
+                },
                 &Cancellation::default(),
             );
-            assert_eq!(response.is_ok(), reported == BootRegion::SplPrimary);
+            assert_eq!(
+                response.is_ok(),
+                reported == BootRegion::SplPrimary && interpretation == ReadInterpretation::Raw
+            );
             task.join().unwrap();
         }
     }

@@ -105,3 +105,12 @@ hashes, first bytes, page marker observations, erased-page lists and counters re
 The host rejects a response for a different region. Readbacks are diagnostic;
 uncorrected digest equality is not a production verification policy. `0xC00000`
 is still erased and its boot fallback role remains unproven.
+
+Protocol version 2 makes the readback interpretation explicit: `Raw` or
+`KernelCorrected`. The host rejects a response for another interpretation. Kernel
+correction is permitted only on U-Boot; SPL uses a different boot0 ECC layout and
+must not be silently interpreted using the normal kernel layout. The sixth RAM
+boot returned a kernel-corrected U-Boot digest identical to the preserved original,
+with 6,136 corrected bits and zero uncorrectable errors. The raw/OOB digests are
+still diagnostic, not a flat-NAND verification policy. Historical evidence retains
+the protocol version actually measured.

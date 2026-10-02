@@ -1,7 +1,7 @@
 //! Fixed raw boot-region diagnostics; no caller-controlled paths or lengths.
 use flasher_core::{
     Cancellation, Error,
-    recovery::{BootReadback, BootRegion},
+    recovery::{BootReadback, BootRegion, ReadInterpretation},
     tool::{SystemToolRunner, ToolRequest, ToolRunner},
 };
 use sha2::{Digest, Sha256};
@@ -12,21 +12,27 @@ const OOB: usize = 1_664;
 const PAGES: usize = 256;
 const BLOCK: u64 = 4_194_304;
 
-fn request(region: BootRegion, output: &Path) -> Result<ToolRequest, Error> {
+fn request(
+    region: BootRegion,
+    interpretation: ReadInterpretation,
+    output: &Path,
+) -> Result<ToolRequest, Error> {
     let output = output.to_str().ok_or(Error::UnsafePath)?;
-    Ok(ToolRequest::new(
-        "/usr/sbin/nanddump",
-        [
-            "--noecc".to_owned(),
-            "--oob".to_owned(),
-            "--bb=dumpbad".to_owned(),
-            "--quiet".to_owned(),
-            "--length=4194304".to_owned(),
-            format!("--file={output}"),
-            format!("/dev/mtd{}", region.index()),
-        ],
-    )
-    .timeout(Duration::from_secs(10)))
+    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
+        return Err(Error::Device);
+    }
+    let mut args = vec![
+        "--oob".to_owned(),
+        "--bb=dumpbad".to_owned(),
+        "--quiet".to_owned(),
+        "--length=4194304".to_owned(),
+        format!("--file={output}"),
+        format!("/dev/mtd{}", region.index()),
+    ];
+    if interpretation == ReadInterpretation::Raw {
+        args.insert(0, "--noecc".to_owned());
+    }
+    Ok(ToolRequest::new("/usr/sbin/nanddump", args).timeout(Duration::from_secs(10)))
 }
 
 fn geometry(base: &Path, region: BootRegion) -> Result<(), Error> {
@@ -47,7 +53,11 @@ fn geometry(base: &Path, region: BootRegion) -> Result<(), Error> {
     Ok(())
 }
 
-fn summarize(region: BootRegion, bytes: &[u8]) -> Result<BootReadback, Error> {
+fn summarize(
+    region: BootRegion,
+    interpretation: ReadInterpretation,
+    bytes: &[u8],
+) -> Result<BootReadback, Error> {
     if bytes.len() != PAGES * (PAGE + OOB) {
         return Err(Error::Length);
     }
@@ -72,6 +82,7 @@ fn summarize(region: BootRegion, bytes: &[u8]) -> Result<BootReadback, Error> {
     }
     Ok(BootReadback {
         region,
+        interpretation,
         data_bytes: BLOCK,
         oob_bytes: (PAGES * OOB) as u64,
         data_sha256: format!("{:x}", data_hash.finalize()),
@@ -89,19 +100,26 @@ fn summarize(region: BootRegion, bytes: &[u8]) -> Result<BootReadback, Error> {
     })
 }
 
-pub fn read(region: BootRegion, cancel: &Cancellation) -> Result<BootReadback, Error> {
+pub fn read(
+    region: BootRegion,
+    interpretation: ReadInterpretation,
+    cancel: &Cancellation,
+) -> Result<BootReadback, Error> {
     cancel.check()?;
     let path = format!("/sys/class/mtd/mtd{}", region.index());
     let base = Path::new(&path);
     geometry(base, region)?;
+    if interpretation == ReadInterpretation::KernelCorrected && region != BootRegion::UBoot {
+        return Err(Error::Device);
+    }
     let corrected = crate::number(&base.join("corrected_bits"))?;
     let failures = crate::number(&base.join("ecc_failures"))?;
     let directory = flasher_core::assets::temporary_directory()?;
     let path = directory.path().join("boot-raw.bin");
-    let output = SystemToolRunner.run(&request(region, &path)?, cancel)?;
+    let output = SystemToolRunner.run(&request(region, interpretation, &path)?, cancel)?;
     let bytes = crate::bytes(&path, (PAGES * (PAGE + OOB)) as u64)?;
     cancel.check()?;
-    let mut report = summarize(region, &bytes)?;
+    let mut report = summarize(region, interpretation, &bytes)?;
     report.corrected_bits_before = corrected;
     report.ecc_failures_before = failures;
     report.corrected_bits_after = crate::number(&base.join("corrected_bits"))?;
@@ -122,7 +140,7 @@ mod tests {
         let mut bytes = vec![0xff; PAGES * (PAGE + OOB)];
         bytes[0] = 0x42;
         bytes[PAGE] = 0x7f;
-        let report = summarize(BootRegion::SplPrimary, &bytes).unwrap();
+        let report = summarize(BootRegion::SplPrimary, ReadInterpretation::Raw, &bytes).unwrap();
         assert_eq!(report.erased_data_pages.len(), PAGES - 1);
         assert_eq!(report.erased_oob_pages.len(), PAGES - 1);
         assert_eq!(report.page_marker_bytes[0], [0x7f, 0xff]);
@@ -132,9 +150,34 @@ mod tests {
             report.data_sha256,
             format!("{:x}", Sha256::digest(expected))
         );
-        assert!(summarize(BootRegion::SplPrimary, &bytes[..bytes.len() - 1]).is_err());
+        assert!(
+            summarize(
+                BootRegion::SplPrimary,
+                ReadInterpretation::Raw,
+                &bytes[..bytes.len() - 1]
+            )
+            .is_err()
+        );
     }
 
+    #[test]
+    fn kernel_ecc_is_available_only_for_uboot() {
+        let output = Path::new("/run/private/boot-corrected.bin");
+        let corrected = request(
+            BootRegion::UBoot,
+            ReadInterpretation::KernelCorrected,
+            output,
+        )
+        .unwrap();
+        assert!(!corrected.args.iter().any(|a| a == "--noecc"));
+        for region in [
+            BootRegion::SplPrimary,
+            BootRegion::SplBackup,
+            BootRegion::FourthBootBlock,
+        ] {
+            assert!(request(region, ReadInterpretation::KernelCorrected, output).is_err());
+        }
+    }
     #[test]
     fn requests_preserve_physical_offsets_and_never_skip_bad_blocks() {
         for region in [
@@ -143,7 +186,12 @@ mod tests {
             BootRegion::UBoot,
             BootRegion::FourthBootBlock,
         ] {
-            let request = request(region, Path::new("/run/private/boot-raw.bin")).unwrap();
+            let request = request(
+                region,
+                ReadInterpretation::Raw,
+                Path::new("/run/private/boot-raw.bin"),
+            )
+            .unwrap();
             assert_eq!(request.program, Path::new("/usr/sbin/nanddump"));
             assert!(request.args.contains(&"--noecc".to_owned()));
             assert!(request.args.contains(&"--oob".to_owned()));

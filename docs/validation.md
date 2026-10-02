@@ -374,3 +374,14 @@ its first connection timed out, then authenticated Ping and an explicit diagnost
 retry succeeded. No automatic retry or write occurred. Raw programmed hashes differ
 from the original uncorrected snapshots. Final ECC-aware verification and normal
 boot/fallback characterization remain open.
+
+### Batch 3 kernel-corrected U-Boot readback
+
+Seven daemon tests pass, including rejection of normal kernel ECC interpretation
+for the special SPL layout. The protocol test also rejects a reply carrying the
+wrong interpretation. Protocol v2 makes that wire change explicit. The sixth real
+RAM boot matched the original corrected U-Boot digest, with 6,136 corrected bits
+and zero uncorrectable failures. `python3 scripts/ci.py validate` exited 0; log:
+`work/batch3/readback-milestone-8-validation.log`. All-target/all-feature workspace
+check, formatting and diff checks also passed. This is readback of the original
+installation, not destructive-flash or BROM fallback validation.

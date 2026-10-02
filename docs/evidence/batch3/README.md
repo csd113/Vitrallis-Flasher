@@ -104,3 +104,10 @@ increments on a no-ECC read do not establish corrected-read health.
 scrambler to the private backups. Eight raw decoded copies have 13–57 bit
 differences from a majority reconstruction whose stored checksum matches.
 This reconstruction is host analysis, not BCH correction or a BROM fallback test.
+
+`recovery-boot-6-tool.json` and `recovery-uboot-corrected-readback-6.json` record
+protocol v2 and a kernel-corrected U-Boot read. The 4 MiB data hash matches the
+original corrected backup exactly (`c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224`),
+with 6,136 corrected bits and zero uncorrectable errors. The per-page correction
+totals do not establish the maximum errors in a single ECC codeword. No new
+bootloader was written, and normal NAND boot/fallback remains to be tested.

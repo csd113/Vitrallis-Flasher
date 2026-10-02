@@ -211,7 +211,7 @@ fn run() -> Result<(), Error> {
         match Channel::accept(stream, &credentials, &implementation, &cancel) {
             Ok(mut channel) => match channel.serve(
                 || inventory(&cancel),
-                |region| readback::read(region, &cancel),
+                |region, interpretation| readback::read(region, interpretation, &cancel),
                 &cancel,
             ) {
                 Ok(()) => reboot_to_fel()?,
