@@ -326,3 +326,10 @@ selection is claimed.
   preserve actual pinned U-Boot programming and complete primary erasure with
   both SPLs and the protected release backup healthy. The cold backup boot test
   remains pending; program/readback success is not normal boot evidence.
+
+- `rootfs-installation-stream-audit.json`: host-only full 8 KiB streaming audit
+  of the exact stock archive, including canonical semantic digest, ownership,
+  modes, character devices, hardlink topology and critical file/link metadata.
+  Member/data counts and actual kernel/DTB/overlay/boot-script bytes match the
+  preserved Batch 1 report/artifacts. This performs no extraction or NAND write
+  and is not runtime rootfs verification or physical manifest approval.

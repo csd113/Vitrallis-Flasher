@@ -1,0 +1,392 @@
+{
+  "evidence_class": "host-only full stream audit of exact locked rootfs; no extraction, NAND operation or runtime boot proof",
+  "archive_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+  "archive_bytes": 516563033,
+  "members": 50950,
+  "types": {
+    "0": 36116,
+    "1": 6,
+    "2": 9753,
+    "3": 8,
+    "5": 5067
+  },
+  "regular_file_bytes": 1264012666,
+  "maximum_regular_file_bytes": 115964520,
+  "numeric_owners": {
+    "0:0": 50892,
+    "0:103": 1,
+    "0:105": 2,
+    "0:30": 6,
+    "0:4": 1,
+    "0:42": 5,
+    "0:43": 3,
+    "0:8": 1,
+    "0:988": 1,
+    "0:990": 1,
+    "0:997": 2,
+    "0:999": 1,
+    "1000:1000": 27,
+    "101:102": 2,
+    "998:998": 4,
+    "999:65534": 1
+  },
+  "devices": [
+    {
+      "path": "dev/random",
+      "kind": "3",
+      "major": 1,
+      "minor": 8
+    },
+    {
+      "path": "dev/console",
+      "kind": "3",
+      "major": 5,
+      "minor": 1
+    },
+    {
+      "path": "dev/ptmx",
+      "kind": "3",
+      "major": 5,
+      "minor": 2
+    },
+    {
+      "path": "dev/full",
+      "kind": "3",
+      "major": 1,
+      "minor": 7
+    },
+    {
+      "path": "dev/urandom",
+      "kind": "3",
+      "major": 1,
+      "minor": 9
+    },
+    {
+      "path": "dev/null",
+      "kind": "3",
+      "major": 1,
+      "minor": 3
+    },
+    {
+      "path": "dev/tty",
+      "kind": "3",
+      "major": 5,
+      "minor": 0
+    },
+    {
+      "path": "dev/zero",
+      "kind": "3",
+      "major": 1,
+      "minor": 5
+    }
+  ],
+  "privileged_modes": [
+    {
+      "path": "etc/chatscripts",
+      "mode": "0o2750",
+      "uid": 0,
+      "gid": 30
+    },
+    {
+      "path": "etc/ppp/peers",
+      "mode": "0o2750",
+      "uid": 0,
+      "gid": 30
+    },
+    {
+      "path": "var/log/journal",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 999
+    },
+    {
+      "path": "var/mail",
+      "mode": "0o2775",
+      "uid": 0,
+      "gid": 8
+    },
+    {
+      "path": "usr/lib/openssh/ssh-keysign",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/lib/dbus-1.0/dbus-daemon-launch-helper",
+      "mode": "0o4754",
+      "uid": 0,
+      "gid": 990
+    },
+    {
+      "path": "usr/lib/xorg/Xorg.wrap",
+      "mode": "0o6755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/lib/polkit-1/polkit-agent-helper-1",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/sbin/pppd",
+      "mode": "0o4754",
+      "uid": 0,
+      "gid": 30
+    },
+    {
+      "path": "usr/sbin/unix_chkpwd",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 42
+    },
+    {
+      "path": "usr/bin/chsh",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/umount",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/gpasswd",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/chage",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 42
+    },
+    {
+      "path": "usr/bin/mount",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/ntfs-3g",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/plocate",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 105
+    },
+    {
+      "path": "usr/bin/ssh-agent",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 103
+    },
+    {
+      "path": "usr/bin/newgrp",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/chfn",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/sudo",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/fusermount3",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/crontab",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 997
+    },
+    {
+      "path": "usr/bin/expiry",
+      "mode": "0o2755",
+      "uid": 0,
+      "gid": 42
+    },
+    {
+      "path": "usr/bin/su",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/passwd",
+      "mode": "0o4755",
+      "uid": 0,
+      "gid": 0
+    }
+  ],
+  "semantic_manifest_sha256": "50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35",
+  "critical_regular_files": {
+    "boot/config-6.12.107+deb13-chip": {
+      "bytes": 297637,
+      "sha256": "436a91ee089b758d9ecccf3b557a677cd548afe3e40d5c286001174aba3b536a",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "boot/dtbs/6.12.107+deb13-chip/sun5i-r8-chip.dtb": {
+      "bytes": 25537,
+      "sha256": "0132f7fa312542c374c7e5dfec2a1a12893b9cbe490d22e165fd7a89de51762e",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "boot/vmlinuz-6.12.107+deb13-chip": {
+      "bytes": 6697472,
+      "sha256": "d3c044d80034bb10513c5e987afe208b489c8f36c76a222f223ff63d1f8e1540",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "boot/boot.scr": {
+      "bytes": 4068,
+      "sha256": "61901b03e58105920c444becba42ebec9433b2d782ac54de957ec561c0d9292e",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "etc/fstab": {
+      "bytes": 37,
+      "sha256": "a6b093c9916c6c54e5d634d3689f1a0132e14cce0b8e50ff445da8e85acfbd17",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "etc/systemd/journald.conf": {
+      "bytes": 1429,
+      "sha256": "b7ab521d85bbd289adc37788c469c6ac6a2021dd056a1eada02107bbe891c650",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "var/lib/dpkg/status": {
+      "bytes": 632369,
+      "sha256": "cd3c80a3e47b508acb810fafcef07bf7ad620f2a9f4e9ea98f22cb6bf7a199b1",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "usr/lib/os-release": {
+      "bytes": 286,
+      "sha256": "e249e69c32d81350fdd6b05ac5575255f14e380ba14b8454acea14e49f088bfa",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "usr/lib/systemd/system/tmp.mount": {
+      "bytes": 769,
+      "sha256": "de31676834c93d5d5c115307b3e1a1783e4e6f2459a0fb76e9a10921f5fcecf5",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "usr/lib/systemd/system/systemd-networkd.service": {
+      "bytes": 2557,
+      "sha256": "05fbc66bf481bce3bb918235eeb992de74799d00e71b482f138ace2f1c003cee",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "usr/lib/modules/6.12.107+deb13-chip/modules.dep": {
+      "bytes": 437541,
+      "sha256": "c7215dda261356f8825fe40f1d483cc9385b3b4305e4a9c826984bca19de9739",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    },
+    "usr/lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo": {
+      "bytes": 3581,
+      "sha256": "3230ea7ffb660bb559e8b938a3e4d9ea5e3a2f484a512f345564735f85a23e24",
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0
+    }
+  },
+  "symlink_count": 9753,
+  "hardlink_count": 6,
+  "non_directory_ancestors": [],
+  "invalid_hardlink_targets": [],
+  "forward_hardlinks": [],
+  "absolute_symlink_count": 633,
+  "parent_component_symlink_count": 1192,
+  "critical_links": [
+    {
+      "path": "lib",
+      "target": "usr/lib"
+    },
+    {
+      "path": "boot/dtb",
+      "target": "dtbs/6.12.107+deb13-chip/./sun5i-r8-chip.dtb"
+    },
+    {
+      "path": "etc/os-release",
+      "target": "../usr/lib/os-release"
+    },
+    {
+      "path": "sbin",
+      "target": "usr/sbin"
+    },
+    {
+      "path": "bin",
+      "target": "usr/bin"
+    }
+  ],
+  "hardlinks": [
+    {
+      "path": "usr/lib/klibc/bin/halt",
+      "target": "usr/lib/klibc/bin/reboot"
+    },
+    {
+      "path": "usr/lib/klibc/bin/poweroff",
+      "target": "usr/lib/klibc/bin/reboot"
+    },
+    {
+      "path": "usr/lib/klibc/bin/gzip",
+      "target": "usr/lib/klibc/bin/zcat"
+    },
+    {
+      "path": "usr/lib/klibc/bin/gunzip",
+      "target": "usr/lib/klibc/bin/zcat"
+    },
+    {
+      "path": "usr/bin/perl",
+      "target": "usr/bin/perl5.40.1"
+    },
+    {
+      "path": "usr/bin/perlbug",
+      "target": "usr/bin/perlthanks"
+    }
+  ],
+  "bounded_content_read_bytes": 8192,
+  "archive_retained_in_ram": false,
+  "filesystem_mutated": false,
+  "production_reflash": false,
+  "crosschecks": {
+    "batch1_build_report_counts_and_archive_digest_match": true,
+    "preserved_kernel_dtb_overlay_and_boot_script_match": true,
+    "build_report": "work/batch1/preflight/evidence/build-report.json"
+  }
+}

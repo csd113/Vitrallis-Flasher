@@ -278,3 +278,35 @@ Evidence under `evidence/batch3/`: `recovery-boot-17-v9-tool.json`,
 `recovery-erase-original-uboot-primary-trial-17.json` and
 `recovery-release-uboot-backup-isolated-preboot-17.json`. Private version-3
 journals are under `work/batch3/uboot-trial-session-17/`.
+
+### Host-only rootfs installation stream audit
+
+While the isolated U-Boot cold boot remains pending, a complete bounded scan of
+the exact stock rootfs archive establishes installation requirements without
+extraction or NAND access. The compressed archive is 516,563,033 bytes, larger
+than the recovery RAM capacity. It contains 50,950 members and 1,264,012,666
+regular-file bytes; the largest regular file is 115,964,520 bytes. Content hashing
+uses 8 KiB reads. Counts and compressed digest agree with the preserved Batch 1
+build report; kernel, DTB, overlay and boot-script contents independently match
+the preserved actual files.
+
+The archive contains 36,116 regular files, 5,067 directories, 9,753 symlinks,
+six hardlinks and eight character devices. All hardlinks target earlier regular
+files; no member has a non-directory archive ancestor. Numeric owners, device
+major/minor values and setuid/setgid modes are recorded. There are 633 absolute
+symlinks and 1,192 symlinks with parent components. These are legitimate rootfs
+metadata; future extraction must contain resolution within the new root and
+preserve links rather than following them into the RAM recovery filesystem.
+The device entries are only the eight recorded standard character devices,
+not a grant to install arbitrary device nodes.
+
+The ordered canonical semantic digest, using the existing repack metadata/content
+encoding, is `50deb4906c1cfc5bf30b766cdb0e711713b8564022b65a686878ef6bab500c35`.
+The report also records critical content hashes, ownership/modes and boot/OS
+identity links. This is host-only evidence, not an implemented installer,
+readback of installed contents, physical manifest approval or a flashed OS.
+Production rootfs streaming, UBI installation and semantic completion checks
+remain required. Evidence:
+`evidence/batch3/rootfs-installation-stream-audit.json`; private audit script/log:
+`work/batch3/audit-rootfs-installation.py` and
+`work/batch3/rootfs-installation-stream-audit.log`.
