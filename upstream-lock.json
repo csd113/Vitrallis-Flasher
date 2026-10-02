@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "reviewed_on": "2026-09-25",
+  "reviewed_on": "2026-10-01",
   "repositories": [
     {
       "repository": "https://github.com/u-boot/u-boot",
@@ -57,7 +57,7 @@
         "0001-video-sunxi-draw-the-console-inside-the-overscan-border.patch": "629146986b2f76fc4131d768078a4a70abb65523f3fba56847efc94e0ac21817"
       },
       "license": "GPL-2.0-or-later (built U-Boot); repository build scripts and three CHIP Builder patches have no observed grant",
-      "license_status": "UNRESOLVED — redistribution status not established",
+      "license_status": "UNRESOLVED \u2014 redistribution status not established",
       "redistributed": false,
       "purpose": "PocketCHIP bootloader build recipe and NAND configuration; source of the released U-Boot/SPL binaries. Rebuilds: sunxi-spl.bin and u-boot-dtb.bin are bit-identical with SOURCE_DATE_EPOCH pinned; u-boot-sunxi-with-spl.bin differs only in the uImage time/header-CRC bytes.",
       "status": "VERIFIED"
@@ -98,8 +98,8 @@
         ".github/workflows/publish.yml": "f9bc4fcaef66bc64605a8a2fb648598c83644c07f9c8048477ef7c50863dfc89"
       },
       "key_fingerprint": "6584A42C802AE168A2985797C2B5998BA4BEE115",
-      "license": "UNRESOLVED — no root license grant observed; per-package copyright files govern each built package",
-      "license_status": "UNRESOLVED — redistribution status not established",
+      "license": "UNRESOLVED \u2014 no root license grant observed; per-package copyright files govern each built package",
+      "license_status": "UNRESOLVED \u2014 redistribution status not established",
       "redistributed": false,
       "purpose": "Builds and publishes the CHIP apt repository consumed by the rootfs. 40a8723 (CI run 30, deployed 2026-07-29T01:54Z) is the last repo state published before the accepted rootfs build began at 01:59Z; it differs from the prior run (f18ad24) only in the chip-exit submodule, which the pocketchip flavor does not install. The installed kernel deb itself was built at run 29 (f18ad24) from x-chip-linux-deb d2fa89a and reused from cache. Head 20bb1e8 is the current live state (kernel 6.12.107-1.31).",
       "status": "PARTIAL"
@@ -125,11 +125,11 @@
     },
     {
       "repository": "https://github.com/nextthingco/x-chip-os",
-      "commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+      "commit": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
       "head": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
       "tag": {
-        "name": "os-2026.07.29-024145",
-        "commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+        "name": "os-2026.09.23-010738",
+        "commit": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
         "type": "lightweight"
       },
       "tag_history": [
@@ -204,8 +204,8 @@
           "type": "lightweight"
         },
         {
-          "name": "os-2026.09.23-010738",
-          "commit": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
+          "name": "os-2026.07.29-024145",
+          "commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
           "type": "lightweight"
         }
       ],
@@ -215,7 +215,7 @@
         "build.sh": "13b35bed1091f484b47a0acdd644b86210a5765ddd49239f33350771a4dea4b0",
         "init.sh": "0955ffe47a0d9a8a5dbce0f1ad1339a14a1250a7ec761b159498bd37f2e0ad46",
         "pocketchip/config/package-lists/pocketchip.list.chroot": "651973cffac41e59b022e64e715174c1f72e2b86ed3d43b0bf927076c41c949a",
-        "pocketchip/config/includes.chroot_before_packages/etc/flash-kernel/bootscript/bootscr.chip": "1cb27a87e5caaca9e1754c70f03e6064824361b4a6322b5b5d8d01d6d60e0990",
+        "pocketchip/config/includes.chroot_before_packages/etc/flash-kernel/bootscript/bootscr.chip": "14ad19c8475b0f7b968a31a46aa3d7b5f3f8891a794bc8230174cafefb52f5d4",
         "pocketchip/config/includes.chroot_after_packages/etc/flash-kernel/db": "34e4aba85446ed1fb519ff0f25bc8b92c725bdd5b2a8f6a80b46bed93171f10a",
         "pocketchip/config/archives/chip.key.chroot": "d78ee2a62b1e7b0041d1dbb2d302b1d2c1bc1920ba02d88831a4dd1e1d276b7a",
         "pocketchip/config/archives/chip.list.chroot": "a8ace0ee608ca8555a70bbfb4dc1a5a3de9b8d10f2340a62f9fe79ed9e6ea463",
@@ -224,11 +224,12 @@
         "pocketchip/config/binary": "9f5b0261392fde3ae3e0a1415f506e1b082c7b14259cda2e0a47de715056a593",
         "Makefile": "3dba0109249a8fe29e91069f8ea1a302bdc825a8eeff5401c5699b6869ae6eaf"
       },
-      "license": "UNRESOLVED — no root license grant observed; per-package licenses apply to image contents",
-      "license_status": "UNRESOLVED — redistribution status not established",
+      "license": "UNRESOLVED \u2014 no root license grant observed; per-package licenses apply to image contents",
+      "license_status": "UNRESOLVED \u2014 redistribution status not established",
       "redistributed": false,
-      "purpose": "live-build configuration that produced the pinned PocketCHIP Debian 13 rootfs",
-      "status": "VERIFIED"
+      "purpose": "live-build configuration that produced the selected September PocketCHIP Debian 13 rootfs",
+      "status": "VERIFIED",
+      "notes": "Batch 1 selected the os-2026.09.23-010738 release built from this commit. All reviewed file hashes except the bootscr.chip template (overscan bootargs) are identical to the July recipe commit."
     },
     {
       "repository": "https://github.com/nextthingco/x-chip-tools",
@@ -274,8 +275,8 @@
         "Dockerfile": "6de53c29a609b9564c57fbd20456a8295a240a0cae75fbf9111fea158d13a2a3",
         ".github/workflows/release.yml": "196d0d0afb4012b5f2dae8490abadb197fc48a48569d97de5a0df9839a01313e"
       },
-      "license": "UNRESOLVED — no root license grant observed; contains a committed throwaway installer SSH key",
-      "license_status": "UNRESOLVED — redistribution status not established",
+      "license": "UNRESOLVED \u2014 no root license grant observed; contains a committed throwaway installer SSH key",
+      "license_status": "UNRESOLVED \u2014 redistribution status not established",
       "redistributed": false,
       "purpose": "Recovery/installer flow and the recovery initramfs build; reference for boot layout and SPL generation",
       "status": "VERIFIED"
@@ -286,13 +287,17 @@
       "reviewed_files": {
         "LICENSE.md": "a86425c18b019d34f9bdd90d927cf400b6239a96c63e3c2af1195abb37c78d2c",
         "fel.c": "2d065fef80f4669ff71a33da788c0187ae2fa1b8cbf7c0ced1e4d5736e3101be",
-        "soc_info.c": "fbdaf27be0f82bb243ae797f7d2562eca3a9d4ac5451fa5b8fcf0a25fcd6ddac"
+        "soc_info.c": "fbdaf27be0f82bb243ae797f7d2562eca3a9d4ac5451fa5b8fcf0a25fcd6ddac",
+        "nand-image-builder.c": "3876bac0aca5d5160d2f05f1715444c8e65cc72898f77c17e614147e21cbfc0d",
+        "common.h": "fc842877db83c0803cc433d628783dca56c28961ba7ab928a7a491a8f120ada5",
+        "include/portable_endian.h": "46bad3f8c8c1e1ab68b9fff3e29638b01d8e2cba572924e06da9306e35421d85"
       },
       "license": "GPL-2.0-or-later",
       "license_status": "declared",
       "redistributed": false,
-      "purpose": "External sunxi-fel identity tool and the sunxi-nand-image-builder used to wrap SPL images per NAND part",
-      "status": "VERIFIED"
+      "purpose": "External sunxi-fel identity tool and the pinned sunxi-nand-image-builder used to wrap SPL images per NAND part",
+      "status": "VERIFIED",
+      "notes": "Batch 1 builds nand-image-builder.c from this commit in the digest-pinned container with -Dfls=sunxi_fls and feeds it a documented deterministic stream in place of /dev/urandom; outputs are byte-identical across runs."
     },
     {
       "repository": "https://github.com/csd113/Vitrallis-Shell",
@@ -307,8 +312,8 @@
         "src/platform/mod.rs": "243dbb2d8e56050d8ae3fc11d58238519d14b18409c393c1b7653777ae7123f9",
         "src/app_center/runtime.rs": "13817f7a31f378f99ec210aa6a371982f44b1c842cdc87f680c3e2a0aaecdd6a"
       },
-      "license": "UNRESOLVED — no license grant at the reviewed commits; the repository added an MIT LICENSE at later HEAD 3146f8f covering code, but upstream's own THIRD_PARTY_NOTICES.md documents unresolved rights in embedded artwork",
-      "license_status": "UNRESOLVED — redistribution status not established",
+      "license": "UNRESOLVED \u2014 no license grant at the reviewed commits; the repository added an MIT LICENSE at later HEAD 3146f8f covering code, but upstream's own THIRD_PARTY_NOTICES.md documents unresolved rights in embedded artwork",
+      "license_status": "UNRESOLVED \u2014 redistribution status not established",
       "redistributed": false,
       "purpose": "Optional Vitrallis desktop profile; never bundled by this project",
       "status": "PARTIAL"
@@ -380,12 +385,12 @@
       "sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2",
       "source_repository": "https://github.com/nextthingco/x-chip-os",
       "source_commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
-      "license": "UNRESOLVED — aggregate of Debian and CHIP packages. Notices are retained in the archive (dpkg docs/common-licenses), but chip-power bin/* has only asserted third-party permission and pocketchip-onboard imagery sits under an unfilled copyright template; firmware-realtek is binary-redistributable with notice. GPL/LGPL source offers apply.",
+      "license": "UNRESOLVED \u2014 aggregate of Debian and CHIP packages. Notices are retained in the archive (dpkg docs/common-licenses), but chip-power bin/* has only asserted third-party permission and pocketchip-onboard imagery sits under an unfilled copyright template; firmware-realtek is binary-redistributable with notice. GPL/LGPL source offers apply.",
       "reproducibility": "PINNED PREBUILT BINARY",
       "status": "VERIFIED BUT PREBUILT",
       "download_verified": true,
       "flash_approved": false,
-      "notes": "Debian 13 rootfs assembled 2026-07-29 (boot.scr embedded time 2026-07-29T02:01:37Z) from live Debian mirrors and the CHIP apt repo state published at 2026-07-29T01:54Z (x-chip-deb-repo 40a8723); the source commit 7584eab is dated 2026-07-24. Rebuilding is currently impossible: the CHIP repo replaced kernel 6.12.94-1.29 with 6.12.107-1.31 and the old debs are gone, and no Debian snapshot was recorded. Kernel, DTB and boot script are derived from this archive."
+      "notes": "Documented July fallback candidate (os-2026.07.29-024145); Batch 1 selected the newer September archive instead. Debian 13 rootfs assembled 2026-07-29 (boot.scr embedded time 2026-07-29T02:01:37Z) from live Debian mirrors and the CHIP apt repo state published at 2026-07-29T01:54Z (x-chip-deb-repo 40a8723). Kept pinned for fallback comparison only."
     },
     {
       "name": "pocketchip-rootfs-2026-09-23.tar.gz",
@@ -395,12 +400,12 @@
       "sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
       "source_repository": "https://github.com/nextthingco/x-chip-os",
       "source_commit": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
-      "license": "UNRESOLVED — same aggregate and unresolved package items as the accepted rootfs (chip-power bin/*, pocketchip-onboard imagery, firmware-realtek notice)",
+      "license": "UNRESOLVED \u2014 same aggregate and unresolved package items as the accepted rootfs (chip-power bin/*, pocketchip-onboard imagery, firmware-realtek notice)",
       "reproducibility": "PINNED PREBUILT BINARY",
       "status": "VERIFIED BUT PREBUILT",
       "download_verified": true,
       "flash_approved": false,
-      "notes": "Alternative candidate, inspected in Batch 0 but not adopted: its kernel (6.12.107-1.31, vmlinuz d3c044d8...) matches the live CHIP apt repo byte-for-byte and its boot.scr carries the overscan bootargs. Adopting it would require re-verifying the storage-policy inspection against this archive. Not referenced by any physical role."
+      "notes": "SELECTED Batch 1 rootfs (os-2026.09.23-010738). Its kernel 6.12.107-1.31 config and vmlinuz match the independently hash-pinned live CHIP kernel deb byte-for-byte; its DTB and PocketCHIP overlay are byte-identical to the July candidate. Installed package state is bound by images/package-inventory-6.12.107+deb13-chip.json (709 packages, per-package .list/.md5sums hashes). The July archive remains pinned as fallback."
     },
     {
       "name": "linux-image-6.12.107+deb13-chip_6.12.107-1.31_armhf.deb",
@@ -419,7 +424,7 @@
       "status": "VERIFIED BUT PREBUILT",
       "download_verified": true,
       "flash_approved": false,
-      "notes": "Current live-repo kernel candidate, hash-pinned from the signed index (key 6584A42C...A4BEE115). Extracted config sha256 436a91ee089b758d9ecccf3b557a677cd548afe3e40d5c286001174aba3b536a: all 35 nand.cfg lines resolve, MTD/MTD_OF_PARTS/MTD_RAW_NAND/MTD_NAND_SUNXI/MTD_UBI/UBIFS_FS are built-in. The Pages path is mutable upstream; this hash fails closed if replaced."
+      "notes": "Current live-repo kernel candidate, hash-pinned from the signed index (key 6584A42C...A4BEE115). Extracted config sha256 436a91ee089b758d9ecccf3b557a677cd548afe3e40d5c286001174aba3b536a: all 35 nand.cfg lines resolve, MTD/MTD_OF_PARTS/MTD_RAW_NAND/MTD_NAND_SUNXI/MTD_UBI/UBIFS_FS are built-in. The Pages path is mutable upstream; this hash fails closed if replaced. Batch 1 confirmed the selected September rootfs ships this exact kernel config (sha256 436a91ee...) and vmlinuz (d3c044d8...)."
     },
     {
       "name": "chip-dt-overlays_0.8_armhf.deb",
@@ -448,7 +453,7 @@
       "sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
       "source_repository": "https://github.com/nextthingco/x-chip-tools",
       "source_commit": "215f98eed44babb699c129bb124537d32c414102",
-      "license": "UNRESOLVED — 107 debootstrapped Debian packages with /usr/share/doc removed by the build script, plus x-chip-tools init; notices and source offers are not present in the artifact and the repository has no root license grant",
+      "license": "UNRESOLVED \u2014 107 debootstrapped Debian packages with /usr/share/doc removed by the build script, plus x-chip-tools init; notices and source offers are not present in the artifact and the repository has no root license grant",
       "reproducibility": "PINNED PREBUILT BINARY",
       "status": "VERIFIED BUT PREBUILT",
       "download_verified": true,
@@ -458,40 +463,49 @@
   ],
   "derived_artifacts": [
     {
+      "name": "vmlinuz-6.12.107+deb13-chip",
+      "from_asset": "pocketchip-rootfs-2026-09-23.tar.gz",
+      "path": "boot/vmlinuz-6.12.107+deb13-chip",
+      "size": 6697472,
+      "sha256": "d3c044d80034bb10513c5e987afe208b489c8f36c76a222f223ff63d1f8e1540",
+      "status": "VERIFIED BUT PREBUILT",
+      "notes": "Recovery kernel extracted from the selected September rootfs under the same path; the bytes match the live 6.12.107-1.31 kernel package whose config was independently verified."
+    },
+    {
       "name": "vmlinuz-6.12.94+deb13-chip",
       "from_asset": "pocketchip-rootfs.tar.gz",
       "path": "boot/vmlinuz-6.12.94+deb13-chip",
       "size": 6676992,
       "sha256": "c159646938235663a7997798fa5edde02889f835e33a19f6323a1d8c9ac7513c",
       "status": "VERIFIED",
-      "notes": "Recovery kernel extracted from the pinned rootfs at the recorded path; hash computed from the released archive. No separate upstream URL exists."
+      "notes": "July fallback recovery kernel extracted from the fallback rootfs; no longer a physical role after Batch 1 selected the September archive."
     },
     {
       "name": "sun5i-r8-chip.dtb",
-      "from_asset": "pocketchip-rootfs.tar.gz",
-      "path": "boot/dtbs/6.12.94+deb13-chip/sun5i-r8-chip.dtb",
+      "from_asset": "pocketchip-rootfs-2026-09-23.tar.gz",
+      "path": "boot/dtbs/6.12.107+deb13-chip/sun5i-r8-chip.dtb",
       "size": 25537,
       "sha256": "0132f7fa312542c374c7e5dfec2a1a12893b9cbe490d22e165fd7a89de51762e",
       "status": "VERIFIED",
-      "notes": "Base device tree extracted from the pinned rootfs; compiled with __symbols__ so the PocketCHIP overlay can apply. Identical copy also installed under usr/lib/linux-image-6.12.94+deb13-chip/."
+      "notes": "Base device tree extracted from the selected September rootfs; byte-identical to the July candidate DTB. Compiled with __symbols__ so the PocketCHIP overlay can apply; identical copy also installed under usr/lib/linux-image-6.12.107+deb13-chip/."
     },
     {
       "name": "boot.scr",
-      "from_asset": "pocketchip-rootfs.tar.gz",
+      "from_asset": "pocketchip-rootfs-2026-09-23.tar.gz",
       "path": "boot/boot.scr",
-      "size": 3500,
-      "sha256": "1fa91fee90df67db2f832b59fe797453a165e125cdeaabca6a09eb00812ecb0d",
+      "size": 4068,
+      "sha256": "61901b03e58105920c444becba42ebec9433b2d782ac54de957ec561c0d9292e",
       "status": "VERIFIED",
-      "notes": "Installed boot script extracted from the pinned rootfs; generated by flash-kernel from the x-chip-os bootscr.chip template. Loads kernel at 0x42000000 and DTB at 0x43000000 from UBIFS, applies the DIP overlay, then bootz with no initrd."
+      "notes": "Installed boot script extracted from the selected September rootfs; generated by flash-kernel from the x-chip-os bootscr.chip template. Loads kernel at 0x42000000 and DTB at 0x43000000 from UBIFS, applies the DIP overlay, uses the overscan bootargs, then bootz with no initrd."
     },
     {
       "name": "x-chip-pocketchip.dtbo",
-      "from_asset": "pocketchip-rootfs.tar.gz",
+      "from_asset": "pocketchip-rootfs-2026-09-23.tar.gz",
       "path": "usr/lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo",
       "size": 3581,
       "sha256": "3230ea7ffb660bb559e8b938a3e4d9ea5e3a2f484a512f345564735f85a23e24",
       "status": "VERIFIED",
-      "notes": "PocketCHIP device-tree overlay shipped in the rootfs; rebuilt byte-identically from CHIP-dt-overlays e79aee33 and installed from the chip-dt-overlays 0.8 deb."
+      "notes": "PocketCHIP device-tree overlay shipped in the selected rootfs; rebuilt byte-identically from CHIP-dt-overlays e79aee33 and installed from the chip-dt-overlays 0.8 deb. Identical bytes in both pinned rootfs releases."
     },
     {
       "name": "u-boot-dtb-padded.bin",
@@ -501,6 +515,36 @@
       "sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8",
       "status": "VERIFIED",
       "notes": "Deterministic zero-padding of the locked u-boot-dtb.bin to 4194304 bytes; the NAND payload written at 0x800000."
+    },
+    {
+      "name": "spl-hynix",
+      "from_asset": "sunxi-spl.bin",
+      "transform": "sunxi-nand-image-builder -c 64/1024 -p 16384 -o 1664 -u 1024 -e 4194304 -b -s over the deterministic 256 KiB four-group source; /dev/urandom replaced by the checked-in SHA-256 stream",
+      "size": 4620288,
+      "sha256": "0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a",
+      "status": "VERIFIED",
+      "tool": {
+        "repository": "https://github.com/linux-sunxi/sunxi-tools",
+        "commit": "d7bbd172a5da601a08f94479de308c6fb714a19a",
+        "file": "nand-image-builder.c",
+        "sha256": "3876bac0aca5d5160d2f05f1715444c8e65cc72898f77c17e614147e21cbfc0d"
+      },
+      "notes": "One 4 MiB erase block of data+OOB: SPL at pages 0-15 of each 64-page BROM group (pages 0/64/128/192), deterministic padding elsewhere. Generated twice byte-identically in the digest-pinned container and structurally validated page-by-page by images/spl.py."
+    },
+    {
+      "name": "spl-toshiba",
+      "from_asset": "sunxi-spl.bin",
+      "transform": "sunxi-nand-image-builder -c 64/1024 -p 16384 -o 1280 -u 1024 -e 4194304 -b -s over the deterministic 256 KiB four-group source; /dev/urandom replaced by the checked-in SHA-256 stream",
+      "size": 4521984,
+      "sha256": "487edb2eda190bd98b85deacaf858fcc4583351c3210be4ebc19ee983d19dd45",
+      "status": "VERIFIED",
+      "tool": {
+        "repository": "https://github.com/linux-sunxi/sunxi-tools",
+        "commit": "d7bbd172a5da601a08f94479de308c6fb714a19a",
+        "file": "nand-image-builder.c",
+        "sha256": "3876bac0aca5d5160d2f05f1715444c8e65cc72898f77c17e614147e21cbfc0d"
+      },
+      "notes": "Same deterministic procedure as spl-hynix with the Toshiba OOB geometry (1280). Generated twice byte-identically and structurally validated page-by-page."
     }
   ],
   "physical_roles": [
@@ -520,17 +564,17 @@
     },
     {
       "role": "kernel",
-      "artifact": "vmlinuz-6.12.94+deb13-chip",
+      "artifact": "vmlinuz-6.12.107+deb13-chip",
       "status": "VERIFIED BUT PREBUILT",
       "purpose": "Recovery kernel for the FEL boot; must match the DTB and rootfs kernel version",
-      "notes": "Extracted from the pinned rootfs rather than downloaded separately."
+      "notes": "Recovery kernel extracted from the selected September rootfs; must match the DTB and rootfs kernel version."
     },
     {
       "role": "dtb",
       "artifact": "sun5i-r8-chip.dtb",
       "status": "VERIFIED BUT PREBUILT",
       "purpose": "Base device tree for the recovery kernel; PocketCHIP display/input support comes from an overlay applied at boot",
-      "notes": "Extracted from the pinned rootfs; carries __symbols__ for overlay fixups."
+      "notes": "Base device tree extracted from the selected September rootfs; carries __symbols__ for overlay fixups."
     },
     {
       "role": "recovery",
@@ -541,24 +585,24 @@
     },
     {
       "role": "spl-hynix",
-      "artifact": null,
-      "status": "PARTIAL",
+      "artifact": "spl-hynix",
+      "status": "VERIFIED",
       "purpose": "Raw NAND SPL image for the SK Hynix H27UCG8T2ETR part (OOB 1664)",
-      "notes": "Generated from the locked sunxi-spl.bin with sunxi-nand-image-builder -c 64/1024 -p 16384 -o 1664 -u 1024 -e 4194304 -b, with random padding between BROM copies. Upstream publishes no such binary. Batch 1 must either generate deterministically (fixed padding) and record hashes or decide the role is derived rather than a downloaded asset."
+      "notes": "Deterministically generated from the locked sunxi-spl.bin by the pinned sunxi-tools builder with OOB 1664; byte-identical across repeated and independent-toolchain runs. No NAND write was performed."
     },
     {
       "role": "spl-toshiba",
-      "artifact": null,
-      "status": "PARTIAL",
+      "artifact": "spl-toshiba",
+      "status": "VERIFIED",
       "purpose": "Raw NAND SPL image for the Toshiba TC58TEG5DCLTA00 part (OOB 1280)",
-      "notes": "Same generator and unresolved determinism as spl-hynix, with -o 1280."
+      "notes": "Same deterministic generator with OOB 1280; byte-identical across repeated and independent-toolchain runs. No NAND write was performed."
     },
     {
       "role": "rootfs",
-      "artifact": "pocketchip-rootfs.tar.gz",
+      "artifact": "pocketchip-rootfs-2026-09-23.tar.gz",
       "status": "VERIFIED BUT PREBUILT",
       "purpose": "Debian 13 rootfs streamed to the on-device UBIFS installer on mtd4",
-      "notes": "Pinned prebuilt artifact; not rebuildable from current mirrors, see asset notes."
+      "notes": "SELECTED pinned prebuilt September rootfs (os-2026.09.23-010738), consumed byte-for-byte. The July pocketchip-rootfs.tar.gz remains pinned and documented as the fallback candidate."
     }
   ],
   "approved_physical_manifest_sha256": [],

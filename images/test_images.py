@@ -7,8 +7,14 @@ from repack import repack
 
 
 class ImageScaffoldTests(unittest.TestCase):
-    def test_current_inputs_remain_blocked(self):
-        self.assertEqual(plan(load_inputs(ROOT / 'images/inputs.lock.json'))['status'], 'blocked')
+    def test_selected_route_inputs_are_pinned(self):
+        lock = load_inputs(ROOT / 'images/inputs.lock.json')
+        stock = plan(lock)
+        self.assertEqual(stock['status'], 'inputs-pinned')
+        self.assertEqual(stock['missing'], [])
+        self.assertEqual(stock['physical_approval'], 'blocked')
+        self.assertEqual(stock['rootfs']['asset'], lock['rootfs']['asset'])
+        self.assertEqual(stock['route'], 'consume-pinned-prebuilt-rootfs')
 
     def test_stock_does_not_depend_on_or_install_vitrallis(self):
         lock = load_inputs(ROOT / 'images/inputs.lock.json')
@@ -59,6 +65,33 @@ class ImageScaffoldTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     load_inputs(path)
             lock[field] = None
+        lock['container_digest'] = 'sha256:' + '0' * 64
+        lock['debian_snapshot'] = '20260930T000000Z'
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'lock.json'
+            path.write_text(json.dumps(lock))
+            self.assertEqual(load_inputs(path)['debian_snapshot'], '20260930T000000Z')
+
+    def test_selected_rootfs_and_derived_pins_are_required(self):
+        lock = json.loads((ROOT / 'images/inputs.lock.json').read_text())
+        lock['rootfs']['sha256'] = 'not-a-hash'
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'lock.json'
+            path.write_text(json.dumps(lock))
+            with self.assertRaises(ValueError):
+                load_inputs(path)
+        del lock['derived']['spl-hynix']
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'lock.json'
+            path.write_text(json.dumps(lock))
+            with self.assertRaises(ValueError):
+                load_inputs(path)
+        lock['derived']['spl-hynix'] = {'size': 1, 'sha256': 'x'}
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / 'lock.json'
+            path.write_text(json.dumps(lock))
+            with self.assertRaises(ValueError):
+                load_inputs(path)
 
     def test_repack_is_deterministic_and_preserves_contents(self):
         import tarfile

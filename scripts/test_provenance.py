@@ -177,6 +177,39 @@ class ImageInputLockTests(unittest.TestCase):
             path.write_text(json.dumps(value))
             self.assertTrue(check_inputs(load_document(path)))
 
+    def test_selected_route_cross_checks_pass_offline(self):
+        lock = load_document(ROOT / 'upstream-lock.json')
+        inputs = load_document(ROOT / 'images/inputs.lock.json')
+        _, requirements = check_evidence()
+        self.assertEqual(cross_checks(lock, inputs, requirements), [])
+
+    def test_selected_rootfs_derived_pins_inventory_and_tool_are_cross_checked(self):
+        lock = load_document(ROOT / 'upstream-lock.json')
+        inputs = json.loads((ROOT / 'images/inputs.lock.json').read_text())
+        _, requirements = check_evidence()
+        broken = json.loads(json.dumps(inputs))
+        broken['rootfs']['sha256'] = '0' * 64
+        self.assertTrue(cross_checks(lock, broken, requirements))
+        broken = json.loads(json.dumps(inputs))
+        broken['derived']['spl-hynix']['sha256'] = '0' * 64
+        self.assertTrue(cross_checks(lock, broken, requirements))
+        broken = json.loads(json.dumps(inputs))
+        broken['package_lock_sha256'] = '0' * 64
+        self.assertTrue(cross_checks(lock, broken, requirements))
+        broken = json.loads(json.dumps(inputs))
+        broken['spl_tool']['files']['nand-image-builder.c'] = '0' * 64
+        self.assertTrue(cross_checks(lock, broken, requirements))
+        broken = json.loads(json.dumps(inputs))
+        broken['rootfs']['fallback']['sha256'] = '0' * 64
+        self.assertTrue(cross_checks(lock, broken, requirements))
+
+    def test_derived_tool_record_must_be_reviewed(self):
+        lock = load_document(ROOT / 'upstream-lock.json')
+        for artifact in lock['derived_artifacts']:
+            if artifact['name'] == 'spl-hynix':
+                artifact['tool']['sha256'] = '0' * 64
+        self.assertTrue(check_lock(lock))
+
 
 class CompatibilityTests(unittest.TestCase):
     def compatibility_fixture(self):

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "kernel_release": "6.12.94+deb13-chip",
+  "kernel_release": "6.12.107+deb13-chip",
   "dtb": {
     "artifact": "sun5i-r8-chip.dtb",
     "sha256": "0132f7fa312542c374c7e5dfec2a1a12893b9cbe490d22e165fd7a89de51762e"
@@ -11,7 +11,7 @@
   },
   "boot_script": {
     "artifact": "boot.scr",
-    "sha256": "1fa91fee90df67db2f832b59fe797453a165e125cdeaabca6a09eb00812ecb0d"
+    "sha256": "61901b03e58105920c444becba42ebec9433b2d782ac54de957ec561c0d9292e"
   },
   "overlay_required_labels": [
     "pwm",
@@ -46,5 +46,5 @@
     "pid_offset": 9,
     "pocketchip_pid": [0, 1]
   },
-  "notes": "Labels are the external fixups of the shipped PocketCHIP overlay; dtb_symbols are the labels observed in the accepted DTB's __symbols__ section. The overlay is applied by U-Boot with fdt apply from the rootfs UBIFS path /lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo. Kernel panel/backlight/touch drivers are modules; sun4i_tcon_probe() defers on the unbound panel and the driver core re-probes when panel-simple loads from the rootfs, so the display path remains a hardware-validation item rather than a known failure. See docs/image-provenance.md."
+  "notes": "Batch 1 selected the os-2026.09.23-010738 rootfs. Its base DTB and PocketCHIP overlay are byte-identical to the July candidate (hashes unchanged); the boot script now carries the overscan bootargs and loads the 6.12.107 release paths. Labels are the external fixups of the shipped PocketCHIP overlay; dtb_symbols are the labels observed in the selected DTB's __symbols__ section. The overlay is applied by U-Boot with fdt apply from the rootfs UBIFS path /lib/firmware/nextthingco/chip/early/x-chip-pocketchip.dtbo. Kernel panel/backlight/touch drivers are modules; display behaviour remains a hardware-validation item rather than a known failure. See docs/image-provenance.md."
 }

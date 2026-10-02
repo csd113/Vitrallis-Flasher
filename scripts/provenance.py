@@ -221,7 +221,7 @@ def check_assets(lock, repositories, errors):
     return known
 
 
-def check_derived(lock, assets, errors):
+def check_derived(lock, assets, repositories, errors):
     derived = lock.get('derived_artifacts')
     if derived is None:
         return {}
@@ -259,6 +259,18 @@ def check_derived(lock, assets, errors):
             problem(errors, where + ' needs a status classification')
         if not isinstance(artifact.get('notes'), str) or not artifact['notes']:
             problem(errors, where + ' must explain how it is derived')
+        tool = artifact.get('tool')
+        if tool is not None:
+            if not isinstance(tool, dict) or set(tool) != {'repository', 'commit', 'file', 'sha256'}:
+                problem(errors, where + ' tool record needs repository, commit, file and sha256')
+                continue
+            repository = repositories.get(tool['repository'])
+            if repository is None:
+                problem(errors, where + ' tool repository is not reviewed')
+            elif tool['commit'] not in known_revisions(repository):
+                problem(errors, where + ' tool commit is not a recorded revision')
+            elif repository.get('reviewed_files', {}).get(tool['file']) != tool['sha256']:
+                problem(errors, where + ' tool file is not reviewed with that hash')
     return known
 
 
@@ -315,7 +327,7 @@ def check_lock(lock):
         problem(errors, 'reviewed_on must be an ISO date')
     repositories = check_repositories(lock, errors)
     assets = check_assets(lock, repositories, errors)
-    derived = check_derived(lock, assets, errors)
+    derived = check_derived(lock, assets, repositories, errors)
     check_physical_roles(lock, assets, derived, errors)
     return errors
 
@@ -324,10 +336,48 @@ def check_inputs(lock):
     errors = []
     if not isinstance(lock, dict):
         return ['image input lock must be a JSON object']
-    if lock.get('schema_version') != 2:
-        problem(errors, 'image input lock schema_version must be 2')
+    if lock.get('schema_version') != 3:
+        problem(errors, 'image input lock schema_version must be 3')
     if lock.get('architecture') != 'armhf' or lock.get('distribution') != 'trixie':
         problem(errors, 'image input lock must target armhf trixie')
+    rootfs = lock.get('rootfs')
+    if not isinstance(rootfs, dict):
+        problem(errors, 'image input lock needs a selected-rootfs record')
+    else:
+        if set(rootfs) != {'asset', 'tag', 'url', 'size', 'sha256', 'kernel', 'fallback'}:
+            problem(errors, 'selected-rootfs record has unexpected fields')
+        else:
+            if not isinstance(rootfs['asset'], str) or not rootfs['asset']:
+                problem(errors, 'selected rootfs needs an asset name')
+            if not https_url(rootfs['url']) or type(rootfs['size']) is not int or rootfs['size'] <= 0 or not SHA256.match(str(rootfs['sha256'])):
+                problem(errors, 'selected rootfs needs a pinned HTTPS URL, size and SHA-256')
+            kernel = rootfs['kernel']
+            if not isinstance(kernel, dict) or set(kernel) != {'release', 'package', 'version'} or not all(isinstance(kernel.get(field), str) and kernel[field] for field in ('release', 'package', 'version')):
+                problem(errors, 'selected rootfs needs a complete kernel record')
+            fallback = rootfs['fallback']
+            if not isinstance(fallback, dict) or set(fallback) != {'asset', 'tag', 'url', 'size', 'sha256'} or not https_url(fallback['url']) or not SHA256.match(str(fallback['sha256'])):
+                problem(errors, 'selected rootfs needs a pinned fallback record')
+    tool = lock.get('spl_tool')
+    if not isinstance(tool, dict) or set(tool) != {'repository', 'commit', 'files', 'version_header', 'compile_flags'}:
+        problem(errors, 'image input lock needs an SPL tool record')
+    else:
+        if not https_url(tool['repository']) or not IMMUTABLE_REF.match(str(tool['commit'])):
+            problem(errors, 'SPL tool needs an immutable repository and commit')
+        files = tool['files']
+        if not isinstance(files, dict) or not files or any(not isinstance(name, str) or not name or not SHA256.match(str(digest)) for name, digest in files.items()):
+            problem(errors, 'SPL tool needs reviewed file hashes')
+        if not isinstance(tool['version_header'], str) or 'VERSION' not in tool['version_header']:
+            problem(errors, 'SPL tool needs a pinned generated version header')
+        if not isinstance(tool['compile_flags'], list) or not tool['compile_flags']:
+            problem(errors, 'SPL tool needs explicit compile flags')
+    derived = lock.get('derived')
+    expected_derived = {'spl-hynix', 'spl-toshiba', 'u-boot-dtb-padded.bin'}
+    if not isinstance(derived, dict) or set(derived) != expected_derived:
+        problem(errors, 'image input lock needs derived SPL and padded-U-Boot pins')
+    else:
+        for name, record in derived.items():
+            if not isinstance(record, dict) or set(record) != {'size', 'sha256'} or type(record['size']) is not int or record['size'] <= 0 or not SHA256.match(str(record['sha256'])):
+                problem(errors, 'derived pin is malformed: ' + str(name))
     dependencies = lock.get('dependencies')
     if not isinstance(dependencies, dict) or not dependencies:
         problem(errors, 'image input lock needs resolved dependency provenance')
@@ -343,7 +393,15 @@ def check_inputs(lock):
             tag = record.get('tag')
             if tag is None and commit is None:
                 problem(errors, where + ' needs a commit or an explicit unresolved marker')
-    for field in ('container_digest', 'debian_snapshot', 'chip_snapshot_sha256', 'package_lock_sha256', 'vitrallis_bundle_sha256'):
+    container = lock.get('container_digest')
+    if not isinstance(container, str) or not re.fullmatch(r'sha256:[0-9a-f]{64}', container):
+        problem(errors, 'image input lock needs a pinned container digest')
+    snapshot = lock.get('debian_snapshot')
+    if not isinstance(snapshot, str) or not re.fullmatch(r'\d{8}T\d{6}Z', snapshot):
+        problem(errors, 'image input lock needs a signed Debian snapshot timestamp (YYYYMMDDThhmmssZ)')
+    if not SHA256.match(str(lock.get('package_lock_sha256'))):
+        problem(errors, 'image input lock needs a pinned package inventory digest')
+    for field in ('chip_snapshot_sha256', 'vitrallis_bundle_sha256'):
         value = lock.get(field)
         if value is not None and not (isinstance(value, str) and value):
             problem(errors, 'image input lock field ' + field + ' must be null or a non-empty string')
@@ -484,11 +542,53 @@ def cross_checks(lock, inputs, requirements):
             problem(errors, 'image dependency repository is not locked: ' + str(name))
         elif record.get('commit') not in known_revisions(repository):
             problem(errors, 'image dependency commit is not a recorded revision: ' + str(name))
+    selected = inputs.get('rootfs', {})
+    if isinstance(selected, dict):
+        asset = assets.get(selected.get('asset'))
+        if asset is None:
+            problem(errors, 'selected rootfs is not locked in upstream-lock.json')
+        else:
+            if asset.get('sha256') != selected.get('sha256') or asset.get('size') != selected.get('size') or asset.get('url') != selected.get('url'):
+                problem(errors, 'selected rootfs disagrees with the locked asset')
+            if asset.get('source_commit') != inputs.get('source_commit'):
+                problem(errors, 'selected rootfs was not built from the locked source commit')
+        fallback = selected.get('fallback', {})
+        if isinstance(fallback, dict):
+            record = assets.get(fallback.get('asset'))
+            if record is None:
+                problem(errors, 'fallback rootfs is not locked in upstream-lock.json')
+            elif record.get('sha256') != fallback.get('sha256') or record.get('size') != fallback.get('size') or record.get('url') != fallback.get('url'):
+                problem(errors, 'fallback rootfs disagrees with the locked asset')
+    derived = {artifact.get('name'): artifact for artifact in lock.get('derived_artifacts', []) if isinstance(artifact, dict)}
+    for name, pin in inputs.get('derived', {}).items():
+        record = derived.get(name)
+        if record is None:
+            problem(errors, 'derived pin is not locked in upstream-lock.json: ' + str(name))
+        elif record.get('sha256') != pin.get('sha256') or record.get('size') != pin.get('size'):
+            problem(errors, 'derived pin disagrees with the lock: ' + str(name))
+    tool = inputs.get('spl_tool', {})
+    repository = repositories.get(tool.get('repository')) if isinstance(tool, dict) else None
+    if repository is None:
+        problem(errors, 'SPL tool repository is not locked in upstream-lock.json')
+    else:
+        if tool.get('commit') not in known_revisions(repository):
+            problem(errors, 'SPL tool commit is not a recorded revision')
+        reviewed = repository.get('reviewed_files', {})
+        for name, digest in tool.get('files', {}).items():
+            if reviewed.get(name) != digest:
+                problem(errors, 'SPL tool file is not reviewed in upstream-lock.json: ' + str(name))
+    inventory = ROOT / 'images' / ('package-inventory-' + str(selected.get('kernel', {}).get('release', '')) + '.json')
+    if not inventory.is_file():
+        problem(errors, 'checked-in package inventory is missing')
+    elif sha256_file(inventory) != inputs.get('package_lock_sha256'):
+        problem(errors, 'checked-in package inventory disagrees with the input lock')
     storage = ROOT / 'docs/storage-inspection.json'
     if storage.is_file():
-        recorded = json.loads(storage.read_text()).get('sha256')
-        rootfs = assets.get('pocketchip-rootfs.tar.gz')
-        if rootfs is not None and recorded != rootfs.get('sha256'):
+        inspection = json.loads(storage.read_text())
+        rootfs = assets.get(inspection.get('source_asset'))
+        if rootfs is None:
+            problem(errors, 'storage inspection names an unlocked rootfs')
+        elif inspection.get('sha256') != rootfs.get('sha256'):
             problem(errors, 'storage inspection rootfs hash disagrees with the lock')
     return errors
 

@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "config": "images/evidence/kernel-config-6.12.94+deb13-chip",
-  "config_sha256": "0e4e379d5add59800208d06ad5563e053a842b9402314a3868ecd02601e9d9b5",
+  "config": "images/evidence/kernel-config-6.12.107+deb13-chip",
+  "config_sha256": "436a91ee089b758d9ecccf3b557a677cd548afe3e40d5c286001174aba3b536a",
   "kernel_package": {
-    "name": "linux-image-6.12.94+deb13-chip",
-    "version": "6.12.94-1.29",
+    "name": "linux-image-6.12.107+deb13-chip",
+    "version": "6.12.107-1.31",
     "source_repository": "https://github.com/nextthingco/x-chip-linux-deb",
-    "source_commit": "d2fa89a991f3a1aa5ca812268d75acc82e6b933e"
+    "source_commit": "6ed9015281df266c73ce56673724cac0f18bc625"
   },
   "config_source": {
-    "asset": "pocketchip-rootfs.tar.gz",
-    "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.07.29-024145/pocketchip-rootfs.tar.gz",
-    "path": "boot/config-6.12.94+deb13-chip",
-    "sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2"
+    "asset": "pocketchip-rootfs-2026-09-23.tar.gz",
+    "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.09.23-010738/pocketchip-rootfs.tar.gz",
+    "path": "boot/config-6.12.107+deb13-chip",
+    "sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef"
   },
   "required": {
     "CONFIG_MTD": "y",
@@ -36,5 +36,5 @@
     "CONFIG_USB_CONFIGFS_RNDIS": "y",
     "CONFIG_AXP20X_POWER": "y"
   },
-  "notes": "Values asserted from the config extracted out of the pinned pocketchip-rootfs.tar.gz, not from documentation. These are the NAND/UBI root-mount chain, the documented built-in display bridge chain, and the FEL-installer USB-gadget chain. Panel (CONFIG_DRM_PANEL_SIMPLE=m), PWM backlight (CONFIG_BACKLIGHT_PWM=m), TCA8418 keyboard (CONFIG_KEYBOARD_TCA8418=m) and the sun4i touchscreen (CONFIG_TOUCHSCREEN_SUN4I=m) are modules in this package; whether early module load is sufficient for the PocketCHIP panel is a hardware-validation item."
+  "notes": "Values asserted from the config extracted out of the selected pocketchip-rootfs-2026-09-23.tar.gz, not from documentation. Batch 1 selected the September rootfs (kernel 6.12.107-1.31); its extracted config hash and package identity agree with the independently hash-pinned live kernel .deb. The July 6.12.94-1.29 config evidence remains checked in for the documented fallback. These are the NAND/UBI root-mount chain, the documented built-in display bridge chain, and the FEL-installer USB-gadget chain. Panel (CONFIG_DRM_PANEL_SIMPLE=m), PWM backlight (CONFIG_BACKLIGHT_PWM=m), TCA8418 keyboard (CONFIG_KEYBOARD_TCA8418=m) and the sun4i touchscreen (CONFIG_TOUCHSCREEN_SUN4I=m) are modules in this package; whether early module load is sufficient for the PocketCHIP panel is a hardware-validation item."
 }

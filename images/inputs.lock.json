@@ -1,10 +1,54 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "source_repository": "https://github.com/nextthingco/x-chip-os",
-  "source_commit": "7584eab1aafb1667bd89ae210dcd641efc7cc5b5",
+  "source_commit": "f9191c2914c94a3bfe2030556cadf7aaa3d9b4ff",
   "architecture": "armhf",
   "distribution": "trixie",
   "source_date_epoch": 1785292905,
+  "rootfs": {
+    "asset": "pocketchip-rootfs-2026-09-23.tar.gz",
+    "tag": "os-2026.09.23-010738",
+    "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.09.23-010738/pocketchip-rootfs.tar.gz",
+    "size": 516563033,
+    "sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+    "kernel": {
+      "release": "6.12.107+deb13-chip",
+      "package": "linux-image-6.12.107+deb13-chip",
+      "version": "6.12.107-1.31"
+    },
+    "fallback": {
+      "asset": "pocketchip-rootfs.tar.gz",
+      "tag": "os-2026.07.29-024145",
+      "url": "https://github.com/nextthingco/x-chip-os/releases/download/os-2026.07.29-024145/pocketchip-rootfs.tar.gz",
+      "size": 516321424,
+      "sha256": "010eb2a0cb59334f068d3a5e6989bdc486715362e7a5d04fbb329e7b556e0de2"
+    }
+  },
+  "spl_tool": {
+    "repository": "https://github.com/linux-sunxi/sunxi-tools",
+    "commit": "d7bbd172a5da601a08f94479de308c6fb714a19a",
+    "files": {
+      "nand-image-builder.c": "3876bac0aca5d5160d2f05f1715444c8e65cc72898f77c17e614147e21cbfc0d",
+      "common.h": "fc842877db83c0803cc433d628783dca56c28961ba7ab928a7a491a8f120ada5",
+      "include/portable_endian.h": "46bad3f8c8c1e1ab68b9fff3e29638b01d8e2cba572924e06da9306e35421d85"
+    },
+    "version_header": "#define VERSION \"sunxi-tools-d7bbd172\"\n",
+    "compile_flags": ["-O2", "-Wall", "-Wextra", "-Dfls=sunxi_fls"]
+  },
+  "derived": {
+    "spl-hynix": {
+      "size": 4620288,
+      "sha256": "0099342e6331e9880d704bf11eb75f1b7618be8cef05b2ae456918fa1010fc7a"
+    },
+    "spl-toshiba": {
+      "size": 4521984,
+      "sha256": "487edb2eda190bd98b85deacaf858fcc4583351c3210be4ebc19ee983d19dd45"
+    },
+    "u-boot-dtb-padded.bin": {
+      "size": 4194304,
+      "sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8"
+    }
+  },
   "dependencies": {
     "bootloader": {
       "repository": "https://github.com/nextthingco/x-chip-uboot",
@@ -13,7 +57,7 @@
     },
     "kernel": {
       "repository": "https://github.com/nextthingco/x-chip-linux-deb",
-      "commit": "d2fa89a991f3a1aa5ca812268d75acc82e6b933e",
+      "commit": "6ed9015281df266c73ce56673724cac0f18bc625",
       "tag": null
     },
     "overlays": {
@@ -23,7 +67,7 @@
     },
     "package_repository": {
       "repository": "https://github.com/nextthingco/x-chip-deb-repo",
-      "commit": "40a8723194368dd29c663b0af01f9737c10edf8f",
+      "commit": "20bb1e8795305729e4587225439cca04fc475182",
       "tag": null
     },
     "recovery_installer": {
@@ -32,20 +76,19 @@
       "tag": "installer-2026.06.19-181233"
     }
   },
-  "container_digest": null,
-  "debian_snapshot": null,
+  "container_digest": "sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251",
+  "debian_snapshot": "20260930T000000Z",
   "chip_snapshot_sha256": null,
-  "package_lock_sha256": null,
+  "package_lock_sha256": "75f1d4bcee28ad40839ecf825486fdb6b19df503b7eee70c196acf4081e5d368",
   "vitrallis_bundle_sha256": null,
   "vitrallis_compatibility": "blocked",
   "blockers": [
-    "Lock the arm/v7 build-container digest and a signed Debian snapshot.",
-    "Snapshot the CHIP repository package index and every transitive package version/checksum; pinning the live GitHub Pages index is not yet possible because upstream rebuilds it.",
-    "Verify the CHIP repository signing key fingerprint, verify the InRelease signature against the key snapshot, and record both in the lock.",
+    "The selected rootfs is consumed as a pinned prebuilt binary; its CHIP and Debian packages cannot be rebuilt from current upstreams because the live CHIP apt repository deletes replaced packages and upstream recorded no Debian snapshot. Its installed package set is bound by the checked-in inventory hashes instead.",
     "Review upstream redistribution permissions before distributing their configuration or images.",
-    "Validate PocketCHIP panel, keyboard, touch, USB recovery transport and both NAND parts.",
+    "Validate PocketCHIP panel, keyboard, touch, USB recovery transport and both NAND parts on hardware.",
     "Validate preservation of the stock PocketHome menu, default startup, controls, calibration and redistributable stock applications on Debian 13.",
-    "Validate the shared NAND-write policy: no NAND-backed swap, RAM-only zram if adopted, bounded volatile logs/tmp, preserved UBI health and memory-pressure testing."
+    "Validate the shared NAND-write policy on hardware: no NAND-backed swap, RAM-only zram if adopted, bounded volatile logs/tmp, preserved UBI health and memory-pressure testing.",
+    "No physical manifest is approved; approval must bind the exact manifest and artifact hashes before any NAND write path is enabled."
   ],
   "vitrallis_blockers": [
     "Supply the complete matching ARM Vitrallis bundle; verify its PocketHome/Marshmallow session contract and any optional app dependencies.",

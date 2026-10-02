@@ -40,9 +40,12 @@ def validate():
     run([sys.executable, '-m', 'unittest', 'discover', '-s', 'images', '-p', 'test_*.py'])
     run([sys.executable, '-m', 'unittest', 'discover', '-s', 'scripts', '-p', 'test_*.py'])
     run([sys.executable, 'scripts/provenance.py', 'check'])
+    run([sys.executable, 'scripts/provenance.py', 'check-kernel-config'])
     run([sys.executable, 'images/build.py', 'plan'])
     run([sys.executable, 'images/build.py', 'plan', '--profile', 'vitrallis-default'])
-    run_expect([sys.executable, 'images/build.py', 'check'], 2)
+    run([sys.executable, 'images/build.py', 'check'])
+    run_expect([sys.executable, 'images/build.py', 'check', '--profile', 'vitrallis-default'], 2)
+    run([sys.executable, 'images/assemble.py', '--help'])
     run(['cargo', 'build', '--workspace', '--all-features', '--release', '--locked'])
     run(['cargo', 'run', '--locked', '-p', 'flasher-cli', '--', 'validate', 'manifests/simulation.json'])
     run(['cargo', 'run', '--locked', '-p', 'flasher-cli', '--', 'validate', 'manifests/simulation-vitrallis.json'])
@@ -85,7 +88,7 @@ def package(target=None, bin_dir=None):
         for filename in ['upgrade_debian13.py', 'provenance.py']:
             shutil.copy2(ROOT / 'scripts' / filename, destination / 'scripts' / filename)
         (destination / 'images').mkdir()
-        for filename in ['build.py', 'inputs.lock.json', 'storage.py', 'kernel-requirements.json', 'compatibility.json']:
+        for filename in ['build.py', 'assemble.py', 'physical.py', 'spl.py', 'fdt.py', 'repack.py', 'uimage.py', 'storage.py', 'inputs.lock.json', 'kernel-requirements.json', 'compatibility.json', 'package-inventory-6.12.107+deb13-chip.json', 'Dockerfile']:
             shutil.copy2(ROOT / 'images' / filename, destination / 'images' / filename)
         shutil.copytree(ROOT / 'images/storage-candidates', destination / 'images/storage-candidates')
         shutil.copytree(ROOT / 'images/evidence', destination / 'images/evidence')

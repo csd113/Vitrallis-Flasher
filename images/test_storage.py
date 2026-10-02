@@ -15,7 +15,7 @@ class StoragePolicyTests(unittest.TestCase):
         self.assertIsNone(stock['zram']['writeback_device'])
         self.assertFalse(stock['zram']['disk_swap_fallback'])
         self.assertEqual(stock['status'], 'candidate-not-applied')
-        self.assertEqual(plan(lock)['status'], 'blocked')
+        self.assertEqual(plan(lock)['status'], 'inputs-pinned')
 
     def test_candidate_configs_match_policy_and_have_no_execution_directives(self):
         policy = storage_policy()
