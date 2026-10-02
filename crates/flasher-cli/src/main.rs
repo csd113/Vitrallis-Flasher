@@ -69,6 +69,9 @@ fn run() -> Result<(), Error> {
         [command, assets, template, daemon, tool] if command == "recovery-boot" => {
             boot_recovery_diagnostic(assets, template, daemon, tool, &cancel)?;
         }
+        [command, assets, template, daemon, tool, dtb] if command == "recovery-boot-marker" => {
+            boot_marker_diagnostic(assets, template, daemon, tool, dtb, &cancel)?;
+        }
         [command, config, binary, operation] if command == "recovery-spl-preflight" => {
             let response = flasher_core::recovery::spl_trial::prepare(
                 Path::new(config),
@@ -127,7 +130,11 @@ fn run() -> Result<(), Error> {
 fn is_recovery_diagnostic(command: &str) -> bool {
     matches!(
         command,
-        "recovery-inventory" | "recovery-ping" | "recovery-return-to-fel" | "recovery-rootfs-map"
+        "recovery-inventory"
+            | "recovery-ping"
+            | "recovery-return-to-fel"
+            | "recovery-rootfs-map"
+            | "recovery-physical-marker"
     )
 }
 
@@ -140,6 +147,7 @@ fn read_recovery_diagnostic(
     let diagnostic = match command {
         "recovery-ping" => flasher_core::recovery::diagnostic_ping,
         "recovery-rootfs-map" => flasher_core::recovery::diagnostic_rootfs_map,
+        "recovery-physical-marker" => flasher_core::recovery::diagnostic_physical_marker,
         "recovery-return-to-fel" => flasher_core::recovery::diagnostic_return_to_fel,
         _ => flasher_core::recovery::diagnostic_inventory,
     };
@@ -271,6 +279,29 @@ fn boot_recovery_diagnostic(
     Ok(())
 }
 
+fn boot_marker_diagnostic(
+    assets: &str,
+    template: &str,
+    daemon: &str,
+    tool: &str,
+    dtb: &str,
+    cancel: &Cancellation,
+) -> Result<(), Error> {
+    let private = flasher_core::recovery_boot::boot_marker(
+        Path::new(assets),
+        Path::new(template),
+        Path::new(daemon),
+        Path::new(tool),
+        Path::new(dtb),
+        cancel,
+    )?;
+    println!(
+        "Read-only marker RAM boot dispatched; authenticated inventory still required.\nPrivate session directory: {}",
+        private.display()
+    );
+    Ok(())
+}
+
 fn native_diagnostic(command: &str, cancel: &Cancellation) -> Result<(), Error> {
     let transport = NativeFel;
     let device = select(&transport.discover(cancel)?)?;
@@ -331,7 +362,7 @@ fn boot_readback_diagnostic(
 
 fn help() {
     println!(
-        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. The SPL diagnostic is restricted to the measured sacrificial unit and exact original program. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
+        "Vitrallis Flasher\n\n  doctor\n  releases\n  detect (native USB, read-only)\n  fel-probe (scratch SRAM diagnostic)\n  boot0-readback /absolute/path/to/mtd-raw-data.bin (saved 4 MiB SPL diagnostic)\n  boot0-check-restoration /absolute/path/to/original-spl.nand (fixed pinned restoration candidate)\n  boot0-recover-source /primary /backup expected-sha256 /private-output (verify eight saved copies)\n  recovery-spl-preflight /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup (prepare then disconnect; no write)\n  recovery-spl-trial /private-session/session.bin /private-session/daemon.bin erase-primary|restore-primary|erase-backup|restore-backup /new-private-journal.jsonl (fixed sacrificial-unit diagnostic)\n  trial-journal-read /absolute/path/to/private-journal.jsonl (read-only inspection)\n  recovery-boot /assets /template /daemon /sunxi-fel (pinned RAM recovery diagnostic)\n  recovery-boot-marker /assets /template /daemon /sunxi-fel /pinned-marker.dtb (fixed read-only alias; denies SPL trials)\n  recovery-physical-marker /private-session/session.bin /private-session/daemon.bin (fixed raw last-page observation)\n  recovery-boot-readback /private-session/session.bin /private-session/daemon.bin spl-primary|spl-backup|spl-primary-corrected|spl-backup-corrected|uboot|uboot-corrected|fourth-boot-block\n  recovery-ping /private-session/session.bin /private-session/daemon.bin\n  recovery-inventory /private-session/session.bin /private-session/daemon.bin\n  recovery-rootfs-map /private-session/session.bin /private-session/daemon.bin (read-only logical eraseblock map)\n  recovery-return-to-fel /private-session/session.bin /private-session/daemon.bin (keep FEL bridge connected)\n  detect /absolute/path/to/sunxi-fel\n  validate manifest.json\n  fetch manifest.json existing-private-cache\n  offline manifest.json existing-private-cache offline-directory\n  simulate [--profile stock|vitrallis-default]\n  upgrade --profile stock|vitrallis-default (blocked)\n\nStock PocketHome is the default choice. Production flashing remains blocked. The SPL diagnostic is restricted to the measured sacrificial unit and exact original program. Simulation still requires typed ERASE confirmation. Downloads require an explicitly selected manifest; checksums establish integrity, not publisher trust."
     );
 }
 fn fetch(

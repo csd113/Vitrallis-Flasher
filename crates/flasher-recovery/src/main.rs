@@ -1,4 +1,5 @@
 //! SID-bound RAM recovery with a restricted original-SPL fallback trial.
+mod marker;
 mod readback;
 mod trial;
 

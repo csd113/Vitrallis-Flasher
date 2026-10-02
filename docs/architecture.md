@@ -215,3 +215,12 @@ capability; execution still requires the unresolved physical gates. No path,
 address or utility argument is supplied by the GUI or manifest. The eleventh RAM session physically executes v6 enumeration with all 2,044 entries
 and the original 65 unavailable indices. Independent boot-chain readbacks remain
 healthy; write skipping and production installation still require validation.
+
+Protocol v7 adds a fixed physical-marker read backed by a pinned read-only
+non-SLC alias DTB on the measured sacrificial SID. Only its fixed last page is
+read; the response contains OOB bytes and hashes, with bounded host validation.
+Device-local geometry, flags, fresh rootfs map and unchanged post-read facts are
+required. Inventory includes the alias, causing existing exact-five-partition
+write preflight to deny SPL mutation. Standard recovery retains its original
+DTB. This diagnostic grants no NAND-plan or physical-manifest approval; payload
+loading and marker observation remain physically unvalidated.

@@ -725,3 +725,36 @@ private all-erased raw capture:
 `work/batch3/original-spl-trial-session-8/backup-after-isolated-primary-raw.nand`.
 No Rust or image code is part of this evidence-only milestone; `git diff --check`
 passes. The next recovery protocol work remains separate and uncommitted.
+
+### Batch 3 protocol v7 fixed physical-marker read preparation
+
+The application now has a closed marker read and an opt-in pinned diagnostic
+DTB bootstrap on the measured sacrificial SID. Standard recovery keeps its
+original DTB. Marker reads require a read-only non-SLC alias, fixed geometry,
+RAM mounts/no attached UBI and a fresh validated rootfs unavailable-block map.
+Only physical page 255 is read, without ECC/skip substitution; full OOB bytes
+and data/interleaved hashes are returned and checked after authentication.
+Changed alias facts, flags, partial reads, diagnostics, wrong page or wrong
+response type fail closed. The extra partition denies original-SPL writes.
+Factory/runtime origin is not inferred from the observed bytes.
+
+Four targeted core tests and one daemon request test pass on host; all four
+core tests and the daemon request test also pass cross-built on ARMv7 under
+qemu-arm. Older v5/v6 hellos are rejected by v7. Two template builds are identical:
+36,601,703 bytes, SHA256
+`6c85ed628fba2555ebd2c98be65700473dd5400fbe6d9d826ed58d792ee7f4aa`.
+The builder, image header and metadata use protocol 7. No v7 physical load or
+marker read has occurred; source-derived marker/page rules and platform patch
+equivalence remain distinct from physical evidence.
+
+`cargo fmt --all --check`, strict Clippy and
+`cargo check --workspace --all-targets --all-features --locked` pass.
+`python3 scripts/ci.py validate` exits 0: 163 core tests pass with six intentional
+child-process fixture ignores, five integration and eleven daemon tests pass,
+plus 71 image and 35 script tests. Formatting, strict workspace Clippy, release
+build, provenance and established image/plan checks pass in the same sequence.
+`git diff --check` passes. Logs:
+`work/batch3/physical-marker-v7-final-validation.log`,
+`work/batch3/physical-marker-v7-final-workspace-check.log`,
+`work/batch3/physical-marker-v7-arm-core-tests.log` and
+`work/batch3/physical-marker-v7-arm-daemon-tests.log`.

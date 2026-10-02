@@ -279,3 +279,9 @@ selection is claimed.
   corrupted PEBs; original root UUID and zero NAND ECC failures are preserved.
   No locked release boot is claimed. Package activity was absent before clean
   poweroff; backup restoration remains pending FEL re-entry.
+
+- `recovery-template-v7.json`: reproducible pinned protocol v7 payload and
+  closed physical last-page diagnostic through the exact read-only alias DTB.
+  Host and ARMv7 qemu tests cover alias/status/page bounds, authentication and
+  response mismatch; current physical load/marker read remain pending. This
+  preserves historical v6 evidence and grants no production authorization.

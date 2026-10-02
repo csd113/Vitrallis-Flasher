@@ -20,9 +20,11 @@ use std::{
 };
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
-const TEMPLATE_HASH: &str = "84e3baa083f1a26f335a7e707f16336d88762c9bdcdf4d1133f8b1c330489ba7";
-const TEMPLATE_BYTES: usize = 36_595_460;
-const DAEMON_HASH: &str = "f00caaf5b82bed672e1e4c11d576da848b3bb29fb881c08f8dc3b24340f902a2";
+const TEMPLATE_HASH: &str = "6c85ed628fba2555ebd2c98be65700473dd5400fbe6d9d826ed58d792ee7f4aa";
+const TEMPLATE_BYTES: usize = 36_601_703;
+const DAEMON_HASH: &str = "2fe757c2235f65e0d76c6680d389349e8df870ba610a74169ab225c00243757d";
+const MARKER_DTB_HASH: &str = "55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd";
+const MARKER_DTB_BYTES: usize = 25_639;
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
 const INPUTS: [(&str, &str, &str, usize); 4] = [
     (
@@ -82,6 +84,12 @@ fn sid(device: &Device) -> Result<[u8; 16], Error> {
         sid[index * 4..index * 4 + 4].copy_from_slice(&value.to_le_bytes());
     }
     Ok(sid)
+}
+fn verified_marker_dtb(path: &Path, device: &Device) -> Result<Vec<u8>, Error> {
+    if sid(device)? != crate::boot_trial::SID {
+        return Err(Error::Device);
+    }
+    verified(path, MARKER_DTB_HASH, MARKER_DTB_BYTES, MARKER_DTB_BYTES)
 }
 fn crc32(data: &[u8]) -> u32 {
     // IEEE CRC-32 used by legacy U-Boot uImage, not an authentication primitive.
@@ -146,8 +154,37 @@ pub fn boot(
     tool: &Path,
     cancel: &Cancellation,
 ) -> Result<PathBuf, Error> {
+    boot_with_dtb(assets, template, daemon, tool, None, cancel)
+}
+
+/// Boots the fixed read-only marker alias DTB on the measured sacrificial SID.
+/// # Errors
+/// Rejects any changed diagnostic DTB, inputs, identity or failed RAM operation.
+/// The extra alias denies original-SPL trial writes; no manifest is approved.
+pub fn boot_marker(
+    assets: &Path,
+    template: &Path,
+    daemon: &Path,
+    tool: &Path,
+    marker_dtb: &Path,
+    cancel: &Cancellation,
+) -> Result<PathBuf, Error> {
+    boot_with_dtb(assets, template, daemon, tool, Some(marker_dtb), cancel)
+}
+
+fn boot_with_dtb(
+    assets: &Path,
+    template: &Path,
+    daemon: &Path,
+    tool: &Path,
+    marker_dtb: Option<&Path>,
+    cancel: &Cancellation,
+) -> Result<PathBuf, Error> {
     cancel.check()?;
     let selected = select(&NativeFel.discover(cancel)?)?;
+    let marker_dtb = marker_dtb
+        .map(|path| verified_marker_dtb(path, &selected))
+        .transpose()?;
     let template = verified(template, TEMPLATE_HASH, 40 * 1024 * 1024, TEMPLATE_BYTES)?;
     let daemon = verified(daemon, DAEMON_HASH, 32 * 1024 * 1024, 0)?;
     let _tool_bytes = verified(tool, TOOL_HASH, 4 * 1024 * 1024, 0)?;
@@ -156,6 +193,9 @@ pub fn boot(
         cancel.check()?;
         let bytes = verified(&assets.join(relative), digest, 16 * 1024 * 1024, length)?;
         std::fs::write(staging.path().join(staged), bytes)?;
+    }
+    if let Some(bytes) = &marker_dtb {
+        std::fs::write(staging.path().join("dtb.bin"), bytes)?;
     }
     let (_, mut secret) = Credentials::generate(sid(&selected)?)?;
     let image = session_image(&template, &secret)?;
@@ -219,6 +259,7 @@ pub fn boot(
         "exit": output.exit, "stdout": output.stdout, "stderr": output.stderr,
         "sid": selected.sid, "template_sha256": TEMPLATE_HASH,
         "daemon_sha256": DAEMON_HASH,
+        "marker_alias": marker_dtb.is_some(),
     }))
     .map_err(|_| Error::Output)?;
     std::fs::write(staging.path().join("boot-tool-log.json"), log)?;
@@ -229,15 +270,52 @@ pub fn boot(
 mod tests {
     use super::*;
     #[test]
+    fn marker_dtb_pins_match_preparation_and_reject_changed_input_or_sid() {
+        let metadata: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../docs/evidence/batch3/hynix-marker-probe-preparation.json"
+        ))
+        .unwrap();
+        let probe = &metadata["diagnostic_preparation"];
+        assert_eq!(probe["derived_sha256"], MARKER_DTB_HASH);
+        assert_eq!(
+            probe["derived_bytes"].as_u64().unwrap(),
+            MARKER_DTB_BYTES as u64
+        );
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().canonicalize().unwrap().join("probe.dtb");
+        let mut device = Device {
+            bus: 0,
+            address: 1,
+            soc: "A13".into(),
+            sid: "16254217:50303858:31333030:0e0288c0".into(),
+        };
+        std::fs::write(&path, vec![0; MARKER_DTB_BYTES]).unwrap();
+        assert!(matches!(
+            verified_marker_dtb(&path, &device),
+            Err(Error::Hash)
+        ));
+        std::fs::write(&path, [0; 1]).unwrap();
+        assert!(matches!(
+            verified_marker_dtb(&path, &device),
+            Err(Error::Length)
+        ));
+        device.sid = "00000001:00000001:00000001:00000001".into();
+        assert!(matches!(
+            verified_marker_dtb(&path, &device),
+            Err(Error::Device)
+        ));
+    }
+    #[test]
     fn bootstrap_pins_match_the_recorded_template_bytes_and_implementation() {
         let metadata: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../docs/evidence/batch3/recovery-template-v6-inventory-guard.json"
+            "../../../docs/evidence/batch3/recovery-template-v7.json"
         ))
         .unwrap();
         assert_eq!(
             metadata["image_bytes"].as_u64().unwrap(),
             TEMPLATE_BYTES as u64
         );
+        assert_eq!(metadata["protocol"], 7);
         assert_eq!(metadata["image_sha256"].as_str().unwrap(), TEMPLATE_HASH);
         assert_eq!(metadata["daemon_sha256"].as_str().unwrap(), DAEMON_HASH);
     }

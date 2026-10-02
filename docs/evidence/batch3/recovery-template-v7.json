@@ -1,0 +1,29 @@
+{
+  "protocol": 7,
+  "sid": null,
+  "session_id": null,
+  "daemon_sha256": "2fe757c2235f65e0d76c6680d389349e8df870ba610a74169ab225c00243757d",
+  "image_sha256": "6c85ed628fba2555ebd2c98be65700473dd5400fbe6d9d826ed58d792ee7f4aa",
+  "image_bytes": 36601703,
+  "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
+  "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
+  "operations": [
+    "ping",
+    "inventory",
+    "rootfs-map",
+    "physical-marker",
+    "boot-readback",
+    "return-to-fel",
+    "prepare-spl-trial",
+    "execute-spl-trial"
+  ],
+  "nand_writes": "restricted-original-spl-block-trial",
+  "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+  "byte_identical_repeat": true,
+  "physical_boot": "pending",
+  "physical_marker_read": "pending",
+  "marker_alias_dtb_sha256": "55b8346c340692bb22f06dc020bdf36445341237b752e27fe0486f3e751450fd",
+  "marker_alias_dtb_bytes": 25639,
+  "marker_operation": "Fixed raw physical page 255 of read-only non-SLC mtd5 at physical 0x38800000; no caller-selected address/path",
+  "trial_write_policy": "Original-SPL trial requires exactly five partitions; marker alias produces six and denies trial writes"
+}

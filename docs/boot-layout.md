@@ -232,8 +232,9 @@ It appends the alias after all original partitions and checks every original
 node/property and child order. Standard overlay merging was rejected: its new
 child appeared first in offline testing and would renumber the existing MTD
 paths. The diagnostic DTB is reproducible and independently parses with dtc;
-it has not been integrated into bootstrap or loaded on hardware. A closed read
-operation and direct physical marker observation remain pending. This preparation
+it is integrated into the closed protocol v7 diagnostic bootstrap/read operation
+but has not been loaded on hardware. Direct physical marker observation remains
+pending. This preparation
 changes no NAND plan or production authorization.
 
 Recovery inventory now enumerates bounded canonical MTD class entries, including

@@ -251,7 +251,9 @@ The v6 template is reproducible and pinned with its exact daemon. The eleventh R
 rootfs map. All 65 unavailable logical indices match the original ioctl capture.
 The initially stale bootstrap byte-length pin rejected before upload; a regression
 test now binds length and both digests to recorded metadata. No NAND write was
-performed in this session. The isolated restored-primary boot remains pending.
+performed in this session. A subsequent normal boot with independent full backup
+data/OOB still erased confirms restored-primary acceptance; backup restoration
+remains pending FEL re-entry.
 
 The parser requires the measured Hynix SLC geometry, a complete ordered map,
 matching offsets and unavailable count, no diagnostics or unexpected flags, and
@@ -260,3 +262,28 @@ after an ioctl failure and suppresses EOPNOTSUPP diagnostics, so a zero exit and
 printed map alone are insufficient. A relocated/missing final reservation is
 rejected for review rather than silently accepted. Scripted tests use measured
 indices and source-derived formatting; they are not a physical --map capture.
+
+### Protocol v7 physical marker diagnostic
+
+Protocol v7 adds the closed `PhysicalMarker` request and typed `MarkerReadback`.
+It rejects v5/v6 sessions without compatibility fallback. The standard bootstrap
+still uses the original pinned DTB. `recovery-boot-marker` accepts only the exact
+reviewed derived DTB digest/length on the measured sacrificial SID; it appends
+a read-only, non-SLC mtd5 alias without renumbering original partitions.
+
+`recovery-physical-marker` has no address, path or operation parameters. The
+daemon checks SID, RAM-only mounts, no attached UBI, six-partition inventory,
+read-only/non-SLC flags, exact alias geometry and a fresh complete rootfs map
+reporting logical block 222 unavailable. It invokes only the fixed raw `nanddump`
+last-page read at alias offset 4,177,920 for 16,384 data bytes plus 1,664 OOB
+bytes. A short read, diagnostics, changed counters/geometry or changed flags
+fails. The response retains full OOB bytes and only SHA256 digests for data
+and interleaved bytes. The host rechecks the bounded response after authentication.
+Observed OOB bytes do not establish factory/runtime origin or authorize writes.
+
+Any sixth partition denies original-SPL trial preflight, including this alias.
+A marker request on the standard five-partition DTB is rejected. The v7 template
+builds identically twice; host and ARMv7 qemu tests pass. No v7 payload load or
+physical marker observation has occurred yet. Production plan/manifest gates
+remain denied. Metadata is in
+[evidence/batch3/recovery-template-v7.json](evidence/batch3/recovery-template-v7.json).

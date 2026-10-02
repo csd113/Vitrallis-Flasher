@@ -130,6 +130,9 @@ impl Service {
                 Request::Ping => Ok(Response::Pong),
                 Request::Inventory => Ok(Response::Inventory(Box::new(super::inventory(cancel)?))),
                 Request::RootfsMap => Ok(Response::RootfsMap(Box::new(super::rootfs_map(cancel)?))),
+                Request::PhysicalMarker => Ok(Response::PhysicalMarker(Box::new(
+                    super::marker::read(cancel)?,
+                ))),
                 Request::BootReadback {
                     region,
                     interpretation,

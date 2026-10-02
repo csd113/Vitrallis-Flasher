@@ -17,17 +17,18 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 6;
+const VERSION: u32 = 7;
 const LIMIT: usize = 64 * 1024;
 // Bounded device-local preflight, erase/write and checked readback may take longer
 // than read-only diagnostics. Polling and cancellation remain at 500 ms.
 const TIMEOUT: Duration = Duration::from_secs(60);
 
 pub mod bad_blocks;
+pub mod marker;
 pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC06";
+const MAGIC: &[u8; 8] = b"VTRREC07";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -106,6 +107,7 @@ pub enum Request {
     Ping,
     Inventory,
     RootfsMap,
+    PhysicalMarker,
     BootReadback {
         region: BootRegion,
         interpretation: ReadInterpretation,
@@ -224,6 +226,7 @@ pub enum Response {
     Pong,
     Inventory(Box<Inventory>),
     RootfsMap(Box<bad_blocks::RootfsMapReadback>),
+    PhysicalMarker(Box<marker::MarkerReadback>),
     BootReadback(Box<BootReadback>),
     RestartAccepted,
     SplTrialPrepared(spl_trial::Prepared),
@@ -506,6 +509,9 @@ impl Channel {
                 (Request::RootfsMap, Response::RootfsMap(report)) => {
                     report.validate()?;
                 }
+                (Request::PhysicalMarker, Response::PhysicalMarker(report)) => {
+                    report.validate()?;
+                }
                 (Request::PrepareSplTrial { operation }, Response::SplTrialPrepared(prepared)) => {
                     prepared.validate(*operation)?;
                 }
@@ -575,6 +581,7 @@ impl Channel {
                     )?)))
                 }
                 Request::RootfsMap
+                | Request::PhysicalMarker
                 | Request::PrepareSplTrial { .. }
                 | Request::ExecuteSplTrial { .. } => Err(Error::State),
             },
@@ -627,6 +634,17 @@ pub fn diagnostic_rootfs_map(
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
     diagnostic_request(config, binary, &Request::RootfsMap, cancel)
+}
+
+/// Reads the fixed last page through the reviewed read-only physical alias.
+/// # Errors
+/// Rejects unsafe credentials, authentication and malformed marker evidence.
+pub fn diagnostic_physical_marker(
+    config: &std::path::Path,
+    binary: &std::path::Path,
+    cancel: &Cancellation,
+) -> Result<Response, Error> {
+    diagnostic_request(config, binary, &Request::PhysicalMarker, cancel)
 }
 
 /// Reads one reviewed boot block without accepting paths or addresses.
@@ -750,14 +768,55 @@ mod tests {
         (client, server.join().unwrap())
     }
     #[test]
-    fn protocol_v5_hello_is_rejected_by_v6_without_compatibility_fallback() {
+    fn older_protocol_hellos_are_rejected_by_v7_without_compatibility_fallback() {
         let expected = hello(&credentials(1), &[2; 32], &[3; 32]);
-        let mut old = expected;
-        old[..8].copy_from_slice(b"VTRREC05");
-        old[8..12].copy_from_slice(&5_u32.to_be_bytes());
-        assert!(check_hello(&old, &expected).is_err());
-        assert_eq!(&expected[..8], b"VTRREC06");
+        for (magic, version) in [(b"VTRREC05", 5_u32), (b"VTRREC06", 6_u32)] {
+            let mut old = expected;
+            old[..8].copy_from_slice(magic);
+            old[8..12].copy_from_slice(&version.to_be_bytes());
+            assert!(check_hello(&old, &expected).is_err());
+        }
+        assert_eq!(&expected[..8], b"VTRREC07");
         assert!(check_hello(&expected, &expected).is_ok());
+    }
+
+    #[test]
+    fn authenticated_marker_rejects_wrong_page_or_response_and_consumes_channel() {
+        for mode in 0..3 {
+            let (mut client, mut server) = pair();
+            let task = thread::spawn(move || {
+                assert_eq!(
+                    server.read::<Request>(&Cancellation::default()).unwrap(),
+                    Request::PhysicalMarker
+                );
+                let mut report = marker::scripted_fixture();
+                if mode == 1 {
+                    report.physical_page = 253;
+                }
+                let response = if mode == 2 {
+                    Response::Pong
+                } else {
+                    Response::PhysicalMarker(Box::new(report))
+                };
+                assert!(serde_json::to_vec(&response).unwrap().len() < LIMIT);
+                server.write(&response, &Cancellation::default()).unwrap();
+            });
+            let result = client.request(&Request::PhysicalMarker, &Cancellation::default());
+            if mode == 0 {
+                let Response::PhysicalMarker(report) = result.unwrap() else {
+                    panic!("unexpected marker response")
+                };
+                report.validate().unwrap();
+            } else {
+                assert!(result.is_err());
+                assert!(
+                    client
+                        .request(&Request::Ping, &Cancellation::default())
+                        .is_err()
+                );
+            }
+            task.join().unwrap();
+        }
     }
 
     #[test]
