@@ -175,3 +175,22 @@ intact. This proves write plus ECC-aware readback, not BROM selection of the
 restored primary. A controlled backup-isolation trial is prepared under protocol
 v5 to establish that additional fact. The selected release's SPL program is also
 not assumed identical to the installed original.
+
+### Rootfs bad-block offset correlation
+
+The upstream [Linux v6.12 MTD core](https://raw.githubusercontent.com/torvalds/linux/v6.12/drivers/mtd/mtdcore.c)
+translates SLC eraseblock starts before adding the partition offset:
+`physical = 0x1000000 + (logical_partition_offset / 0x200000) * 0x400000`.
+Applying this source-derived rule to the original read-only ioctl enumeration
+matches all 61 factory-bad physical addresses in the tenth RAM recovery log.
+The four additional unavailable addresses are the final four physical blocks,
+consistent with the separately measured four BBT blocks. The ioctl alone does
+not distinguish reserved from factory-bad blocks. See
+[the exact correlation fixture](evidence/batch3/rootfs-bad-block-offset-correlation.json).
+
+This is an eraseblock-start rule, not a page/byte translation: SLC reads and
+writes additionally use the NAND pairing scheme. Exact installed-kernel source,
+fresh recovery ioctl enumeration, marker/reservation classification, utility
+skip behavior and physical rootfs installation remain to be validated. No
+production gate is enabled by this correlation. Deterministic fixture tests also
+reject treating the logical partition offsets as flat physical byte offsets.

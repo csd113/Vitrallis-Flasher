@@ -215,3 +215,10 @@ selection is claimed.
 - `recovery-protected-chain-after-backup-erase-10.json`: independent original
   corrected primary SPL and U-Boot digests and unchanged inventory. The backup
   remains erased for a pending isolated cold boot of the clean restored primary.
+
+- `rootfs-bad-block-offset-correlation.json`: source-derived eraseblock-start
+  translation cross-checked against the original 65 ioctl-unavailable blocks and
+  all 61 factory-bad physical addresses in the tenth recovery boot log. The four
+  remaining addresses are the final four physical blocks, consistent with the
+  BBT count. Source hashes and exact input hashes are recorded. This does not
+  establish page mapping, live recovery ioctl enumeration or write skip behavior.

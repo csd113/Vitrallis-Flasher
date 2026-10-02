@@ -1,0 +1,375 @@
+{
+  "schema_version": 1,
+  "scope": "Eraseblock-start translation only; not a byte/page mapping or executable bad-block policy",
+  "source_baseline": "upstream Linux v6.12; exact installed Debian-patched source not established",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/drivers/mtd/mtdcore.c",
+      "sha256": "a14842ae73acebc5601e74bcbde1b2dfac594979fd2512a38ea30d406b57540e",
+      "bytes": 67267
+    },
+    {
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/include/linux/mtd/mtd.h",
+      "sha256": "7ffee580bb12556e4074f07e6fdf13d56d9a5ca18d2eb69ebb4d3c0c9896badb",
+      "bytes": 22834
+    }
+  ],
+  "inputs": [
+    {
+      "path": "docs/evidence/batch3/mtd-ioctl-inventory.json",
+      "sha256": "5bd870ba6ed0106372117a4666d898ee70c86fc76fd478bbbdc721d89791fcab"
+    },
+    {
+      "path": "docs/evidence/batch3/recovery-protected-chain-after-backup-erase-10.json",
+      "sha256": "e0620a612a02fdc37aefba1158db4428f839f551f5a315b91dcdf2b94e3cadda"
+    }
+  ],
+  "rootfs_physical_offset": 16777216,
+  "logical_eraseblock_bytes": 2097152,
+  "physical_eraseblock_bytes": 4194304,
+  "formula": "physical_offset = rootfs_physical_offset + (partition_offset / logical_eraseblock_bytes) * physical_eraseblock_bytes",
+  "ioctl_unavailable_count": 65,
+  "logged_factory_bad_count": 61,
+  "all_logged_bad_blocks_match": true,
+  "unlogged_unavailable_physical_offsets": [
+    8573157376,
+    8577351680,
+    8581545984,
+    8585740288
+  ],
+  "reserved_interpretation": "These four final physical blocks agree with the separately measured bbt_blocks count of four; MEMGETBADBLOCK does not itself classify them.",
+  "rows": [
+    {
+      "logical_partition_offset": 465567744,
+      "physical_offset": 947912704,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 524288000,
+      "physical_offset": 1065353216,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 528482304,
+      "physical_offset": 1073741824,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 566231040,
+      "physical_offset": 1149239296,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 794820608,
+      "physical_offset": 1606418432,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 840957952,
+      "physical_offset": 1698693120,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 952107008,
+      "physical_offset": 1920991232,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1121976320,
+      "physical_offset": 2260729856,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1140850688,
+      "physical_offset": 2298478592,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1145044992,
+      "physical_offset": 2306867200,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1228931072,
+      "physical_offset": 2474639360,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1241513984,
+      "physical_offset": 2499805184,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1268776960,
+      "physical_offset": 2554331136,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1317011456,
+      "physical_offset": 2650800128,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1566572544,
+      "physical_offset": 3149922304,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1606418432,
+      "physical_offset": 3229614080,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1663041536,
+      "physical_offset": 3342860288,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1725956096,
+      "physical_offset": 3468689408,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1753219072,
+      "physical_offset": 3523215360,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1858076672,
+      "physical_offset": 3732930560,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1879048192,
+      "physical_offset": 3774873600,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1883242496,
+      "physical_offset": 3783262208,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1916796928,
+      "physical_offset": 3850371072,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1923088384,
+      "physical_offset": 3862953984,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 1927282688,
+      "physical_offset": 3871342592,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2078277632,
+      "physical_offset": 4173332480,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2147483648,
+      "physical_offset": 4311744512,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2168455168,
+      "physical_offset": 4353687552,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2199912448,
+      "physical_offset": 4416602112,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2206203904,
+      "physical_offset": 4429185024,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2227175424,
+      "physical_offset": 4471128064,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2575302656,
+      "physical_offset": 5167382528,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2610954240,
+      "physical_offset": 5238685696,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2659188736,
+      "physical_offset": 5335154688,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2707423232,
+      "physical_offset": 5431623680,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2743074816,
+      "physical_offset": 5502926848,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2822766592,
+      "physical_offset": 5662310400,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2915041280,
+      "physical_offset": 5846859776,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2917138432,
+      "physical_offset": 5851054080,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2969567232,
+      "physical_offset": 5955911680,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 2984247296,
+      "physical_offset": 5985271808,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3191865344,
+      "physical_offset": 6400507904,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3265265664,
+      "physical_offset": 6547308544,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3355443200,
+      "physical_offset": 6727663616,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3405774848,
+      "physical_offset": 6828326912,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3533701120,
+      "physical_offset": 7084179456,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3548381184,
+      "physical_offset": 7113539584,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3554672640,
+      "physical_offset": 7126122496,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3605004288,
+      "physical_offset": 7226785792,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3611295744,
+      "physical_offset": 7239368704,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3787456512,
+      "physical_offset": 7591690240,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3839885312,
+      "physical_offset": 7696547840,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3909091328,
+      "physical_offset": 7834959872,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3919577088,
+      "physical_offset": 7855931392,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 3942645760,
+      "physical_offset": 7902068736,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4022337536,
+      "physical_offset": 8061452288,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4047503360,
+      "physical_offset": 8111783936,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4114612224,
+      "physical_offset": 8246001664,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4192206848,
+      "physical_offset": 8401190912,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4219469824,
+      "physical_offset": 8455716864,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4240441344,
+      "physical_offset": 8497659904,
+      "kernel_logs_bad_block": true
+    },
+    {
+      "logical_partition_offset": 4278190080,
+      "physical_offset": 8573157376,
+      "kernel_logs_bad_block": false
+    },
+    {
+      "logical_partition_offset": 4280287232,
+      "physical_offset": 8577351680,
+      "kernel_logs_bad_block": false
+    },
+    {
+      "logical_partition_offset": 4282384384,
+      "physical_offset": 8581545984,
+      "kernel_logs_bad_block": false
+    },
+    {
+      "logical_partition_offset": 4284481536,
+      "physical_offset": 8585740288,
+      "kernel_logs_bad_block": false
+    }
+  ],
+  "remaining_validation": [
+    "Fresh authenticated recovery ioctl enumeration",
+    "Bad-marker and BBT reserved classification",
+    "Reviewed utility skip behavior",
+    "Physical rootfs install and verification",
+    "Exact running-kernel pairing scheme for page operations"
+  ]
+}

@@ -568,3 +568,14 @@ Logs: `work/batch3/interrupted-backup-trial-validation.log` and
 `work/batch3/interrupted-backup-trial-workspace-check.log`. The CI sequence includes
 formatting, strict Clippy, workspace tests, release build, Python image/script
 suites, provenance and established image/plan checks.
+
+### Batch 3 SLC bad-block correlation fixture
+
+The original ioctl enumeration and tenth recovery boot log agree under the
+source-derived SLC eraseblock translation: all 61 logged bad physical blocks
+match, with the four final unavailable blocks consistent with BBT reservations.
+Three deterministic tests bind exact capture hashes, check the correlation and
+reject flat logical-to-physical byte translation. This does not validate write
+skip behavior or page pairing. `python3 -m unittest discover -s scripts -p
+'test_*.py'` passes all 35 tests; `git diff --check` passes. The script log is
+`work/batch3/bad-block-correlation-script-tests.log`. No Rust or payload changed.
