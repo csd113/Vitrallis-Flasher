@@ -89,6 +89,25 @@ fn inventory(cancel: &Cancellation) -> Result<Inventory, Error> {
         nanddump_help,
     })
 }
+fn rootfs_info(cancel: &Cancellation) -> Result<MtdInfo, Error> {
+    inventory(cancel)?
+        .mtd
+        .into_iter()
+        .find(|info| info.index == 4)
+        .ok_or(Error::Device)
+}
+fn rootfs_map(
+    cancel: &Cancellation,
+) -> Result<flasher_core::recovery::bad_blocks::RootfsMapReadback, Error> {
+    let info = rootfs_info(cancel)?;
+    let report = flasher_core::recovery::bad_blocks::capture(&SystemToolRunner, info, cancel)?;
+    // A changed geometry, counter or unavailable count invalidates this snapshot.
+    if report.info != rootfs_info(cancel)? {
+        return Err(Error::Device);
+    }
+    Ok(report)
+}
+
 fn memory_reg(root: &Path) -> Result<Vec<u8>, Error> {
     // This board's U-Boot creates `memory`, as captured in starting-inventory.
     // Require the exact memory type and a bounded R8 address/capacity pair.

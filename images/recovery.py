@@ -231,7 +231,7 @@ def build(base, rootfs, daemon, original_spl, output):
     image = uimage.build({'type': 3, 'compression': 1, 'name': 'Vitrallis recovery v5'}, gzip.compress(cpio, compresslevel=9, mtime=0))
     if len(image) > 40 * 1024 * 1024:
         raise ValueError('recovery RAM image bound')
-    metadata = {'protocol': 5, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'boot-readback', 'return-to-fel', 'prepare-spl-trial', 'execute-spl-trial'], 'nand_writes': 'restricted-original-spl-block-trial', 'restoration_sha256': RESTORATION_SHA256}
+    metadata = {'protocol': 6, 'sid': None, 'session_id': None, 'daemon_sha256': hashlib.sha256(binary).hexdigest(), 'image_sha256': hashlib.sha256(image).hexdigest(), 'image_bytes': len(image), 'base_sha256': BASE_SHA256, 'rootfs_sha256': ROOTFS_SHA256, 'operations': ['ping', 'inventory', 'rootfs-map', 'boot-readback', 'return-to-fel', 'prepare-spl-trial', 'execute-spl-trial'], 'nand_writes': 'restricted-original-spl-block-trial', 'restoration_sha256': RESTORATION_SHA256}
     output.mkdir(mode=0o700)
     files = [('initrd.uimage', image), ('metadata.json', (json.dumps(metadata, indent=2) + '\n').encode())]
     for name, data in files:

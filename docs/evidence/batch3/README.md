@@ -228,3 +228,16 @@ selection is claimed.
   Records the existing read-only map operation and its suppressed unsupported
   ioctl behavior. The strict parser/capture foundation is scripted-tested; live
   v5 has no map request, and physical utility execution remains pending.
+
+- `recovery-template-v6.json`: reproducible, byte-identical repeated payload for
+  the authenticated read-only rootfs map diagnostic. Exact daemon/template hashes
+  are pinned. Protocol v6 integration and response validation are tested; this
+  build record claims no physical v6 boot or map execution.
+
+- `original-vs-locked-release-spl.json`: exact private decoded-original versus
+  locked-release comparison. All 12 differing bytes are in the eGON checksum
+  or ASCII build banner; every other byte is identical. Metadata only; this
+  does not establish physical acceptance of the exact locked release encoding.
+- `original-vs-locked-release-uboot.json`: full corrected original and locked
+  padded U-Boot digests differ at 376,738 bytes. Specific source/config causes
+  remain unreviewed; exact new-release write/readback/boot acceptance is pending.

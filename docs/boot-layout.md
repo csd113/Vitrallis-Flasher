@@ -194,3 +194,19 @@ fresh recovery ioctl enumeration, marker/reservation classification, utility
 skip behavior and physical rootfs installation remain to be validated. No
 production gate is enabled by this correlation. Deterministic fixture tests also
 reject treating the logical partition offsets as flat physical byte offsets.
+
+### Exact original and locked release comparison
+
+The decoded original SPL and locked 16 KiB release SPL differ at 12 bytes:
+three in the stored checksum and nine in the ASCII build timestamp banner.
+Every byte outside those two fields is identical. The banners date the original
+build to June 12 and the locked build to September 13, 2026. See
+[the SPL comparison](evidence/batch3/original-vs-locked-release-spl.json).
+This narrows the program difference but does not prove BROM acceptance of the
+exact release encoding or replace its physical test.
+
+The full corrected original U-Boot and locked padded release U-Boot differ at
+376,738 bytes, all below offset 688,938. Their specific source/config differences
+remain unreviewed. Original-program boot and restoration evidence therefore do
+not validate the locked release U-Boot. See
+[the U-Boot comparison](evidence/batch3/original-vs-locked-release-uboot.json).

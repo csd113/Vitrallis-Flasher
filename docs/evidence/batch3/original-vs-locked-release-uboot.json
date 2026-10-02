@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "original_corrected_uboot": {
+    "sha256": "c76993ede3ceab2ba56e37b027c43896f4e4a79058cf4197aa7d1a7118b10224",
+    "bytes": 4194304,
+    "banner": "U-Boot 2022.01-dirty (Jun 12 2026 - 15:49:44 +0000) Allwinner Technology"
+  },
+  "locked_release_uboot": {
+    "sha256": "2c5de011e950263c1e940c0a926863404d3dc4a936ae20823226d5b2b5dbafb8",
+    "bytes": 4194304,
+    "banner": "U-Boot 2022.01-dirty (Sep 13 2026 - 12:27:18 +0000) Allwinner Technology"
+  },
+  "different_byte_count": 376738,
+  "first_differing_offset": 1332,
+  "last_differing_offset": 688937,
+  "conclusion": "The exact locked release is not byte-identical to the installed U-Boot; original-program boot tests do not validate this release artifact. Differences have not been attributed to specific source/config changes.",
+  "physical_locked_release_write_readback_boot": "pending"
+}

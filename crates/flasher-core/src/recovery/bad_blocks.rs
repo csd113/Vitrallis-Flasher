@@ -12,6 +12,23 @@ const BLOCKS: u64 = 2044;
 const ERASE: u64 = 2_097_152;
 const LIMIT: usize = 64 * 1024;
 
+/// Bounded utility output and the device-local geometry used to validate it.
+/// Deserialized reports must pass [`Self::validate`] before they are accepted.
+#[derive(Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RootfsMapReadback {
+    pub info: MtdInfo,
+    pub tool_stdout: String,
+}
+impl RootfsMapReadback {
+    /// Recheck the complete map at the receiving boundary.
+    /// # Errors
+    /// Rejects unsupported geometry, malformed maps and incomplete enumeration.
+    pub fn validate(&self) -> Result<RootfsBadBlockMap, Error> {
+        RootfsBadBlockMap::parse(&self.tool_stdout, "", &self.info)
+    }
+}
+
 /// A complete map checked against the freshly observed Hynix SLC partition.
 #[derive(Debug, PartialEq, Eq, serde::Serialize)]
 pub struct RootfsBadBlockMap {
@@ -144,11 +161,11 @@ fn field<'a>(header: &'a str, label: &str) -> Result<&'a str, Error> {
 /// No map is returned from partial utility output or unsupported ioctl results.
 pub fn capture(
     runner: &dyn ToolRunner,
-    info: &MtdInfo,
+    info: MtdInfo,
     cancel: &Cancellation,
-) -> Result<RootfsBadBlockMap, Error> {
+) -> Result<RootfsMapReadback, Error> {
     cancel.check()?;
-    geometry(info)?;
+    geometry(&info)?;
     let output = runner.run(
         &ToolRequest::new("/usr/sbin/mtdinfo", ["--map", "/dev/mtd4"]),
         cancel,
@@ -156,9 +173,21 @@ pub fn capture(
     if output.exit != Some(0) {
         return Err(Error::Output);
     }
-    let map = RootfsBadBlockMap::parse(&output.stdout, &output.stderr, info)?;
+    let _map = RootfsBadBlockMap::parse(&output.stdout, &output.stderr, &info)?;
     cancel.check()?;
-    Ok(map)
+    Ok(RootfsMapReadback {
+        info,
+        tool_stdout: output.stdout,
+    })
+}
+
+#[cfg(test)]
+pub(super) fn scripted_fixture() -> RootfsMapReadback {
+    let (info, blocks) = tests::measured();
+    RootfsMapReadback {
+        info,
+        tool_stdout: tests::render(&blocks),
+    }
 }
 
 #[cfg(test)]
@@ -167,7 +196,7 @@ mod tests {
     use crate::tool::{ScriptedToolRunner, ToolOutput};
     use std::fmt::Write;
 
-    fn measured() -> (MtdInfo, Vec<u16>) {
+    pub(super) fn measured() -> (MtdInfo, Vec<u16>) {
         let recovery: serde_json::Value = serde_json::from_str(include_str!(
             "../../../../docs/evidence/batch3/recovery-protected-chain-after-backup-erase-10.json"
         ))
@@ -192,7 +221,7 @@ mod tests {
     }
 
     // Scripted utility formatting with measured indices; not a live --map capture.
-    fn render(blocks: &[u16]) -> String {
+    pub(super) fn render(blocks: &[u16]) -> String {
         let mut output = "mtd4\nName: rootfs\nType: mlc-nand\nEraseblock size: 2097152 bytes, 2.0 MiB\nAmount of eraseblocks: 2044 (4286578688 bytes, 3.9 GiB)\nMinimum input/output unit size: 16384 bytes\nOOB size: 1664 bytes\nBad blocks are allowed: true\nDevice is writable: true\nEraseblock map:\n".to_owned();
         for index in 0..BLOCKS {
             let status = if blocks.contains(&u16::try_from(index).unwrap()) {
@@ -273,7 +302,7 @@ mod tests {
             Error::Timeout,
         );
         assert!(matches!(
-            capture(&runner, &info, &Cancellation::default()),
+            capture(&runner, info, &Cancellation::default()),
             Err(Error::Timeout)
         ));
         assert_eq!(runner.remaining(), 0);
@@ -284,7 +313,7 @@ mod tests {
         let (mut info, _) = measured();
         info.erase_size = 4_194_304;
         let runner = ScriptedToolRunner::new();
-        assert!(capture(&runner, &info, &Cancellation::default()).is_err());
+        assert!(capture(&runner, info, &Cancellation::default()).is_err());
         assert_eq!(runner.remaining(), 0);
     }
 
@@ -303,12 +332,15 @@ mod tests {
         let cancel = Cancellation::default();
         cancel.cancel();
         assert!(matches!(
-            capture(&runner, &info, &cancel),
+            capture(&runner, info, &cancel),
             Err(Error::Cancelled)
         ));
         assert_eq!(runner.remaining(), 1);
+        let (info, _) = measured();
         assert_eq!(
-            capture(&runner, &info, &Cancellation::default())
+            capture(&runner, info, &Cancellation::default())
+                .unwrap()
+                .validate()
                 .unwrap()
                 .unavailable_blocks(),
             blocks

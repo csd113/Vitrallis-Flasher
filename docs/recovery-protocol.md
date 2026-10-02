@@ -234,14 +234,22 @@ Independent primary and U-Boot checks still pass. This later observation does no
 rewrite the original host journal or authorize automatic resumption. Isolated
 restored-primary boot remains pending.
 
-### Rootfs map capture preparation
+### Authenticated rootfs map capture
 
 `recovery::bad_blocks` supplies a bounded read-only ToolRunner operation using
 fixed `/usr/sbin/mtdinfo --map /dev/mtd4`. The validated map stores logical
 partition eraseblock indices, including BBT-unavailable blocks. It cannot choose
-paths, skip blocks, mutate NAND or authorize execution. Live protocol v5 does
-not expose this new capture yet; integration and physical measurement remain
-pending.
+paths, skip blocks, mutate NAND or authorize execution. Protocol v6 exposes a
+closed RootfsMap request; the daemon collects local geometry before capture and
+requires it to remain unchanged afterward. Its typed response retains the bounded
+utility stdout and local MTD facts. The host revalidates the complete map after
+authentication. `recovery-rootfs-map` exposes this read-only diagnostic in the CLI.
+There are no caller-supplied addresses or paths in the request.
+
+The v6 magic/version changes reject v5 sessions without compatibility fallback.
+The v6 template is reproducible and pinned with its exact daemon. The existing
+physical v5 session remains available through its preserved v5 host binary for
+the pending SPL isolation test; physical v6 boot/map capture remains pending.
 
 The parser requires the measured Hynix SLC geometry, a complete ordered map,
 matching offsets and unavailable count, no diagnostics or unexpected flags, and

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "original": {
+    "sha256": "a2640b992973e0ff042ea37de543d89bf9f855d1b64e5f485657267980d5f3cb",
+    "bytes": 16384,
+    "version_banner": "U-Boot SPL 2022.01-dirty (Jun 12 2026 - 15:49:44 +0000)"
+  },
+  "locked_release": {
+    "sha256": "879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0",
+    "bytes": 16384,
+    "version_banner": "U-Boot SPL 2022.01-dirty (Sep 13 2026 - 12:27:18 +0000)"
+  },
+  "different_byte_count": 12,
+  "different_byte_offsets": [
+    12,
+    13,
+    15,
+    11820,
+    11821,
+    11822,
+    11825,
+    11835,
+    11837,
+    11838,
+    11840,
+    11841
+  ],
+  "checksum_field_range": [
+    12,
+    16
+  ],
+  "version_banner_range": [
+    11794,
+    11849
+  ],
+  "all_bytes_outside_checksum_and_banner_identical": true,
+  "interpretation": "The decoded original and locked SPL bytes differ only in the stored eGON checksum and ASCII version/build timestamp banner. This comparison is not physical BROM acceptance of the exact locked release.",
+  "physical_locked_release_acceptance": "pending"
+}

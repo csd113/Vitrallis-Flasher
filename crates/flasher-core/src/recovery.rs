@@ -17,7 +17,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const VERSION: u32 = 5;
+const VERSION: u32 = 6;
 const LIMIT: usize = 64 * 1024;
 // Bounded device-local preflight, erase/write and checked readback may take longer
 // than read-only diagnostics. Polling and cancellation remain at 500 ms.
@@ -27,7 +27,7 @@ pub mod bad_blocks;
 pub mod spl_trial;
 const POLL: Duration = Duration::from_millis(500);
 const HELLO_BYTES: usize = 132;
-const MAGIC: &[u8; 8] = b"VTRREC05";
+const MAGIC: &[u8; 8] = b"VTRREC06";
 
 /// Ephemeral boot credentials. Debug output deliberately excludes the key.
 pub struct Credentials {
@@ -105,6 +105,7 @@ impl Credentials {
 pub enum Request {
     Ping,
     Inventory,
+    RootfsMap,
     BootReadback {
         region: BootRegion,
         interpretation: ReadInterpretation,
@@ -222,6 +223,7 @@ pub struct Inventory {
 pub enum Response {
     Pong,
     Inventory(Box<Inventory>),
+    RootfsMap(Box<bad_blocks::RootfsMapReadback>),
     BootReadback(Box<BootReadback>),
     RestartAccepted,
     SplTrialPrepared(spl_trial::Prepared),
@@ -501,6 +503,9 @@ impl Channel {
                 (Request::Ping, Response::Pong)
                 | (Request::Inventory, Response::Inventory(_))
                 | (Request::ReturnToFel, Response::RestartAccepted) => {}
+                (Request::RootfsMap, Response::RootfsMap(report)) => {
+                    report.validate()?;
+                }
                 (Request::PrepareSplTrial { operation }, Response::SplTrialPrepared(prepared)) => {
                     prepared.validate(*operation)?;
                 }
@@ -569,9 +574,9 @@ impl Channel {
                         interpretation,
                     )?)))
                 }
-                Request::PrepareSplTrial { .. } | Request::ExecuteSplTrial { .. } => {
-                    Err(Error::State)
-                }
+                Request::RootfsMap
+                | Request::PrepareSplTrial { .. }
+                | Request::ExecuteSplTrial { .. } => Err(Error::State),
             },
             cancel,
         )
@@ -611,6 +616,17 @@ pub fn diagnostic_inventory(
     cancel: &Cancellation,
 ) -> Result<Response, Error> {
     diagnostic_request(config, binary, &Request::Inventory, cancel)
+}
+
+/// Enumerates the fixed rootfs partition without writes or caller-selected paths.
+/// # Errors
+/// Rejects unsafe credentials, authentication and incomplete/invalid maps.
+pub fn diagnostic_rootfs_map(
+    config: &std::path::Path,
+    binary: &std::path::Path,
+    cancel: &Cancellation,
+) -> Result<Response, Error> {
+    diagnostic_request(config, binary, &Request::RootfsMap, cancel)
 }
 
 /// Reads one reviewed boot block without accepting paths or addresses.
@@ -733,6 +749,72 @@ mod tests {
             Channel::connect(address, &credentials(1), &[2; 32], &Cancellation::default()).unwrap();
         (client, server.join().unwrap())
     }
+    #[test]
+    fn protocol_v5_hello_is_rejected_by_v6_without_compatibility_fallback() {
+        let expected = hello(&credentials(1), &[2; 32], &[3; 32]);
+        let mut old = expected;
+        old[..8].copy_from_slice(b"VTRREC05");
+        old[8..12].copy_from_slice(&5_u32.to_be_bytes());
+        assert!(check_hello(&old, &expected).is_err());
+        assert_eq!(&expected[..8], b"VTRREC06");
+        assert!(check_hello(&expected, &expected).is_ok());
+    }
+
+    #[test]
+    fn authenticated_rootfs_map_requires_valid_complete_readback() {
+        for corrupted in [false, true] {
+            let (mut client, mut server) = pair();
+            let task = thread::spawn(move || {
+                assert_eq!(
+                    server.read::<Request>(&Cancellation::default()).unwrap(),
+                    Request::RootfsMap
+                );
+                let mut report = bad_blocks::scripted_fixture();
+                if corrupted {
+                    report.tool_stdout = report.tool_stdout.replace(" 1: 00200000", " 1: 00400000");
+                }
+                let response = Response::RootfsMap(Box::new(report));
+                assert!(serde_json::to_vec(&response).unwrap().len() < LIMIT);
+                server.write(&response, &Cancellation::default()).unwrap();
+            });
+            let result = client.request(&Request::RootfsMap, &Cancellation::default());
+            if corrupted {
+                assert!(result.is_err());
+                assert!(
+                    client
+                        .request(&Request::Ping, &Cancellation::default())
+                        .is_err()
+                );
+            } else {
+                let Response::RootfsMap(report) = result.unwrap() else {
+                    panic!("unexpected map response")
+                };
+                assert_eq!(report.validate().unwrap().unavailable_blocks().len(), 65);
+            }
+            task.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn rootfs_map_request_cannot_accept_a_ping_response() {
+        let (mut client, mut server) = pair();
+        let task = thread::spawn(move || {
+            assert_eq!(
+                server.read::<Request>(&Cancellation::default()).unwrap(),
+                Request::RootfsMap
+            );
+            server
+                .write(&Response::Pong, &Cancellation::default())
+                .unwrap();
+        });
+        assert!(
+            client
+                .request(&Request::RootfsMap, &Cancellation::default())
+                .is_err()
+        );
+        task.join().unwrap();
+    }
+
     #[test]
     fn fresh_nonces_and_authenticated_round_trip() {
         let (mut client, mut server) = pair();

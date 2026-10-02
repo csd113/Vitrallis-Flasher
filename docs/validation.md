@@ -599,3 +599,30 @@ Targeted host tests pass all seven; ARMv7 cross-built tests under qemu-arm also
 pass all seven. Logs: `work/batch3/rootfs-map-parser-final-validation.log`,
 `work/batch3/rootfs-map-parser-workspace-check.log` and
 `work/batch3/rootfs-map-parser-arm-tests.log`. `git diff --check` passes.
+
+### Batch 3 authenticated rootfs map integration (protocol v6)
+
+The new closed RootfsMap operation carries device-local MTD facts and bounded
+utility output. Recovery rejects changing geometry/counters across capture; the
+host rejects incomplete or invalid maps after authentication. The CLI command
+`recovery-rootfs-map` selects no addresses or paths. Channel tests reject signed
+invalid maps, mismatched response types and v5 hello/version input. Seven map
+parser tests retain the measured fixtures and suppressed-query protections.
+Physical v6 boot and map capture are still pending; current v5 diagnostic state
+is preserved for the isolated primary boot test.
+
+`python3 scripts/ci.py validate` and
+`cargo check --workspace --all-targets --all-features --locked` pass (exit 0).
+The full sequence includes formatting, strict Clippy, locked workspace tests,
+release build, Python image/script suites, provenance and established image/plan
+checks. Targeted ARMv7 recovery tests under qemu-arm pass all 23. Two independent
+v6 template builds are byte-identical, and rebuilding after pin updates retains
+the same daemon digest. `git diff --check` passes. Logs:
+`work/batch3/rootfs-map-v6-full-validation.log`,
+`work/batch3/rootfs-map-v6-workspace-check.log`,
+`work/batch3/rootfs-map-v6-arm-tests.log` and
+`work/batch3/rootfs-map-v6-cross-rebuild.log`.
+
+Separate metadata-only comparisons establish the checksum/banner-only original
+SPL difference and the larger original/release U-Boot difference. Neither is
+recorded as physical approval or as a successful new-release flash.

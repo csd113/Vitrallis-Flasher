@@ -129,6 +129,7 @@ impl Service {
             |request| match request {
                 Request::Ping => Ok(Response::Pong),
                 Request::Inventory => Ok(Response::Inventory(Box::new(super::inventory(cancel)?))),
+                Request::RootfsMap => Ok(Response::RootfsMap(Box::new(super::rootfs_map(cancel)?))),
                 Request::BootReadback {
                     region,
                     interpretation,

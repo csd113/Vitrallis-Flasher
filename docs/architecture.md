@@ -203,3 +203,15 @@ preserves an Indeterminate host journal while the device finishes its committed
 operation; a separate read-only session verifies erasure and the protected chain.
 Isolated restored-primary boot and release installation
 remain pending.
+
+### Authenticated rootfs eraseblock map
+
+Protocol v6 adds a closed read-only RootfsMap request backed by the existing
+mtdinfo utility through ToolRunner. Recovery supplies its local rootfs geometry,
+checks it before and after enumeration, and returns bounded utility output.
+The host independently validates every logical eraseblock entry, count and final
+BBT sentinel before accepting the response. This snapshot grants no NAND write
+capability; execution still requires the unresolved physical gates. No path,
+address or utility argument is supplied by the GUI or manifest. Physical v6
+execution remains pending; the measured v5 session and preserved host binary
+remain separate from the newly pinned v6 payload.
