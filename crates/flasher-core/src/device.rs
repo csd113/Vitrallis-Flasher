@@ -1,5 +1,5 @@
 //! FEL identity is only a candidate: A13/R8 alone does not prove `PocketCHIP`.
-use crate::{Cancellation, Error, process::SunxiTool};
+use crate::{Cancellation, Error, manifest::Role, process::SunxiTool};
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Device {
     pub bus: u16,
@@ -43,6 +43,82 @@ impl Nand {
             "H27UCG8T2ETR" => Ok(Self::Hynix),
             "TC58TEG5DCLTA00" => Ok(Self::Toshiba),
             _ => Err(Error::Device),
+        }
+    }
+    #[must_use]
+    pub const fn part(self) -> &'static str {
+        match self {
+            Self::Hynix => "H27UCG8T2ETR",
+            Self::Toshiba => "TC58TEG5DCLTA00",
+        }
+    }
+}
+
+/// Identity facts a future authenticated recovery service must report before
+/// any erase. Batch 2 only ever reads fixture values.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TargetInfo {
+    pub soc: String,
+    pub board: String,
+    pub nand_part: String,
+    pub ram_bytes: u64,
+}
+impl TargetInfo {
+    /// Builds the deterministic host-only fixture for one supported NAND part.
+    /// This is fixture data, not a hardware claim.
+    #[must_use]
+    pub fn fixture(nand: Nand) -> Self {
+        Self {
+            soc: "A13".into(),
+            board: "pocketchip".into(),
+            nand_part: nand.part().into(),
+            ram_bytes: 512 * 1024 * 1024,
+        }
+    }
+}
+
+/// Read-only host-side FEL device information; contains no NAND facts.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DeviceInfo {
+    pub soc: String,
+    pub sid: String,
+    pub ram_bytes: u64,
+}
+
+/// A target that passed closed-set board/SoC validation and exact NAND
+/// identification. Ambiguous or unknown fixtures are rejected.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IdentifiedTarget {
+    info: TargetInfo,
+    nand: Nand,
+}
+impl IdentifiedTarget {
+    /// Requires an exact `PocketCHIP` board/SoC pair and a known NAND part.
+    /// # Errors
+    /// Rejects mismatched, ambiguous or unknown identification; never defaults.
+    pub fn identify(info: TargetInfo) -> Result<Self, Error> {
+        let soc = matches!(info.soc.as_str(), "A13" | "R8");
+        let board = info.board == "pocketchip";
+        if !soc || !board {
+            return Err(Error::Device);
+        }
+        let nand = Nand::identify(&info.nand_part)?;
+        Ok(Self { info, nand })
+    }
+    #[must_use]
+    pub const fn nand(&self) -> Nand {
+        self.nand
+    }
+    #[must_use]
+    pub const fn info(&self) -> &TargetInfo {
+        &self.info
+    }
+    /// The one SPL role this target may use.
+    #[must_use]
+    pub const fn spl_role(&self) -> Role {
+        match self.nand {
+            Nand::Hynix => Role::SplHynix,
+            Nand::Toshiba => Role::SplToshiba,
         }
     }
 }

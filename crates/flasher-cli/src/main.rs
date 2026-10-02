@@ -105,14 +105,14 @@ fn fetch(
 ) -> Result<(), Error> {
     let manifest = Manifest::open(Path::new(path))?;
     let cache = Cache::open(Path::new(directory))?;
-    let assets = acquire(&manifest, &cache, offline, cancel, |role, done, total| {
+    let verified = acquire(&manifest, &cache, offline, cancel, |role, done, total| {
         if done == total {
             println!("Verified {role:?}: {total} bytes");
         }
     })?;
     println!(
         "{} verified assets; physical flashing remains blocked.",
-        assets.len()
+        verified.len()
     );
     Ok(())
 }
@@ -122,16 +122,29 @@ fn simulate(cancel: &Cancellation, profile: Profile) -> Result<(), Error> {
 }
 fn simulate_in(directory: &Path, cancel: &Cancellation, profile: Profile) -> Result<(), Error> {
     let cache = Cache::open(directory)?;
-    let (manifest, assets) = simulation::prepare_profile(&cache, cancel, profile)?;
+    let verified = simulation::prepare_profile(&cache, cancel, profile)?;
     println!(
         "Requested: {}\n{}\nThis fixture does not install an OS or change the startup desktop.",
-        manifest.profile().label(),
-        manifest.profile().description()
+        verified.manifest().profile().label(),
+        verified.manifest().profile().description()
     );
     let mut session = Session::new(MockFel::default());
-    session.preflight(manifest, assets, cancel, |e| {
+    session.preflight(verified, cancel, |e| {
         println!("{}: {}", e.stage.label(), e.message);
     })?;
+    if let Some(plan) = session.plan() {
+        println!("\nReview-only plan for this fixture (no executor exists):");
+        for step in plan.steps() {
+            println!(
+                "  {:?} source={:?} placement={:?} length={:?}",
+                step.kind, step.source, step.placement, step.length
+            );
+        }
+        println!(
+            "  {} unresolved physical gates; execution is blocked in this build.",
+            plan.gates().len()
+        );
+    }
     let confirmation = session.confirmation().ok_or(Error::State)?;
     println!("\nSIMULATION ONLY. Type this exact phrase:\n{confirmation}");
     io::stdout().flush()?;

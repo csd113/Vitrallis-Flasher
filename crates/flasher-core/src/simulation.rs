@@ -1,8 +1,7 @@
 //! Reproducible offline fixtures. These bytes are deliberately not bootable.
 use crate::{
     Cancellation, Error,
-    assets::{Cache, VerifiedAsset},
-    manifest::Manifest,
+    assets::{Cache, VerifiedAssets},
     profile::Profile,
 };
 pub const MANIFEST: &str = include_str!("../../../manifests/simulation.json");
@@ -11,10 +10,7 @@ pub const PAYLOAD: &[u8] = b"Vitrallis recovery simulation fixture. NOT A BOOTAB
 /// Returns a complete verified mock asset set using the normal cache pipeline.
 /// # Errors
 /// Returns fixture-contract, cache or cancellation errors.
-pub fn prepare(
-    cache: &Cache,
-    cancel: &Cancellation,
-) -> Result<(Manifest, Vec<VerifiedAsset>), Error> {
+pub fn prepare(cache: &Cache, cancel: &Cancellation) -> Result<VerifiedAssets, Error> {
     prepare_profile(cache, cancel, Profile::default())
 }
 /// Prepares a profile-specific, nonbootable simulation through the same asset checks.
@@ -24,7 +20,7 @@ pub fn prepare_profile(
     cache: &Cache,
     cancel: &Cancellation,
     profile: Profile,
-) -> Result<(Manifest, Vec<VerifiedAsset>), Error> {
+) -> Result<VerifiedAssets, Error> {
     let manifest = crate::releases::select(
         crate::releases::Channel::Simulation,
         profile.simulation_release(),
@@ -33,6 +29,6 @@ pub fn prepare_profile(
         .assets()
         .iter()
         .map(|a| cache.import(a, PAYLOAD, cancel, |_, _| {}))
-        .collect::<Result<_, _>>()?;
-    Ok((manifest, assets))
+        .collect::<Result<Vec<_>, _>>()?;
+    VerifiedAssets::verify(manifest, assets, cancel)
 }

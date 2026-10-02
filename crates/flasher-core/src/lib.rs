@@ -1,13 +1,19 @@
 //! Host-independent, fail-closed `PocketCHIP` recovery services.
 pub mod assets;
+pub mod clock;
 pub mod device;
+pub mod fel;
+pub mod http;
 pub mod manifest;
+pub mod nand;
 pub mod platform;
 pub mod process;
 pub mod profile;
 pub mod releases;
+pub mod script;
 pub mod session;
 pub mod simulation;
+pub mod tool;
 mod transport;
 
 use std::sync::{
@@ -38,6 +44,8 @@ pub enum Error {
     Device,
     #[error("physical recovery is blocked: no approved image and authenticated recovery protocol")]
     PhysicalBlocked,
+    #[error("no physical FEL transport is available in this build")]
+    FelUnavailable,
     #[error("invalid operation for the current recovery state")]
     State,
     #[error("confirmation does not match the device and image")]
@@ -48,6 +56,10 @@ pub enum Error {
     Output,
     #[error("HTTPS transfer failed")]
     Network,
+    #[error("scripted call mismatch: expected {expected}, got {actual}")]
+    ScriptMismatch { expected: String, actual: String },
+    #[error("scripted call was unexpected or arrived after failure: {0}")]
+    ScriptUnexpected(String),
     #[error("filesystem or process I/O: {0}")]
     Io(#[from] std::io::Error),
 }

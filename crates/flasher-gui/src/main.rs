@@ -165,12 +165,12 @@ impl Wizard {
                 let result = (|| {
                     let directory = flasher_core::assets::temporary_directory()?;
                     let cache = Cache::open(directory.path())?;
-                    let (manifest, assets) = simulation::prepare_profile(&cache, &cancel, profile)?;
+                    let verified = simulation::prepare_profile(&cache, &cancel, profile)?;
                     let mut session = Session::new(MockFel {
                         delay: Duration::from_millis(300),
                         ..Default::default()
                     });
-                    session.preflight(manifest, assets, &cancel, |e| {
+                    session.preflight(verified, &cancel, |e| {
                         let _ = tx.try_send(Update::Event(e));
                     })?;
                     Ok(Prepared {
@@ -233,8 +233,8 @@ impl Wizard {
                 let manifest = Manifest::open(Path::new(&manifest_path))?;
                 let cache = Cache::open(Path::new(&cache_path))?;
                 let offline = if offline_path.is_empty() { None } else { Some(Path::new(&offline_path)) };
-                let assets = acquire(&manifest,&cache,offline,&cancel,|role,done,total| { let _ = tx.try_send(Update::Event(Event { stage: Stage::Download, message: format!("Checking {role:?}: {done} / {total} bytes"), done,total })); })?;
-                Ok(format!("{} assets verified for {}. Integrity checked; physical approval remains blocked.",assets.len(),manifest.release()))
+                let verified = acquire(&manifest,&cache,offline,&cancel,|role,done,total| { let _ = tx.try_send(Update::Event(Event { stage: Stage::Download, message: format!("Checking {role:?}: {done} / {total} bytes"), done,total })); })?;
+                Ok(format!("{} assets verified for {}. Integrity checked; physical approval remains blocked.",verified.len(),verified.manifest().release()))
             })();
             let _ = tx.send(Update::Finished(result));
         });

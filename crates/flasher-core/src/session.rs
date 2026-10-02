@@ -1,11 +1,19 @@
 //! One state machine for simulated operations and fail-closed physical discovery.
 use crate::{
     Cancellation, Error,
-    assets::VerifiedAsset,
-    device::{Device, Nand, RealFel, select},
-    manifest::{Manifest, Role},
+    assets::VerifiedAssets,
+    clock::{Clock, SystemClock},
+    device::{Device, IdentifiedTarget, Nand, RealFel, TargetInfo, select},
+    manifest::Role,
+    nand::{self, NandPlan},
 };
-use std::time::{Duration, Instant};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
+/// Default lifetime of a prepared confirmation.
+pub const DEFAULT_CONFIRMATION_TTL: Duration = Duration::from_secs(300);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stage {
@@ -48,6 +56,23 @@ impl Stage {
             Self::Recovery => "Recovery",
         }
     }
+    /// Monotonic milestone position; `Recovery` is terminal and never decreases
+    /// relative to a failed operation's stage.
+    #[must_use]
+    pub const fn index(self) -> usize {
+        match self {
+            Self::Welcome => 0,
+            Self::Fel => 1,
+            Self::Detect => 2,
+            Self::Preflight => 3,
+            Self::ConfirmErase => 4,
+            Self::Download => 5,
+            Self::Flash => 6,
+            Self::Verify => 7,
+            Self::Complete => 8,
+            Self::Recovery => 9,
+        }
+    }
 }
 #[derive(Debug, Clone)]
 pub struct Event {
@@ -55,6 +80,24 @@ pub struct Event {
     pub message: String,
     pub done: u64,
     pub total: u64,
+}
+impl Event {
+    /// Byte progress within the current stage-item, never an overall claim.
+    #[must_use]
+    pub fn percent(&self) -> Option<u32> {
+        if self.total == 0 {
+            return None;
+        }
+        let value = self.done.min(self.total).saturating_mul(100) / self.total;
+        Some(u32::try_from(value).unwrap_or(100))
+    }
+}
+/// Terminal state of one session attempt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Outcome {
+    Success,
+    Failure,
+    Cancelled,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operation {
@@ -67,6 +110,25 @@ pub enum Operation {
     Reboot,
 }
 
+/// Explicit, testable session policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SessionConfig {
+    pub confirmation_ttl: Duration,
+}
+impl Default for SessionConfig {
+    fn default() -> Self {
+        Self {
+            confirmation_ttl: DEFAULT_CONFIRMATION_TTL,
+        }
+    }
+}
+impl SessionConfig {
+    #[must_use]
+    pub const fn new(confirmation_ttl: Duration) -> Self {
+        Self { confirmation_ttl }
+    }
+}
+
 mod private {
     pub trait Sealed {}
 }
@@ -77,7 +139,11 @@ pub trait Backend: private::Sealed {
     fn discover(&mut self, cancel: &Cancellation) -> Result<Vec<Device>, Error>;
     /// # Errors
     /// Requires board proof and known NAND before any destructive operation.
-    fn identify(&mut self, device: &Device, cancel: &Cancellation) -> Result<Nand, Error>;
+    fn identify(
+        &mut self,
+        device: &Device,
+        cancel: &Cancellation,
+    ) -> Result<IdentifiedTarget, Error>;
     fn simulated(&self) -> bool;
     /// # Errors
     /// Returns cancellation, transport or verification failure.
@@ -88,7 +154,11 @@ impl Backend for RealFel {
     fn discover(&mut self, cancel: &Cancellation) -> Result<Vec<Device>, Error> {
         Self::discover(self, cancel)
     }
-    fn identify(&mut self, _device: &Device, _cancel: &Cancellation) -> Result<Nand, Error> {
+    fn identify(
+        &mut self,
+        _device: &Device,
+        _cancel: &Cancellation,
+    ) -> Result<IdentifiedTarget, Error> {
         Err(Error::PhysicalBlocked)
     }
     fn simulated(&self) -> bool {
@@ -102,7 +172,7 @@ impl Backend for RealFel {
 #[derive(Debug, Clone)]
 pub struct MockFel {
     pub devices: Vec<Device>,
-    pub nand: Option<Nand>,
+    pub target: Option<TargetInfo>,
     pub fail_at: Option<Operation>,
     pub operations: Vec<Operation>,
     pub delay: Duration,
@@ -116,7 +186,7 @@ impl Default for MockFel {
                 soc: "A13".into(),
                 sid: "01234567:89abcdef:01234567:89abcdef".into(),
             }],
-            nand: Some(Nand::Hynix),
+            target: Some(TargetInfo::fixture(Nand::Hynix)),
             fail_at: None,
             operations: Vec::new(),
             delay: Duration::ZERO,
@@ -129,9 +199,13 @@ impl Backend for MockFel {
         cancel.check()?;
         Ok(self.devices.clone())
     }
-    fn identify(&mut self, _device: &Device, cancel: &Cancellation) -> Result<Nand, Error> {
+    fn identify(
+        &mut self,
+        _device: &Device,
+        cancel: &Cancellation,
+    ) -> Result<IdentifiedTarget, Error> {
         self.operation(Operation::Identify, cancel)?;
-        self.nand.ok_or(Error::Device)
+        IdentifiedTarget::identify(self.target.clone().ok_or(Error::Device)?)
     }
     fn simulated(&self) -> bool {
         true
@@ -155,22 +229,32 @@ pub struct Session<B> {
     backend: B,
     stage: Stage,
     device: Option<Device>,
-    nand: Option<Nand>,
-    manifest: Option<Manifest>,
-    assets: Vec<VerifiedAsset>,
+    target: Option<IdentifiedTarget>,
+    verified: Option<VerifiedAssets>,
+    plan: Option<NandPlan>,
     prepared_at: Option<Instant>,
+    config: SessionConfig,
+    clock: Arc<dyn Clock>,
+    outcome: Option<Outcome>,
 }
 impl<B: Backend> Session<B> {
     #[must_use]
-    pub const fn new(backend: B) -> Self {
+    pub fn new(backend: B) -> Self {
+        Self::with_config(backend, SessionConfig::default(), Arc::new(SystemClock))
+    }
+    #[must_use]
+    pub fn with_config(backend: B, config: SessionConfig, clock: Arc<dyn Clock>) -> Self {
         Self {
             backend,
             stage: Stage::Welcome,
             device: None,
-            nand: None,
-            manifest: None,
-            assets: Vec::new(),
+            target: None,
+            verified: None,
+            plan: None,
             prepared_at: None,
+            config,
+            clock,
+            outcome: None,
         }
     }
     #[must_use]
@@ -182,16 +266,26 @@ impl<B: Backend> Session<B> {
         &self.backend
     }
     #[must_use]
-    pub const fn nand(&self) -> Option<Nand> {
-        self.nand
+    pub fn nand(&self) -> Option<Nand> {
+        self.target
+            .as_ref()
+            .map(crate::device::IdentifiedTarget::nand)
+    }
+    /// The review-only install plan built during preflight.
+    #[must_use]
+    pub const fn plan(&self) -> Option<&NandPlan> {
+        self.plan.as_ref()
+    }
+    #[must_use]
+    pub const fn outcome(&self) -> Option<Outcome> {
+        self.outcome
     }
     /// Moves through discovery and checks every verified payload before offering erase.
     /// # Errors
     /// Any invalid inventory, unapproved physical image or unknown device enters recovery.
     pub fn preflight(
         &mut self,
-        manifest: Manifest,
-        mut assets: Vec<VerifiedAsset>,
+        verified: VerifiedAssets,
         cancel: &Cancellation,
         mut emit: impl FnMut(Event),
     ) -> Result<(), Error> {
@@ -216,23 +310,15 @@ impl<B: Backend> Session<B> {
             if !self.backend.simulated() {
                 return Err(Error::PhysicalBlocked);
             }
-            let nand = self.backend.identify(&device, cancel)?;
-            if assets.len() != manifest.assets().len() {
-                return Err(Error::Manifest("incomplete verified inventory"));
-            }
-            for (asset, spec) in assets.iter_mut().zip(manifest.assets()) {
-                if !asset.matches(spec) {
-                    return Err(Error::Manifest(
-                        "asset inventory differs from selected release",
-                    ));
-                }
-                asset.recheck(cancel)?;
-            }
+            let target = self.backend.identify(&device, cancel)?;
+            let mut verified = verified;
+            verified.recheck_all(cancel)?;
+            let plan = nand::plan(&verified, &target)?;
             self.device = Some(device);
-            self.nand = Some(nand);
-            self.manifest = Some(manifest);
-            self.assets = assets;
-            self.prepared_at = Some(Instant::now());
+            self.target = Some(target);
+            self.verified = Some(verified);
+            self.plan = Some(plan);
+            self.prepared_at = Some(self.clock.now());
             self.report(
                 Stage::ConfirmErase,
                 "All preflight checks passed in simulation; explicit confirmation required",
@@ -251,8 +337,8 @@ impl<B: Backend> Session<B> {
         Some(format!(
             "ERASE {} {} {}",
             self.device.as_ref()?.sid,
-            self.manifest.as_ref()?.release(),
-            self.manifest.as_ref()?.digest()
+            self.verified.as_ref()?.manifest().release(),
+            self.verified.as_ref()?.manifest().digest()
         ))
     }
     /// Consumes the prepared session; never automatically retries or reboots a failed write.
@@ -272,16 +358,21 @@ impl<B: Backend> Session<B> {
             if self.confirmation().as_deref() != Some(confirmation) {
                 return Err(Error::Confirmation);
             }
-            if self
-                .prepared_at
-                .is_none_or(|t| t.elapsed() > Duration::from_secs(300))
-            {
+            let prepared = self.prepared_at.ok_or(Error::State)?;
+            let elapsed = self
+                .clock
+                .now()
+                .checked_duration_since(prepared)
+                .ok_or(Error::Timeout)?;
+            if elapsed > self.config.confirmation_ttl {
                 return Err(Error::Timeout);
             }
             let device = select(&self.backend.discover(cancel)?)?;
-            if Some(&device) != self.device.as_ref()
-                || Some(self.backend.identify(&device, cancel)?) != self.nand
-            {
+            if Some(&device) != self.device.as_ref() {
+                return Err(Error::Device);
+            }
+            let target = self.backend.identify(&device, cancel)?;
+            if Some(&target) != self.target.as_ref() {
                 return Err(Error::Device);
             }
             self.report(
@@ -289,9 +380,10 @@ impl<B: Backend> Session<B> {
                 "Rechecking verified snapshots immediately before recovery boot",
                 &mut emit,
             );
-            for asset in &mut self.assets {
-                asset.recheck(cancel)?;
-            }
+            self.verified
+                .as_mut()
+                .ok_or(Error::State)?
+                .recheck_all(cancel)?;
             self.report(
                 Stage::Flash,
                 "Booting LIVE recovery in simulated RAM",
@@ -303,10 +395,10 @@ impl<B: Backend> Session<B> {
             self.backend.operation(Operation::WriteBootloader, cancel)?;
             self.backend.operation(Operation::StreamRootfs, cancel)?;
             let rootfs = self
-                .assets
-                .iter_mut()
-                .find(|a| a.role() == Role::Rootfs)
-                .ok_or(Error::State)?;
+                .verified
+                .as_mut()
+                .ok_or(Error::State)?
+                .asset_mut(Role::Rootfs)?;
             rootfs.stream(cancel, |done, total| {
                 emit(Event {
                     stage: Stage::Flash,
@@ -327,12 +419,19 @@ impl<B: Backend> Session<B> {
                 "Simulation complete. No hardware was written or rebooted.",
                 &mut emit,
             );
-            self.assets.clear();
+            self.outcome = Some(Outcome::Success);
+            self.verified = None;
+            self.plan = None;
+            self.prepared_at = None;
             Ok(())
         })();
         self.finish_error(result, &mut emit)
     }
     fn report(&mut self, stage: Stage, message: &str, emit: &mut impl FnMut(Event)) {
+        debug_assert!(
+            stage == Stage::Recovery || stage.index() >= self.stage.index(),
+            "progress must not move backwards"
+        );
         self.stage = stage;
         emit(Event {
             stage,
@@ -347,8 +446,14 @@ impl<B: Backend> Session<B> {
         emit: &mut impl FnMut(Event),
     ) -> Result<(), Error> {
         if let Err(error) = &result {
-            self.assets.clear();
+            self.verified = None;
+            self.plan = None;
             self.prepared_at = None;
+            self.outcome = Some(if matches!(error, Error::Cancelled) {
+                Outcome::Cancelled
+            } else {
+                Outcome::Failure
+            });
             self.report(Stage::Recovery, &error.to_string(), emit);
         }
         result
@@ -358,21 +463,30 @@ impl<B: Backend> Session<B> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{assets::Cache, simulation};
+    use crate::{assets::Cache, clock::TestClock, profile::Profile, releases, simulation};
+
     fn ready(mock: MockFel) -> Result<(Session<MockFel>, tempfile::TempDir), Error> {
+        let (session, dir, _clock) = ready_with_clock(mock, SessionConfig::default())?;
+        Ok((session, dir))
+    }
+    fn ready_with_clock(
+        mock: MockFel,
+        config: SessionConfig,
+    ) -> Result<(Session<MockFel>, tempfile::TempDir, Arc<TestClock>), Error> {
         let dir = crate::assets::temporary_directory()?;
         let cache = Cache::open(dir.path())?;
-        let c = Cancellation::default();
-        let (manifest, assets) = simulation::prepare(&cache, &c)?;
-        let mut session = Session::new(mock);
-        session.preflight(manifest, assets, &c, |_| {})?;
-        Ok((session, dir))
+        let cancel = Cancellation::default();
+        let verified = simulation::prepare(&cache, &cancel)?;
+        let clock = Arc::new(TestClock::new());
+        let mut session = Session::with_config(mock, config, clock.clone());
+        session.preflight(verified, &cancel, |_| {})?;
+        Ok((session, dir, clock))
     }
     #[test]
     fn success_verifies_without_automatic_reboot() -> Result<(), Error> {
         for nand in [Nand::Hynix, Nand::Toshiba] {
             let (mut s, _dir) = ready(MockFel {
-                nand: Some(nand),
+                target: Some(TargetInfo::fixture(nand)),
                 ..Default::default()
             })?;
             s.install(
@@ -381,6 +495,7 @@ mod tests {
                 |_| {},
             )?;
             assert_eq!(s.stage(), Stage::Complete);
+            assert_eq!(s.outcome(), Some(Outcome::Success));
             assert_eq!(
                 s.backend().operations,
                 [
@@ -397,18 +512,31 @@ mod tests {
         Ok(())
     }
     #[test]
+    fn plan_is_review_only_and_uses_the_identified_spl_variant() -> Result<(), Error> {
+        let (s, _dir) = ready(MockFel {
+            target: Some(TargetInfo::fixture(Nand::Toshiba)),
+            ..Default::default()
+        })?;
+        let plan = s.plan().ok_or(Error::State)?;
+        assert!(!plan.is_executable());
+        assert!(matches!(
+            plan.authorize_execution(),
+            Err(Error::PhysicalBlocked)
+        ));
+        let sources: Vec<_> = plan.steps().iter().filter_map(|step| step.source).collect();
+        assert!(sources.contains(&Role::SplToshiba));
+        assert!(!sources.contains(&Role::SplHynix));
+        Ok(())
+    }
+    #[test]
     fn stock_confirmation_cannot_authorize_vitrallis_default() -> Result<(), Error> {
         let (stock, _stock_dir) = ready(MockFel::default())?;
         let dir = crate::assets::temporary_directory()?;
         let cache = Cache::open(dir.path())?;
         let cancel = Cancellation::default();
-        let (manifest, assets) = simulation::prepare_profile(
-            &cache,
-            &cancel,
-            crate::profile::Profile::VitrallisDefault,
-        )?;
+        let verified = simulation::prepare_profile(&cache, &cancel, Profile::VitrallisDefault)?;
         let mut shell = Session::new(MockFel::default());
-        shell.preflight(manifest, assets, &cancel, |_| {})?;
+        shell.preflight(verified, &cancel, |_| {})?;
         assert!(matches!(
             shell.install(&stock.confirmation().ok_or(Error::State)?, &cancel, |_| {}),
             Err(Error::Confirmation)
@@ -425,6 +553,7 @@ mod tests {
             Err(Error::Confirmation)
         ));
         assert_eq!(s.stage(), Stage::Recovery);
+        assert_eq!(s.outcome(), Some(Outcome::Failure));
         assert!(!s.backend().operations.contains(&Operation::Erase));
         assert!(
             s.install("anything", &Cancellation::default(), |_| {})
@@ -433,18 +562,36 @@ mod tests {
         Ok(())
     }
     #[test]
-    fn expired_confirmation_cannot_erase() -> Result<(), Error> {
-        let (mut s, _dir) = ready(MockFel::default())?;
-        s.prepared_at = Instant::now().checked_sub(Duration::from_secs(301));
+    fn expiry_boundary_is_exact_and_expired_confirmation_cannot_erase() -> Result<(), Error> {
+        let config = SessionConfig::new(Duration::from_secs(100));
+        let (mut midway, _dir, clock) = ready_with_clock(MockFel::default(), config)?;
+        clock.advance(Duration::from_secs(50));
+        midway.install(
+            &midway.confirmation().ok_or(Error::State)?,
+            &Cancellation::default(),
+            |_| {},
+        )?;
+        assert_eq!(midway.stage(), Stage::Complete);
+        let (mut at_boundary, _dir, clock) = ready_with_clock(MockFel::default(), config)?;
+        clock.advance(Duration::from_secs(100));
+        at_boundary.install(
+            &at_boundary.confirmation().ok_or(Error::State)?,
+            &Cancellation::default(),
+            |_| {},
+        )?;
+        assert_eq!(at_boundary.stage(), Stage::Complete);
+        let (mut expired, _dir, clock) = ready_with_clock(MockFel::default(), config)?;
+        clock.advance(Duration::from_secs(101));
         assert!(matches!(
-            s.install(
-                &s.confirmation().ok_or(Error::State)?,
+            expired.install(
+                &expired.confirmation().ok_or(Error::State)?,
                 &Cancellation::default(),
                 |_| {}
             ),
             Err(Error::Timeout)
         ));
-        assert!(!s.backend().operations.contains(&Operation::Erase));
+        assert!(!expired.backend().operations.contains(&Operation::Erase));
+        assert_eq!(expired.outcome(), Some(Outcome::Failure));
         Ok(())
     }
     #[test]
@@ -453,7 +600,7 @@ mod tests {
             let (mut s, _dir) = ready(MockFel::default())?;
             match change {
                 0 => s.backend.devices[0].address = 3,
-                1 => s.backend.nand = Some(Nand::Toshiba),
+                1 => s.backend.target = Some(TargetInfo::fixture(Nand::Toshiba)),
                 _ => s.backend.devices.push(s.backend.devices[0].clone()),
             }
             assert!(
@@ -465,6 +612,7 @@ mod tests {
                 .is_err()
             );
             assert!(!s.backend().operations.contains(&Operation::Erase));
+            assert!(s.plan().is_none());
         }
         Ok(())
     }
@@ -482,6 +630,45 @@ mod tests {
         ));
         assert!(!s.backend().operations.contains(&Operation::Erase));
         assert_eq!(s.stage(), Stage::Recovery);
+        assert_eq!(s.outcome(), Some(Outcome::Cancelled));
+        Ok(())
+    }
+    #[test]
+    fn cancellation_during_rootfs_streaming_stops_before_verify() -> Result<(), Error> {
+        let (mut s, _dir) = ready(MockFel::default())?;
+        let c = Cancellation::default();
+        assert!(matches!(
+            s.install(&s.confirmation().ok_or(Error::State)?, &c, |event| {
+                if event.message.contains("Streaming") {
+                    c.cancel();
+                }
+            }),
+            Err(Error::Cancelled)
+        ));
+        assert!(
+            s.backend().operations.contains(&Operation::StreamRootfs),
+            "the stream was already underway"
+        );
+        assert!(!s.backend().operations.contains(&Operation::Verify));
+        assert_eq!(s.stage(), Stage::Recovery);
+        assert_eq!(s.outcome(), Some(Outcome::Cancelled));
+        assert!(s.confirmation().is_none());
+        Ok(())
+    }
+    #[test]
+    fn cancellation_before_recovery_boot_runs_no_device_operation() -> Result<(), Error> {
+        let (mut s, _dir) = ready(MockFel::default())?;
+        let c = Cancellation::default();
+        assert!(matches!(
+            s.install(&s.confirmation().ok_or(Error::State)?, &c, |event| {
+                if event.stage == Stage::Download {
+                    c.cancel();
+                }
+            }),
+            Err(Error::Cancelled)
+        ));
+        assert!(!s.backend().operations.contains(&Operation::BootRecovery));
+        assert_eq!(s.outcome(), Some(Outcome::Cancelled));
         Ok(())
     }
     #[test]
@@ -506,8 +693,10 @@ mod tests {
                 .is_err()
             );
             assert_eq!(s.stage(), Stage::Recovery);
+            assert_eq!(s.outcome(), Some(Outcome::Failure));
             assert_eq!(s.backend().operations.last(), Some(&operation));
             assert!(s.confirmation().is_none());
+            assert!(s.plan().is_none());
         }
         let (mut retry, _dir) = ready(MockFel::default())?;
         retry.install(
@@ -518,10 +707,87 @@ mod tests {
         Ok(())
     }
     #[test]
+    fn progress_events_are_stage_monotonic_and_never_premature() -> Result<(), Error> {
+        let (mut s, _dir) = ready(MockFel::default())?;
+        let mut events = Vec::new();
+        s.install(
+            &s.confirmation().ok_or(Error::State)?,
+            &Cancellation::default(),
+            |event| events.push(event),
+        )?;
+        let mut last_index = 0;
+        let mut last_done = 0;
+        let mut stream_seen = 0;
+        let mut completed = false;
+        for event in &events {
+            assert!(event.stage.index() >= last_index, "stage moved backwards");
+            last_index = event.stage.index();
+            assert!(
+                event.done <= event.total,
+                "byte progress exceeded its total"
+            );
+            if event.total > 0 {
+                assert!(event.done >= last_done, "byte progress moved backwards");
+                last_done = event.done;
+            }
+            if event.message.contains("Streaming") {
+                stream_seen += 1;
+                assert_eq!(event.percent(), Some(100), "item progress must terminate");
+            }
+            if event.stage == Stage::Complete {
+                assert!(!completed, "complete was reported twice");
+                completed = true;
+            }
+            if completed {
+                assert_eq!(event.stage, Stage::Complete);
+            }
+        }
+        assert!(completed);
+        assert_eq!(
+            events.last().map(|event| event.stage),
+            Some(Stage::Complete)
+        );
+        assert!(events.iter().all(|event| event.stage != Stage::Recovery));
+        assert_eq!(
+            stream_seen, 1,
+            "rootfs milestone must be reported exactly once"
+        );
+        Ok(())
+    }
+    #[test]
+    fn failure_progress_never_reaches_a_success_stage() -> Result<(), Error> {
+        let (mut s, _dir) = ready(MockFel {
+            fail_at: Some(Operation::WriteBootloader),
+            ..Default::default()
+        })?;
+        let mut events = Vec::new();
+        assert!(
+            s.install(
+                &s.confirmation().ok_or(Error::State)?,
+                &Cancellation::default(),
+                |event| events.push(event),
+            )
+            .is_err()
+        );
+        assert!(
+            events
+                .iter()
+                .all(|event| event.stage != Stage::Complete && event.stage != Stage::Verify),
+            "a failed operation must not emit later success stages"
+        );
+        assert_eq!(
+            events.last().map(|event| event.stage),
+            Some(Stage::Recovery)
+        );
+        Ok(())
+    }
+    #[test]
     fn unknown_nand_fails_before_confirmation() {
+        let mut info = TargetInfo::fixture(Nand::Hynix);
+        info.nand_part = "unknown".into();
         assert!(
             ready(MockFel {
-                nand: None,
+                target: Some(info),
                 ..Default::default()
             })
             .is_err()
@@ -531,12 +797,32 @@ mod tests {
     fn incomplete_assets_cannot_pass_preflight() -> Result<(), Error> {
         let dir = crate::assets::temporary_directory()?;
         let cache = Cache::open(dir.path())?;
-        let c = Cancellation::default();
-        let (m, mut a) = simulation::prepare(&cache, &c)?;
-        a.pop();
-        let mut s = Session::new(MockFel::default());
-        assert!(s.preflight(m, a, &c, |_| {}).is_err());
-        assert_eq!(s.stage(), Stage::Recovery);
+        let cancel = Cancellation::default();
+        let manifest = releases::select(releases::Channel::Simulation, "simulation-debian13")?;
+        let mut raw = manifest
+            .assets()
+            .iter()
+            .map(|asset| cache.import(asset, simulation::PAYLOAD, &cancel, |_, _| {}))
+            .collect::<Result<Vec<_>, Error>>()?;
+        raw.pop();
+        assert!(VerifiedAssets::verify(manifest, raw, &cancel).is_err());
+        let session = Session::new(MockFel::default());
+        assert_eq!(session.stage(), Stage::Welcome);
+        Ok(())
+    }
+    #[test]
+    fn preflight_cannot_run_twice() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let cancel = Cancellation::default();
+        let verified = simulation::prepare(&cache, &cancel)?;
+        let mut session = Session::new(MockFel::default());
+        session.preflight(verified, &cancel, |_| {})?;
+        let again = simulation::prepare(&cache, &cancel)?;
+        assert!(matches!(
+            session.preflight(again, &cancel, |_| {}),
+            Err(Error::State)
+        ));
         Ok(())
     }
     #[test]

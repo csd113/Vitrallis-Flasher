@@ -1,6 +1,7 @@
 //! Bounded HTTPS/offline ingestion and a content-addressed atomic cache.
 use crate::{
     Cancellation, Error,
+    http::{HttpClient, UreqHttpClient},
     manifest::{Asset, Manifest, Role, https},
 };
 use sha2::{Digest, Sha256};
@@ -8,12 +9,14 @@ use std::{
     fs::{self, File},
     io::{Read, Seek, SeekFrom, Write},
     path::{Component, Path, PathBuf},
+    sync::Arc,
 };
 use tempfile::NamedTempFile;
 
 #[derive(Debug)]
 pub struct Cache {
     root: PathBuf,
+    http: Arc<dyn HttpClient>,
 }
 /// A private verified snapshot, independent of subsequent cache path replacement.
 #[derive(Debug)]
@@ -29,6 +32,10 @@ impl VerifiedAsset {
     #[must_use]
     pub const fn size(&self) -> u64 {
         self.spec.size()
+    }
+    #[must_use]
+    pub fn sha256(&self) -> &str {
+        self.spec.sha256()
     }
     /// Rechecks the exact open file, not a potentially replaced pathname.
     /// # Errors
@@ -58,11 +65,93 @@ impl VerifiedAsset {
         )
     }
 }
+
+/// The only token accepted by NAND planning.
+///
+/// Fields are private and the only constructor runs the full manifest,
+/// role/size/hash and snapshot verification pipeline. Arbitrary paths or
+/// unverified bytes can therefore never reach destructive planning.
+#[derive(Debug)]
+pub struct VerifiedAssets {
+    manifest: Manifest,
+    assets: Vec<VerifiedAsset>,
+}
+impl VerifiedAssets {
+    /// Validates a complete acquired inventory against its manifest.
+    /// # Errors
+    /// Rejects incomplete inventories, role/size/hash mismatches, corrupted
+    /// snapshots, cancellation and I/O errors.
+    pub fn verify(
+        manifest: Manifest,
+        mut assets: Vec<VerifiedAsset>,
+        cancel: &Cancellation,
+    ) -> Result<Self, Error> {
+        cancel.check()?;
+        if assets.len() != manifest.assets().len() {
+            return Err(Error::Manifest("incomplete verified inventory"));
+        }
+        for (asset, spec) in assets.iter_mut().zip(manifest.assets()) {
+            if !asset.matches(spec) {
+                return Err(Error::Manifest(
+                    "asset inventory differs from selected release",
+                ));
+            }
+            asset.recheck(cancel)?;
+        }
+        Ok(Self { manifest, assets })
+    }
+    #[must_use]
+    pub const fn manifest(&self) -> &Manifest {
+        &self.manifest
+    }
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.assets.len()
+    }
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.assets.is_empty()
+    }
+    /// Looks up one verified role.
+    /// # Errors
+    /// Returns a manifest error when the role is absent.
+    pub fn asset(&self, role: Role) -> Result<&VerifiedAsset, Error> {
+        self.assets
+            .iter()
+            .find(|asset| asset.role() == role)
+            .ok_or(Error::Manifest("verified inventory lacks a required role"))
+    }
+    /// Mutable lookup used by the streaming stage.
+    /// # Errors
+    /// Returns a manifest error when the role is absent.
+    pub fn asset_mut(&mut self, role: Role) -> Result<&mut VerifiedAsset, Error> {
+        self.assets
+            .iter_mut()
+            .find(|asset| asset.role() == role)
+            .ok_or(Error::Manifest("verified inventory lacks a required role"))
+    }
+    /// Rechecks every private snapshot immediately before device work.
+    /// # Errors
+    /// Returns corruption, cancellation or I/O errors.
+    pub fn recheck_all(&mut self, cancel: &Cancellation) -> Result<(), Error> {
+        for asset in &mut self.assets {
+            asset.recheck(cancel)?;
+        }
+        Ok(())
+    }
+}
+
 impl Cache {
-    /// Opens an existing private directory. The caller creates it explicitly.
+    /// Opens an existing private directory with the production HTTPS client.
     /// # Errors
     /// Rejects symlink components, non-directories and group/world-writable Unix directories.
     pub fn open(root: &Path) -> Result<Self, Error> {
+        Self::open_with_http(root, Arc::new(UreqHttpClient))
+    }
+    /// Opens the same validated directory with an injected HTTP client.
+    /// # Errors
+    /// Applies every production path check before accepting the client.
+    pub fn open_with_http(root: &Path, http: Arc<dyn HttpClient>) -> Result<Self, Error> {
         regular_components(root)?;
         let metadata = fs::metadata(root)?;
         if !metadata.is_dir() {
@@ -77,6 +166,7 @@ impl Cache {
         }
         Ok(Self {
             root: fs::canonicalize(root)?,
+            http,
         })
     }
     /// Validates cached content on every use, then takes a private verified snapshot.
@@ -137,7 +227,7 @@ impl Cache {
     }
     /// Downloads with TLS verification, five explicit HTTPS-only redirects and bounded time/bytes.
     /// # Errors
-    /// Rejects HTTP/status/encoding/length errors, unsafe redirects and invalid checksums.
+    /// Rejects HTTP/status/length errors, unsafe redirects and invalid checksums.
     pub fn download(
         &self,
         asset: &Asset,
@@ -145,50 +235,25 @@ impl Cache {
         progress: impl FnMut(u64, u64),
     ) -> Result<VerifiedAsset, Error> {
         cancel.check()?;
-        let agent = crate::transport::agent(cancel);
         let mut url = https(asset.url())?;
         for _ in 0..=5 {
             cancel.check()?;
-            let mut response = agent
-                .get(url.as_str())
-                .header("Accept-Encoding", "identity")
-                .call()
-                .map_err(|error| match cancel.check() {
-                    Err(cancelled) => cancelled,
-                    Ok(()) => {
-                        if matches!(error, ureq::Error::Timeout(_)) {
-                            Error::Timeout
-                        } else {
-                            Error::Network
-                        }
-                    }
-                })?;
-            if matches!(response.status().as_u16(), 301 | 302 | 303 | 307 | 308) {
-                let location = response
-                    .headers()
-                    .get("location")
-                    .and_then(|v| v.to_str().ok())
-                    .ok_or(Error::Network)?;
+            let response = self.http.get(&url, cancel)?;
+            if matches!(response.status, 301 | 302 | 303 | 307 | 308) {
+                let location = response.location.as_deref().ok_or(Error::Network)?;
                 let next = url.join(location).map_err(|_| Error::Network)?;
                 url = https(next.as_str())?;
                 continue;
             }
-            if response.status().as_u16() != 200
-                || response.headers().contains_key("content-encoding")
-            {
+            if response.status != 200 {
                 return Err(Error::Network);
             }
-            if let Some(length) = response.headers().get("content-length") {
-                let length = length
-                    .to_str()
-                    .ok()
-                    .and_then(|s| s.parse::<u64>().ok())
-                    .ok_or(Error::Length)?;
-                if length != asset.size() {
-                    return Err(Error::Length);
-                }
+            if let Some(length) = response.content_length
+                && length != asset.size()
+            {
+                return Err(Error::Length);
             }
-            return self.import(asset, response.body_mut().as_reader(), cancel, progress);
+            return self.import(asset, response.body, cancel, progress);
         }
         Err(Error::Network)
     }
@@ -207,7 +272,8 @@ impl Cache {
         })
     }
 }
-/// Resolves an entire inventory from offline files or the cache/network.
+/// Resolves an entire inventory from offline files or the cache/network and
+/// verifies it against the manifest.
 /// # Errors
 /// Stops at the first unverified or missing asset; no device action is performed.
 pub fn acquire(
@@ -216,8 +282,8 @@ pub fn acquire(
     offline: Option<&Path>,
     cancel: &Cancellation,
     mut progress: impl FnMut(Role, u64, u64),
-) -> Result<Vec<VerifiedAsset>, Error> {
-    manifest
+) -> Result<VerifiedAssets, Error> {
+    let assets = manifest
         .assets()
         .iter()
         .map(|a| {
@@ -233,7 +299,8 @@ pub fn acquire(
                 cache.download(a, cancel, |n, total| progress(a.role(), n, total))
             }
         })
-        .collect()
+        .collect::<Result<Vec<_>, Error>>()?;
+    VerifiedAssets::verify(manifest.clone(), assets, cancel)
 }
 fn verify(
     reader: impl Read,
@@ -311,13 +378,39 @@ pub fn temporary_directory() -> Result<tempfile::TempDir, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::simulation;
+    use crate::{
+        http::{ScriptedHttpClient, ScriptedResponse},
+        simulation,
+    };
     fn spec() -> Result<Asset, Error> {
         Manifest::read(simulation::MANIFEST.as_bytes())?
             .assets()
             .first()
             .cloned()
             .ok_or(Error::State)
+    }
+    fn manifest() -> Result<Manifest, Error> {
+        Manifest::read(simulation::MANIFEST.as_bytes())
+    }
+    fn imported(cache: &Cache, manifest: &Manifest) -> Result<Vec<VerifiedAsset>, Error> {
+        manifest
+            .assets()
+            .iter()
+            .map(|asset| {
+                cache.import(
+                    asset,
+                    simulation::PAYLOAD,
+                    &Cancellation::default(),
+                    |_, _| {},
+                )
+            })
+            .collect()
+    }
+    fn scripted_cache() -> Result<(tempfile::TempDir, Cache, Arc<ScriptedHttpClient>), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let client = Arc::new(ScriptedHttpClient::new());
+        let cache = Cache::open_with_http(dir.path(), client.clone())?;
+        Ok((dir, cache, client))
     }
     #[test]
     fn import_rechecks_cache() -> Result<(), Error> {
@@ -431,6 +524,281 @@ mod tests {
         let dir = crate::assets::temporary_directory()?;
         fs::set_permissions(dir.path(), fs::Permissions::from_mode(0o777))?;
         assert!(matches!(Cache::open(dir.path()), Err(Error::UnsafePath)));
+        Ok(())
+    }
+    #[test]
+    fn verified_assets_accept_a_complete_verified_inventory() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let manifest = manifest()?;
+        let assets = imported(&cache, &manifest)?;
+        assert_eq!(
+            VerifiedAssets::verify(manifest, assets, &Cancellation::default())?.len(),
+            8
+        );
+        Ok(())
+    }
+    #[test]
+    fn verified_assets_reject_an_incomplete_inventory() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let manifest = manifest()?;
+        let mut assets = imported(&cache, &manifest)?;
+        assets.pop();
+        assert!(matches!(
+            VerifiedAssets::verify(manifest, assets, &Cancellation::default()),
+            Err(Error::Manifest(_))
+        ));
+        Ok(())
+    }
+    #[test]
+    fn verified_assets_reject_altered_hash_or_size_specs() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let original = manifest()?;
+        let first = original.assets().first().ok_or(Error::State)?;
+        let altered_specs = [
+            ("sha256", serde_json::Value::from("0".repeat(64))),
+            ("size", serde_json::Value::from(first.size() + 1)),
+        ];
+        for (field, replacement) in altered_specs {
+            let assets = imported(&cache, &original)?;
+            let mut value: serde_json::Value =
+                serde_json::from_str(simulation::MANIFEST).map_err(|_| Error::State)?;
+            value["assets"][0][field] = replacement;
+            let altered = Manifest::read(value.to_string().as_bytes())?;
+            assert!(
+                matches!(
+                    VerifiedAssets::verify(altered, assets, &Cancellation::default()),
+                    Err(Error::Manifest(_))
+                ),
+                "{field} change must be rejected"
+            );
+        }
+        Ok(())
+    }
+    #[test]
+    fn verified_assets_reject_a_role_mismatch() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let original = manifest()?;
+        let assets = imported(&cache, &original)?;
+        let mut value: serde_json::Value =
+            serde_json::from_str(simulation::MANIFEST).map_err(|_| Error::State)?;
+        value["assets"]
+            .as_array_mut()
+            .ok_or(Error::State)?
+            .swap(0, 1);
+        let altered = Manifest::read(value.to_string().as_bytes())?;
+        assert!(matches!(
+            VerifiedAssets::verify(altered, assets, &Cancellation::default()),
+            Err(Error::Manifest(_))
+        ));
+        Ok(())
+    }
+    #[test]
+    fn verified_assets_reject_cancellation() -> Result<(), Error> {
+        let dir = crate::assets::temporary_directory()?;
+        let cache = Cache::open(dir.path())?;
+        let manifest = manifest()?;
+        let assets = imported(&cache, &manifest)?;
+        let cancel = Cancellation::default();
+        cancel.cancel();
+        assert!(matches!(
+            VerifiedAssets::verify(manifest, assets, &cancel),
+            Err(Error::Cancelled)
+        ));
+        Ok(())
+    }
+    #[test]
+    fn download_success_is_verified_and_single_use() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_response(&url, ScriptedResponse::ok(simulation::PAYLOAD.to_vec()));
+        let asset = cache.download(&a, &Cancellation::default(), |_, _| {})?;
+        assert_eq!(asset.size(), a.size());
+        assert_eq!(client.remaining(), 0);
+        assert!(dir.path().join(a.sha256()).is_file());
+        Ok(())
+    }
+    #[test]
+    fn download_http_error_publishes_nothing() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_response(&url, ScriptedResponse::ok(Vec::new()).status(404));
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Network)
+        ));
+        assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+        Ok(())
+    }
+    #[test]
+    fn download_truncated_body_is_rejected() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_response(
+            &url,
+            ScriptedResponse::ok(b"short".to_vec()).content_length(a.size()),
+        );
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Length)
+        ));
+        assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+        Ok(())
+    }
+    #[test]
+    fn download_wrong_content_length_is_rejected() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_response(
+            &url,
+            ScriptedResponse::ok(simulation::PAYLOAD.to_vec()).content_length(a.size() + 1),
+        );
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Length)
+        ));
+        assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+        Ok(())
+    }
+    #[test]
+    fn download_hash_mismatch_is_rejected() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        let mut body = simulation::PAYLOAD.to_vec();
+        if let Some(first) = body.first_mut() {
+            *first ^= 0xff;
+        }
+        client.expect_response(&url, ScriptedResponse::ok(body));
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Hash)
+        ));
+        assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+        Ok(())
+    }
+    #[test]
+    fn download_timeout_is_reported() -> Result<(), Error> {
+        let (_dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_error(&url, Error::Timeout);
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Timeout)
+        ));
+        Ok(())
+    }
+    #[test]
+    fn download_cancellation_removes_partial_file() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        client.expect_response(&url, ScriptedResponse::ok(simulation::PAYLOAD.to_vec()));
+        let cancel = Cancellation::default();
+        assert!(matches!(
+            cache.download(&a, &cancel, |_, _| cancel.cancel()),
+            Err(Error::Cancelled)
+        ));
+        assert_eq!(fs::read_dir(dir.path())?.count(), 0);
+        Ok(())
+    }
+    #[test]
+    fn download_follows_bounded_https_redirects() -> Result<(), Error> {
+        let (_dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        let next = url.join("redirected").map_err(|_| Error::Network)?;
+        client.expect_response(
+            &url,
+            ScriptedResponse::ok(Vec::new())
+                .status(302)
+                .location("redirected"),
+        );
+        client.expect_response(&next, ScriptedResponse::ok(simulation::PAYLOAD.to_vec()));
+        let asset = cache.download(&a, &Cancellation::default(), |_, _| {})?;
+        assert_eq!(asset.size(), a.size());
+        Ok(())
+    }
+    #[test]
+    fn download_redirect_limit_is_enforced() -> Result<(), Error> {
+        let (_dir, cache, client) = scripted_cache()?;
+        let a = spec()?;
+        let url = https(a.url())?;
+        let next = url.join("loop").map_err(|_| Error::Network)?;
+        client.expect_response(
+            &url,
+            ScriptedResponse::ok(Vec::new())
+                .status(302)
+                .location("loop"),
+        );
+        for _ in 0..5 {
+            client.expect_response(
+                &next,
+                ScriptedResponse::ok(Vec::new())
+                    .status(302)
+                    .location("loop"),
+            );
+        }
+        assert!(matches!(
+            cache.download(&a, &Cancellation::default(), |_, _| {}),
+            Err(Error::Network)
+        ));
+        Ok(())
+    }
+    #[test]
+    fn offline_acquisition_never_calls_http() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let manifest = manifest()?;
+        for asset in manifest.assets() {
+            fs::write(dir.path().join(asset.sha256()), simulation::PAYLOAD)?;
+        }
+        let verified = acquire(
+            &manifest,
+            &cache,
+            Some(dir.path()),
+            &Cancellation::default(),
+            |_, _, _| {},
+        )?;
+        assert_eq!(verified.len(), 8);
+        assert!(client.calls().is_empty());
+        Ok(())
+    }
+    #[test]
+    fn offline_missing_asset_never_calls_http() -> Result<(), Error> {
+        let (dir, cache, client) = scripted_cache()?;
+        let manifest = manifest()?;
+        assert!(
+            acquire(
+                &manifest,
+                &cache,
+                Some(dir.path()),
+                &Cancellation::default(),
+                |_, _, _| {}
+            )
+            .is_err()
+        );
+        assert!(client.calls().is_empty());
+        Ok(())
+    }
+    #[test]
+    fn acquisition_cancellation_stops_before_http() -> Result<(), Error> {
+        let (_dir, cache, client) = scripted_cache()?;
+        let manifest = manifest()?;
+        let cancel = Cancellation::default();
+        cancel.cancel();
+        assert!(matches!(
+            acquire(&manifest, &cache, None, &cancel, |_, _, _| {}),
+            Err(Error::Cancelled)
+        ));
+        assert!(client.calls().is_empty());
         Ok(())
     }
 }
