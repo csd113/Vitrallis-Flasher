@@ -180,6 +180,10 @@ Detailed supporting requirements: [image build](docs/image-build.md),
   restored-primary boot with backup erased, then restore and verify both SPLs.
 - [x] Read a physical bad-block last-page marker through a pinned read-only
   non-SLC alias; measure protocol v7 alias write denial and standard-mode policy.
+- [x] Program and natively verify the exact locked Hynix release primary through
+  the authenticated closed diagnostic; verify backup erasure independently while
+  protecting the release primary and original U-Boot. Isolated BROM boot and
+  subsequent backup restoration remain pending.
 - [ ] Validate exact locked release SPL/U-Boot acceptance, write skip behavior
   and remaining logical/physical bad-block semantics.
 - [ ] Approve exact physical artifacts, enable the gated executor and demonstrate

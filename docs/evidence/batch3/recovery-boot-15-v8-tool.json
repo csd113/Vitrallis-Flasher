@@ -1,0 +1,9 @@
+{
+  "daemon_sha256": "4b0ff07681ce7f33e8313f23844edaeb964fa077c0efaaaa077f5659f480188f",
+  "exit": 0,
+  "marker_alias": false,
+  "sid": "16254217:50303858:31333030:0e0288c0",
+  "stderr": "",
+  "stdout": "",
+  "template_sha256": "d7d209536c4a17db90e6c36a56e5aa5996d28cca4eb625675da20c983221b781"
+}

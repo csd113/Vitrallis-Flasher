@@ -114,3 +114,34 @@ program and U-Boot digests remain healthy and the backup remains fully erased.
 This establishes fresh recovery enumeration, not bad-marker classification,
 write skip behavior or a production installation. Evidence:
 [the actual map](evidence/batch3/recovery-rootfs-map-11.json).
+
+### Exact locked Hynix primary: physical programming and isolation
+
+RAM session 15 physically authenticates the pinned v8 implementation on the same
+SID and original five-partition layout. The closed `ProgramReleasePrimary`
+diagnostic reaches Verified in 20.428 seconds. All four physical SPL copies decode
+to `879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0`
+with checksum `0x5305ee97`; native BCH decoding corrects 65 bits total, maximum
+three per 1 KiB chunk, with zero ECC failures. Raw encoded readback is not byte
+identical to the clean artifact; decoded program verification is the completion
+criterion. An independent subsequent read also checks all four release copies,
+the original backup program and original U-Boot digest.
+
+The original `EraseBackup` preflight now correctly rejects this release primary
+without Execute; a fresh authenticated Pong still succeeds. The separately
+guarded `EraseBackupForReleasePrimary` then reaches Verified in 18.800 seconds.
+Independent readback confirms all 256 data pages and OOB pages erased, interleaved
+SHA256 `71c220404abcfabfbeb7480a98fcbc9e44e64290ee9c0c9b8a65d6aabefefdab`,
+while the release primary and original U-Boot remain healthy with zero ECC
+failures. Both host journals are version 2, bind the exact three release hashes
+and end in Verified. The original restoration snapshot remains available in RAM.
+
+The requested next action is a normal boot with the FEL bridge removed. **Locked
+release BROM acceptance is still pending**; programming/readback does not prove
+it. No release U-Boot, physical manifest approval or full production reflash is
+established here. Evidence: `evidence/batch3/recovery-program-release-primary-trial-15.json`,
+`recovery-boot-chain-after-release-primary-15.json`,
+`recovery-original-backup-guard-rejects-release-primary-15.json`,
+`recovery-erase-backup-for-release-primary-trial-15.json`, and
+`recovery-release-primary-isolated-preboot-15.json` in the same directory. Private
+version-2 journals are under `work/batch3/locked-release-trial-session-15/`.

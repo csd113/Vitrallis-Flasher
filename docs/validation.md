@@ -828,3 +828,23 @@ stock/Vitrallis plans and established checks, release builds and manifest checks
 `cargo check --workspace --all-targets --all-features --locked` and
 `git diff --check` pass independently. Logs: `work/batch3/locked-release-v8-full-validation.log`
 and `work/batch3/locked-release-v8-workspace-check.log`.
+
+### Batch 3 physical locked Hynix primary and backup isolation
+
+The v8 endpoint authenticates in RAM session 15. Release-primary programming and
+backup isolation each reach Verified, followed by independent checked readbacks
+of the programmed primary, fully erased backup and original U-Boot. A real
+original-operation preflight rejects the release primary without dispatch.
+The actual programmed readback becomes a regression fixture: the exact decoded
+release programs are accepted with measured BCH corrections and zero ECC failures;
+the original verifier continues to reject them. This fixture passes natively and
+on ARMv7 under qemu. Physical isolated normal boot remains pending.
+
+Full validation after adding the physical fixture passes: 173 core tests (six
+intentional ignored subprocess fixtures), five integration tests, 11 daemon
+tests, 72 image tests and 35 script tests; formatting, strict Clippy, release
+builds, provenance and established image/manifest checks pass. Fresh workspace
+all-target/all-feature check and diff check pass. Logs:
+`work/batch3/locked-release-physical-15-full-validation.log`,
+`locked-release-physical-15-workspace-check.log`, `locked-release-physical-15-fixture.log`
+and `locked-release-physical-15-arm-fixture.log` in the same private directory.

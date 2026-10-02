@@ -1,0 +1,8 @@
+{
+  "request": "PrepareSplTrial EraseBackup",
+  "exit": 1,
+  "stderr": "recovery authentication or protocol failed\n",
+  "execute_dispatched": false,
+  "fresh_ping": "Pong",
+  "reason": "Original operation retains original-primary requirement; release primary requires a separate closed operation"
+}

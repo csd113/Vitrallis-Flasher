@@ -248,6 +248,30 @@ mod tests {
     }
 
     #[test]
+    fn physical_locked_primary_readback_accepts_corrected_programs_only() {
+        let record: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../docs/evidence/batch3/recovery-program-release-primary-trial-15.json"
+        ))
+        .unwrap();
+        let report: BootReadback =
+            serde_json::from_value(record["response"]["SplTrialVerified"]["readback"].clone())
+                .unwrap();
+        Operation::ProgramReleasePrimary.verify(&report).unwrap();
+        assert!(super::super::verify_spl(&report, BootRegion::SplPrimary).is_err());
+        assert_eq!(report.ecc_failures_before, 0);
+        assert_eq!(report.ecc_failures_after, 0);
+        assert_eq!(
+            report
+                .spl_copies
+                .iter()
+                .flat_map(|copy| copy.corrected_bits)
+                .sum::<usize>(),
+            65
+        );
+        assert_ne!(report.interleaved_sha256, ARTIFACT);
+    }
+
+    #[test]
     fn wrong_variant_corruption_paths_and_cancellation_fail_before_snapshot() {
         let directory = crate::assets::temporary_directory().unwrap();
         let path = directory.path().join("candidate.nand");

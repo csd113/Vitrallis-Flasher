@@ -23,8 +23,10 @@
   "release_program_sha256": "879cff4d6345a12091fa8084bab5a002556989b2d10ce1898905dd8666729ba0",
   "release_manifest_sha256": "48e46f66e4c1b6927b0864f9b285ae46a8c1c6e3c74033947a80643e7f723cc2",
   "byte_identical_repeat": true,
-  "physical_boot": "Pending v8 hardware loading",
-  "physical_release_trial": "Pending exact locked Hynix primary programming and isolated BROM boot",
+  "physical_boot": "Authenticated v8 Pong and original five-partition inventory in RAM session 15",
+  "physical_release_trial": "RAM session 15: ProgramReleasePrimary Verified in 20.428 seconds; all four copies match the locked program, BCH correction total 65 bits, maximum 3 per chunk, zero ECC failures",
   "trial_write_policy": "Exact sacrificial SID and five original partitions only; separate locked release operations retain original rollback image and protected boot chain",
-  "physical_manifest_approval": false
+  "physical_manifest_approval": false,
+  "physical_backup_isolation": "EraseBackupForReleasePrimary Verified in 18.800 seconds; independent raw data/OOB readback all FF, release primary and original U-Boot preserved",
+  "physical_release_brom_acceptance": "Pending requested normal boot with bridge removed and backup erased"
 }
