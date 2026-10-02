@@ -626,3 +626,12 @@ the same daemon digest. `git diff --check` passes. Logs:
 Separate metadata-only comparisons establish the checksum/banner-only original
 SPL difference and the larger original/release U-Boot difference. Neither is
 recorded as physical approval or as a successful new-release flash.
+
+The final v6 image header label is generated from the builder's protocol constant,
+matching metadata. Two fresh builds after correcting the stale label are identical
+and their compressed payload bytes match the preceding v6 build exactly; only
+the reviewed uImage header label/CRC changes. Final template SHA256 is
+`3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7`.
+Full CI and workspace check pass again after updating the pin: logs are
+`work/batch3/rootfs-map-v6-final-label-validation.log` and
+`work/batch3/rootfs-map-v6-final-label-workspace-check.log`.

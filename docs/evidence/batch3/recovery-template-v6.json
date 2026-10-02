@@ -3,7 +3,7 @@
   "sid": null,
   "session_id": null,
   "daemon_sha256": "a1f1049019bbb762af3a0bcdac55ec02465f9fc3599458ed1c293b23bb8bce7a",
-  "image_sha256": "d56cd02dad54ed6d8cc7fbb731f9207175cdd0ffc812b70cdabdb1a53d76f1ab",
+  "image_sha256": "3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7",
   "image_bytes": 36594582,
   "base_sha256": "5b8b392c095fd37472f9a08f1ed8f6cdbb6d6a04bb36a0696dbcd3033c0f3b25",
   "rootfs_sha256": "1e516cade3085633f61697d69a5d95cb84a501d8b606247987db5837a53e19ef",
@@ -18,6 +18,7 @@
   ],
   "nand_writes": "restricted-original-spl-block-trial",
   "restoration_sha256": "d6ac65c582c19ff609de3c02b1ff77938127ce05166e13f4e3d2b7b4bb4d3e03",
+  "image_header_name": "Vitrallis recovery v6",
   "byte_identical_repeat": true,
   "physical_boot": "pending",
   "physical_rootfs_map": "pending"

@@ -20,7 +20,7 @@ use std::{
 };
 
 const TOOL_HASH: &str = "1bd55a8b40b629cd5a374ffe9698eb21a894f14e0710d38e07e10fd9e7d2d059";
-const TEMPLATE_HASH: &str = "d56cd02dad54ed6d8cc7fbb731f9207175cdd0ffc812b70cdabdb1a53d76f1ab";
+const TEMPLATE_HASH: &str = "3c4bdbe1dfcb5d4af31f85e4997d4dd22e7b58b77611b9e00d89c813e0666fd7";
 const DAEMON_HASH: &str = "a1f1049019bbb762af3a0bcdac55ec02465f9fc3599458ed1c293b23bb8bce7a";
 const BOOT_SCRIPT: &[u8] = b"echo == Vitrallis RAM-only recovery ==\nsetenv bootargs console=ttyS0,115200 panic=0 rdinit=/init\nfdt addr 0x43000000\nfdt resize 65536\nfdt apply 0x43200000\nbootz 0x42000000 0x43300000 0x43000000\n";
 const INPUTS: [(&str, &str, &str, usize); 4] = [
