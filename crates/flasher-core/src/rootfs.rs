@@ -2,6 +2,7 @@
 //! No operation in this module grants NAND authority.
 #[cfg(target_os = "linux")]
 pub mod contained;
+pub mod streaming;
 
 use crate::{Cancellation, Error};
 use sha2::{Digest, Sha256};

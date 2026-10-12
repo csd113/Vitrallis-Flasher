@@ -9,6 +9,33 @@ use std::io::{Read, Seek};
 pub const TRANSFER_CHUNK_BYTES: usize = 8192;
 
 impl VerifiedAsset {
+    /// Copy the rootfs integrity contract after rechecking the retained snapshot.
+    /// This small value can bind streamed delivery; it grants no plan authority.
+    /// # Errors
+    /// Rejects other roles, corrupted snapshots or cancellation.
+    pub fn rootfs_stream_spec(
+        &mut self,
+        cancel: &Cancellation,
+    ) -> Result<crate::rootfs::streaming::SourceSpec, Error> {
+        if self.role() != crate::manifest::Role::Rootfs {
+            return Err(Error::Manifest("stream contract requires the rootfs role"));
+        }
+        self.recheck(cancel)?;
+        let mut digest = [0; 32];
+        for (pair, byte) in self
+            .sha256()
+            .as_bytes()
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .zip(&mut digest)
+        {
+            *byte = u8::from_str_radix(std::str::from_utf8(pair).map_err(|_| Error::Hash)?, 16)
+                .map_err(|_| Error::Hash)?;
+        }
+        crate::rootfs::streaming::SourceSpec::new(self.size(), digest)
+    }
+
     /// Install this rootfs beneath an owned, empty Linux root capability.
     ///
     /// Complete source inspection and metadata preflight precede creation. All
@@ -467,6 +494,44 @@ mod tests {
         assert!(matches!(
             valid.inspect_rootfs(&cancel),
             Err(Error::Cancelled)
+        ));
+    }
+    #[test]
+    fn rootfs_stream_contract_requires_rootfs_role_and_fresh_snapshot_integrity() {
+        let bytes = rootfs_gzip();
+        let (mut asset, _cache) = snapshot(&bytes);
+        let cancel = Cancellation::default();
+        let spec = asset.rootfs_stream_spec(&cancel).unwrap();
+        assert_eq!(spec.size(), bytes.len() as u64);
+        assert_eq!(spec.sha256(), <[u8; 32]>::from(Sha256::digest(&bytes)));
+        assert_eq!(
+            spec.inspect(bytes.as_slice(), &cancel)
+                .unwrap()
+                .inspection()
+                .entries()
+                .len(),
+            1
+        );
+        asset
+            .snapshot
+            .as_file_mut()
+            .seek(SeekFrom::Start(4))
+            .unwrap();
+        asset.snapshot.as_file_mut().write_all(&[1]).unwrap();
+        assert!(matches!(
+            asset.rootfs_stream_spec(&cancel),
+            Err(Error::Hash)
+        ));
+        asset.spec = Manifest::read(simulation::MANIFEST.as_bytes())
+            .unwrap()
+            .assets()
+            .iter()
+            .find(|asset| asset.role() == Role::UbootNand)
+            .unwrap()
+            .clone();
+        assert!(matches!(
+            asset.rootfs_stream_spec(&cancel),
+            Err(Error::Manifest(_))
         ));
     }
     #[test]
